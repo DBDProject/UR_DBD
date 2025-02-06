@@ -14,4 +14,10 @@ class UR_DBDPROJECT_API UD1GameInstance : public UGameInstance
 {
 	GENERATED_BODY()
 	
+public:
+	UD1GameInstance(const FObjectInitializer& ObjectInitializer);
+
+public:
+	virtual void Init() override;
+	virtual void Shutdown() override;
 };
