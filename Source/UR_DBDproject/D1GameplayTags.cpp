@@ -2,5 +2,5 @@
 
 namespace D1GameplayTags
 {
-	//UE_DEFINE_GAMEPLAY_TAG(Input_Action_SetDestination, "Input.Action.SetDestination");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Move, "Input.Action.Move");
 }
