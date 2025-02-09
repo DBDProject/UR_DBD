@@ -14,4 +14,10 @@ class UR_DBDPROJECT_API UD1AnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 	
+public:
+	UD1AnimInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
+public:
+	virtual void NativeInitializeAnimation() override;
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 };

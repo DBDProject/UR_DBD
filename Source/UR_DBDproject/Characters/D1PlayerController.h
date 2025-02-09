@@ -26,5 +26,7 @@ protected:
 
 private:
 	void Input_Move(const FInputActionValue& InputValue);
+	void Input_Look(const FInputActionValue& InputValue);
+	void Input_Run(const FInputActionValue& InputValue);
 
 };
