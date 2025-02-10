@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "Animation/D1AnimInstance.h"
+#include "Animation/D1BaseAnimInstance.h"
 #include "Characters/D1CharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 
-UD1AnimInstance::UD1AnimInstance(const FObjectInitializer& ObjectInitializer)
+UD1BaseAnimInstance::UD1BaseAnimInstance(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
 
 }
 
-void UD1AnimInstance::NativeInitializeAnimation()
+void UD1BaseAnimInstance::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
 
@@ -21,7 +21,7 @@ void UD1AnimInstance::NativeInitializeAnimation()
 		MovementComponent = Character->GetCharacterMovement();
 }
 
-void UD1AnimInstance::NativeUpdateAnimation(float DeltaSeconds)
+void UD1BaseAnimInstance::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 

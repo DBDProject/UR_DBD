@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "Animation/AnimInstance.h"
-#include "D1AnimInstance.generated.h"
+#include "D1BaseAnimInstance.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1AnimInstance : public UAnimInstance
+class UR_DBDPROJECT_API UD1BaseAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
 	
 public:
-	UD1AnimInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UD1BaseAnimInstance(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 public:
 	virtual void NativeInitializeAnimation() override;

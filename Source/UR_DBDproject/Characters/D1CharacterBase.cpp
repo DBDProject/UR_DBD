@@ -60,11 +60,5 @@ void AD1CharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 }
 
-void AD1CharacterBase::SetSprint(bool bSprint)
-{
-	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
-	{
-		MovementComponent->MaxWalkSpeed = bSprint ? RunSpeed : WalkSpeed;
-	}
-}
+
 
