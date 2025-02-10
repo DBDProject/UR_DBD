@@ -14,18 +14,20 @@ AD1CharacterBase::AD1CharacterBase()
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
-	GetCharacterMovement()->bOrientRotationToMovement = true;  // 이동 방향에 따라 캐릭터 회전
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 640.f, 0.f);  // 회전 속도 설정
+	GetCharacterMovement()->bOrientRotationToMovement = false;			// 이동 방향을 자동으로 바라보지 않음
+	bUseControllerRotationYaw = false;									// 컨트롤러의 방향을 따라 캐릭터가 회전
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 650.f, 0.f);	// 회전 속도
+
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetCapsuleComponent());
+	SpringArm->TargetArmLength = 400.f;
+	SpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
 	Camera->SetupAttachment(SpringArm);
-	Camera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	SpringArm->TargetArmLength = 800.f;
-	SpringArm->SetRelativeRotation(FRotator(-60, 0, 0));
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 
@@ -37,6 +39,11 @@ void AD1CharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
+	if (Controller)
+	{
+		Controller->SetControlRotation(FRotator(-45, 0, 0));
+	}
 }
 
 // Called every frame
@@ -51,5 +58,13 @@ void AD1CharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 {
 	Super::SetupPlayerInputComponent(PlayerInputComponent);
 
+}
+
+void AD1CharacterBase::SetSprint(bool bSprint)
+{
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->MaxWalkSpeed = bSprint ? RunSpeed : WalkSpeed;
+	}
 }
 
