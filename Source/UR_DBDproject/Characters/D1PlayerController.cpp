@@ -9,6 +9,7 @@
 #include "D1GameplayTags.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Characters/D1CharacterBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AD1PlayerController::AD1PlayerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -27,8 +28,8 @@ void AD1PlayerController::BeginPlay()
 	}
 
 	// 카메라 Pitch(위/아래) 제한 설정
-	PlayerCameraManager->ViewPitchMin = -45.0f; // 최소 Pitch (아래 제한)
-	PlayerCameraManager->ViewPitchMax = 45.0f;  // 최대 Pitch (위 제한)
+	PlayerCameraManager->ViewPitchMin = -35.0f; // 최소 Pitch (아래 제한)
+	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
 }
 
 void AD1PlayerController::SetupInputComponent()
@@ -39,14 +40,15 @@ void AD1PlayerController::SetupInputComponent()
 	{
 		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 
-		auto Action1 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Move);
-		EnhancedInputComponent->BindAction(Action1, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
+		auto MoveAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Move);
+		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Move);
 
-		auto Action2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Look);
-		EnhancedInputComponent->BindAction(Action2, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
+		auto LookAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Look);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
-		auto Action3 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Run);
-		EnhancedInputComponent->BindAction(Action3, ETriggerEvent::Triggered, this, &ThisClass::Input_Run);
+		auto RunAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Run);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ThisClass::Input_RunStart);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ThisClass::Input_RunStop);
 	}
 }
 
@@ -54,6 +56,14 @@ void AD1PlayerController::Input_Move(const FInputActionValue& InputValue)
 {
 	FVector2D MovementVector = InputValue.Get<FVector2D>();
 
+	AD1CharacterBase* PlayerCharacter = Cast<AD1CharacterBase>(GetPawn());
+
+	if (!PlayerCharacter) return;
+
+	// Shift 키 상태에 따라 속도 변경
+	float CurrentSpeed = PlayerCharacter->IsRunning() ? PlayerCharacter->GetRunSpeed() : PlayerCharacter->GetWalkSpeed();
+	PlayerCharacter->GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
+	
 	if (MovementVector.X != 0)
 	{
 		FRotator Rotator = GetControlRotation();
@@ -77,16 +87,18 @@ void AD1PlayerController::Input_Look(const FInputActionValue& InputValue)
 	// 상하 회전
 	AddPitchInput(LookVector.Y);
 }
-void AD1PlayerController::Input_Run(const FInputActionValue& InputValue)
+void AD1PlayerController::Input_RunStart()
 {
-	bool bIsRunning = InputValue.Get<bool>();
+	if (AD1CharacterBase* PlayerCharacter = Cast<AD1CharacterBase>(GetPawn()))
+	{
+		PlayerCharacter->SetRunning(true);
+	}
+}
 
-	APawn* ControlledPawn = GetPawn();
-	if (!ControlledPawn) return;
-
-	AD1CharacterBase* PlayerCharacter = Cast<AD1CharacterBase>(ControlledPawn);
-	if (!PlayerCharacter) return;
-
-	// Shift 키를 누르면 달리기 시작, 떼면 걷기
-	PlayerCharacter->SetSprint(bIsRunning);
+void AD1PlayerController::Input_RunStop()
+{
+	if (AD1CharacterBase* PlayerCharacter = Cast<AD1CharacterBase>(GetPawn()))
+	{
+		PlayerCharacter->SetRunning(false);
+	}
 }
