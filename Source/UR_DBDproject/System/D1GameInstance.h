@@ -7,13 +7,13 @@
 #include "D1GameInstance.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API UD1GameInstance : public UGameInstance
 {
 	GENERATED_BODY()
-	
+
 public:
 	UD1GameInstance(const FObjectInitializer& ObjectInitializer);
 
