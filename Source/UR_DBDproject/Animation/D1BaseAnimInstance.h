@@ -40,5 +40,5 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	bool bIsFalling = false;
 
-	// TEST
+	// TEST2
 };
