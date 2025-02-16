@@ -3,14 +3,14 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerState.h"
-#include "D1PlayerState.generated.h"
+#include "AbilitySystem/Attributes/D1AttributeSet.h"
+#include "D1KillerSet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class AD1PlayerState : public APlayerState
+class UR_DBDPROJECT_API UD1KillerSet : public UD1AttributeSet
 {
 	GENERATED_BODY()
 	
