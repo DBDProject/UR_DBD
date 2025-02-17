@@ -19,4 +19,11 @@ public:
 
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+protected:
+	UPROPERTY(BlueprintReadOnly)
+	TObjectPtr<class AD1SurvivorBase> D1Survivor;
+
+	UPROPERTY(BlueprintReadOnly)
+	bool bIsCrouching = false;
 };
