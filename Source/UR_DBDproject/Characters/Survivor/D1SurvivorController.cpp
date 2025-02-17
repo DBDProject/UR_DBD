@@ -114,7 +114,7 @@ void AD1SurvivorController::Input_RunStop()
 }
 
 void AD1SurvivorController::Input_StartCrouch()
-{			
+{
 	if (!D1Survivor)
 	{
 		return;

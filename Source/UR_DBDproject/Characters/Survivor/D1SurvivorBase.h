@@ -8,13 +8,13 @@
 
 class UD1SurvivorSet;
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 {
 	GENERATED_BODY()
-	
+
 public:
 	AD1SurvivorBase();
 
