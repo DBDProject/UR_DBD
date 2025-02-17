@@ -7,20 +7,24 @@
 #include "D1SurvivorSet.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API UD1SurvivorSet : public UD1AttributeSet
 {
 	GENERATED_BODY()
-	
+
 public:
 	UD1SurvivorSet();
 
 public:
 	ATTRIBUTE_ACCESSORS(ThisClass, RunSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, CrouchSpeed);
 
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData RunSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData CrouchSpeed;
 };

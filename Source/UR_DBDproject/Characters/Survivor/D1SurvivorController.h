@@ -9,7 +9,7 @@
 
 struct FInputActionValue;
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorController : public APlayerController
@@ -28,14 +28,12 @@ private:
 	void Input_Look(const FInputActionValue& InputValue);
 	void Input_RunStart();
 	void Input_RunStop();
-	void Input_Crouch();
+	void Input_StartCrouch();
+	void Input_StopCrouch();
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UD1SurvivorSet> SurvivorSet;
 
 public:
 	ECreatureState GetCreatureState();
