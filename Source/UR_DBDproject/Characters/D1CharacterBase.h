@@ -4,10 +4,15 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "AbilitySystemInterface.h"
+#include "AbilitySystem/D1AbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/D1AttributeSet.h"
+#include "D1Define.h"
 #include "D1CharacterBase.generated.h"
 
+
 UCLASS()
-class UR_DBDPROJECT_API AD1CharacterBase : public ACharacter
+class UR_DBDPROJECT_API AD1CharacterBase : public ACharacter, public IAbilitySystemInterface
 {
 	GENERATED_BODY()
 
@@ -18,12 +23,15 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void InitAbilitySystem();
 
-public:		// Called every frame
+public:		
+	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+public:
+	UPROPERTY(BlueprintReadWrite)
+	ECreatureState CreatureState = ECreatureState::None;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
@@ -32,23 +40,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UCameraComponent> Camera;
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float WalkSpeed = 250.f;  // 기본 걷기 속도
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UD1AbilitySystemComponent> AbilitySystemComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement")
-	float RunSpeed = 500.f;   // 달리기 속도
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UD1AttributeSet> AttributeSet;
 
-	UPROPERTY(BlueprintReadOnly)
-	bool bIsRunning = false;
 
 public:
-	float GetWalkSpeed() const { return WalkSpeed; }
-	void SetWalkSpeed(float NewSpeed) { WalkSpeed = NewSpeed; }
-
-	float GetRunSpeed() const { return RunSpeed; }
-	void SetRunSpeed(float NewSpeed) { RunSpeed = NewSpeed; }
-
-	bool IsRunning() const { return bIsRunning; }
-	void SetRunning(bool bRunning) { bIsRunning = bRunning; }
+	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override { return AbilitySystemComponent; }
+	UD1AttributeSet* GetAttributeSet() const { return AttributeSet; }
 };
