@@ -6,6 +6,7 @@
 #include "Characters/D1CharacterBase.h"
 #include "D1SurvivorBase.generated.h"
 
+class UD1SurvivorSet;
 /**
  * 
  */
@@ -24,4 +25,18 @@ protected:
 protected:
 	virtual void InitAbilitySystem() override;
 	virtual void PossessedBy(AController* NewController) override;
+
+public:
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+
+private:
+	void SmoothCameraTransition(float DeltaTime);
+
+protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<UD1SurvivorSet> SurvivorSet;
+
+public:
+	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 };

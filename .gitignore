@@ -72,3 +72,16 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Git LFS를 통한 바이너리 관리
+*.uasset
+*.umap
+*.wav
+*.mp4
+
+# Visual Studio 관련
+*.suo
+*.user
+*.userosscache
+*.VC.db
+*.VC.VC.opendb
