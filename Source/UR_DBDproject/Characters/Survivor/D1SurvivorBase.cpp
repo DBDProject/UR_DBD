@@ -49,6 +49,9 @@ void AD1SurvivorBase::InitAbilitySystem()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 
 		AttributeSet = PS->GetD1SurvivorSet();
+		SurvivorSet = Cast<UD1SurvivorSet>(AttributeSet);
+		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
+		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
 	}
 }
 
@@ -57,4 +60,26 @@ void AD1SurvivorBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+}
+
+void AD1SurvivorBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+	SmoothCameraTransition(DeltaTime);
+}
+
+// 웅크릴 때 카메라 보간
+void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
+{
+	float DefaultCapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	float CrouchCapsuleHalfHeight = GetCharacterMovement()->CrouchedHalfHeight;
+
+	// 카메라 보간 속도
+	float CameraLerpSpeed = 6.f;
+
+	float TargetHeight = bIsCrouched ? CrouchCapsuleHalfHeight * 0.7f : DefaultCapsuleHalfHeight * 0.7f;
+	float CurrentHeight = SpringArm->SocketOffset.Z;
+
+	float NewHeight = FMath::FInterpTo(CurrentHeight, TargetHeight, DeltaTime, CameraLerpSpeed);
+	SpringArm->SocketOffset = FVector(0.f, 0.f, NewHeight);
 }

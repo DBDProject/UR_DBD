@@ -2,6 +2,7 @@
 
 
 #include "Animation/D1SurvivorBaseAnim.h"
+#include "Characters/D1CharacterBase.h"
 #include "D1SurvivorBaseAnim.h"
 
 UD1SurvivorBaseAnim::UD1SurvivorBaseAnim(const FObjectInitializer& ObjectInitializer)
@@ -17,4 +18,14 @@ void UD1SurvivorBaseAnim::NativeInitializeAnimation()
 void UD1SurvivorBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
+
+	Character = Cast<AD1CharacterBase>(TryGetPawnOwner());
+
+	if (Character == nullptr)
+		return;
+
+	if (MovementComponent == nullptr)
+		return;
+
+	bIsCrouching = Character->bIsCrouched;
 }

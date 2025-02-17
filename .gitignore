@@ -72,4 +72,7 @@ Plugins/**/Intermediate/*
 
 # Cache files for the editor to use
 DerivedDataCache/*
+
+# Downloading assets from Google Drive
+Content/Art/*
 /ThirdParty/Protobuf/include

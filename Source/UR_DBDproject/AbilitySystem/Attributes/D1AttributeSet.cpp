@@ -5,5 +5,4 @@
 
 UD1AttributeSet::UD1AttributeSet()
 {
-	InitWalkSpeed(250.f);
 }
