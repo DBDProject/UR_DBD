@@ -34,6 +34,7 @@ void AD1SurvivorController::BeginPlay()
 	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
 
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	D1Survivor->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
 }
 
 void AD1SurvivorController::SetupInputComponent()
@@ -55,7 +56,8 @@ void AD1SurvivorController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ThisClass::Input_RunStop);
 
 		auto CrouchAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Crouch);
-		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_Crouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_StartCrouch);
+		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopCrouch);
 	}
 }
 
@@ -63,20 +65,7 @@ void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 {
 	FVector2D MovementVector = InputValue.Get<FVector2D>();
 
-	SurvivorSet = Cast<UD1SurvivorSet>(D1Survivor->GetAttributeSet());
 	if (!D1Survivor) return;
-
-	ECreatureState CurrentState = ECreatureState::Walk;
-	float CurrentSpeed = SurvivorSet->GetWalkSpeed();
-
-	// Shift 키 상태에 따라 속도 변경
-	if (GetCreatureState() == ECreatureState::Run)
-	{
-		CurrentState = ECreatureState::Run;
-		CurrentSpeed = SurvivorSet->GetRunSpeed();
-	}
-
-	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = CurrentSpeed;
 
 	if (MovementVector.X != 0)
 	{
@@ -91,8 +80,6 @@ void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 		FVector Direction = UKismetMathLibrary::GetRightVector(FRotator(0, Rotator.Yaw, 0));
 		GetPawn()->AddMovementInput(Direction, MovementVector.Y);
 	}
-
-	SetCreatureState(CurrentState);
 }
 
 void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
@@ -106,17 +93,46 @@ void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 
 void AD1SurvivorController::Input_RunStart()
 {
+	if (!D1Survivor)
+	{
+		return;
+	}
+
 	SetCreatureState(ECreatureState::Run);
+	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetRunSpeed();
 }
 
 void AD1SurvivorController::Input_RunStop()
 {
+	if (!D1Survivor)
+	{
+		return;
+	}
+
 	SetCreatureState(ECreatureState::None);
+	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetWalkSpeed();
 }
 
-void AD1SurvivorController::Input_Crouch()
+void AD1SurvivorController::Input_StartCrouch()
 {
+	if (!D1Survivor)
+	{
+		return;
+	}
+
 	SetCreatureState(ECreatureState::Crouch);
+	D1Survivor->Crouch();
+}
+
+void AD1SurvivorController::Input_StopCrouch()
+{
+	if (!D1Survivor)
+	{
+		return;
+	}
+
+	SetCreatureState(ECreatureState::None);
+	D1Survivor->UnCrouch();
 }
 
 ECreatureState AD1SurvivorController::GetCreatureState()
