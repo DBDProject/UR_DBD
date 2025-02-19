@@ -11,6 +11,7 @@
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "AbilitySystem/Attributes/D1SurvivorSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Interactables/D1Generator.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -58,6 +59,9 @@ void AD1SurvivorController::SetupInputComponent()
 		auto CrouchAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Crouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_StartCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopCrouch);
+
+		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
+		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Interact);
 	}
 }
 
@@ -133,6 +137,25 @@ void AD1SurvivorController::Input_StopCrouch()
 
 	SetCreatureState(ECreatureState::None);
 	D1Survivor->UnCrouch();
+}
+
+void AD1SurvivorController::Input_Interact()
+{
+	if (!D1Survivor)
+	{
+		return;
+	}
+
+	SetCreatureState(ECreatureState::Interactable);
+
+}
+
+void AD1SurvivorController::InteractWithGenerator()
+{
+	if (CurrentGenerator)
+	{
+		CurrentGenerator->StartRepair(D1Survivor);
+	}
 }
 
 ECreatureState AD1SurvivorController::GetCreatureState()

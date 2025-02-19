@@ -8,4 +8,5 @@ UD1SurvivorSet::UD1SurvivorSet()
 	InitWalkSpeed(250.f);
 	InitRunSpeed(500.f);
 	InitCrouchSpeed(150.f);
+	InitRepairSpeed(10.f);
 }

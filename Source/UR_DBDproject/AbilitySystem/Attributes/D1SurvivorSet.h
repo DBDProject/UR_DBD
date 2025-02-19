@@ -20,6 +20,7 @@ public:
 public:
 	ATTRIBUTE_ACCESSORS(ThisClass, RunSpeed);
 	ATTRIBUTE_ACCESSORS(ThisClass, CrouchSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, RepairSpeed);
 
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -27,4 +28,7 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData CrouchSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData RepairSpeed;
 };

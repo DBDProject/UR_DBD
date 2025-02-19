@@ -10,4 +10,5 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Look);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Run);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Crouch);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Interact);
 }

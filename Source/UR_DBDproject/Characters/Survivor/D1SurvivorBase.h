@@ -4,9 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Characters/D1CharacterBase.h"
+#include "AbilitySystem/Attributes/D1SurvivorSet.h"
 #include "D1SurvivorBase.generated.h"
 
-class UD1SurvivorSet;
 /**
  *
  */
@@ -36,6 +36,7 @@ private:
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
+
 
 public:
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }

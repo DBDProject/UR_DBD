@@ -11,6 +11,16 @@ enum class ECreatureState : uint8
 	Walk,
 	Run,
 	Crouch,
+	Interactable,
 	Skill,
 	Dead,
+};
+
+UENUM(BlueprintType)
+enum class EGeneratorInteractionPosition : uint8
+{
+	Front UMETA(DisplayName = "Front"),
+	Back UMETA(DisplayName = "Back"),
+	Left UMETA(DisplayName = "Left"),
+	Right UMETA(DisplayName = "Right")
 };

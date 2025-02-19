@@ -30,11 +30,18 @@ private:
 	void Input_RunStop();
 	void Input_StartCrouch();
 	void Input_StopCrouch();
+	void Input_Interact();
+
+private:
+	UFUNCTION()
+	void InteractWithGenerator();
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class AD1Generator> CurrentGenerator;
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);

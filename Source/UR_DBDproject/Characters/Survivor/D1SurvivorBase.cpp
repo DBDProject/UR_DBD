@@ -19,7 +19,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetCapsuleComponent());
-	SpringArm->TargetArmLength = 400.f;
+	SpringArm->TargetArmLength = 200.f;
 	SpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
