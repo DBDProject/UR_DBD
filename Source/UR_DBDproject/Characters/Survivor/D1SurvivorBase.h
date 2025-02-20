@@ -33,11 +33,35 @@ public:
 private:
 	void SmoothCameraTransition(float DeltaTime);
 
+	// 콜리전 이벤트 함수
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 protected:
+	// 오버랩 감지용 박스 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UBoxComponent> InteractionBox;
+
+	// 생존자가 감지한 오브젝트 저장
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TWeakObjectPtr<class AActor> DetectedObject;
+
+	// 상호작용 중인 발전기 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1Generator> CurrentGenerator;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
-
 public:
+	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
+	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
+
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 };

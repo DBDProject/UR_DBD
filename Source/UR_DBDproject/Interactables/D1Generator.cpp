@@ -4,29 +4,39 @@
 #include "Interactables/D1Generator.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/PrimitiveComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 
-// Sets default values
 AD1Generator::AD1Generator()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+    PrimaryActorTick.bCanEverTick = true;
 
-	// 콜라이더 설정
-	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
-	RootComponent = InteractionBox;
-	InteractionBox->SetBoxExtent(FVector(150.f, 150.f, 200.f));
-	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
+    // RootComponent 설정 (SceneComponent 사용)
+    USceneComponent* RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+    RootComponent = RootScene;
 
-	// 발전기 메쉬
-	GeneratorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GeneratorMesh"));
-	GeneratorMesh->SetupAttachment(RootComponent);
+    // 물리 충돌 박스 (Physics Collision)
+    PhysicsCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("PhysicsCollisionBox"));
+    PhysicsCollisionBox->SetupAttachment(RootComponent);
+    PhysicsCollisionBox->SetBoxExtent(FVector(50.f, 50.f, 100.f)); // 적절한 크기로 설정
+    PhysicsCollisionBox->SetCollisionProfileName(TEXT("BlockAll"));  // 모든 물리 충돌 감지
+    PhysicsCollisionBox->SetGenerateOverlapEvents(false); // 오버랩 판정 비활성화 (물리 전용)
 
-	// 기본값 설정
+    // 오버랩 감지 박스 (Interaction Box)
+    InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionBox"));
+    InteractionBox->SetupAttachment(RootComponent);
+    InteractionBox->SetBoxExtent(FVector(100.f, 100.f, 150.f)); // 기존보다 살짝 크게
+    InteractionBox->SetCollisionProfileName(TEXT("Trigger")); // 오버랩 전용
+    InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
+
+    // 발전기 메쉬
+    GeneratorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GeneratorMesh"));
+    GeneratorMesh->SetupAttachment(RootComponent);
+
+    // 기본값 설정
     InteractingPlayer = nullptr;
-    bIsInteracting = false;
-	bIsRepaired = false;
-	RepairProgress = 0.f;
+    bIsRepaired = false;
+    RepairProgress = 0.f;
 }
 
 // Called when the game starts or when spawned
@@ -34,6 +44,12 @@ void AD1Generator::BeginPlay()
 {
 	Super::BeginPlay();
 	
+    if (InteractionBox)
+    {
+        // 콜리전 이벤트 바인딩
+        InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1Generator::OnOverlapBegin);
+        InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1Generator::OnOverlapEnd);
+    }
 }
 
 // Called every frame
@@ -42,14 +58,13 @@ void AD1Generator::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
     // 발전기 수리 진행
-    if (InteractingPlayer && RepairProgress < 100.f)
+    if (InteractingPlayer.IsValid() && RepairProgress < 100.f)
     {
         float RepairSpeed = InteractingPlayer->GetSurvivoreSet()->GetRepairSpeed();
-        RepairProgress += RepairSpeed * DeltaTime;
+        RepairProgress = FMath::Clamp(RepairProgress + RepairSpeed * DeltaTime, 0.f, 100.f);
 
         if (RepairProgress >= 100.f)
         {
-            RepairProgress = 100.f;
             UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료!"));
         }
     }
@@ -57,10 +72,7 @@ void AD1Generator::Tick(float DeltaTime)
 
 EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorBase* Survivor)
 {
-    if (!Survivor)
-    {
-        return EGeneratorInteractionPosition::Front; // 기본값
-    }
+    if (!Survivor) return EGeneratorInteractionPosition::None;
 
     // 발전기 위치 및 방향 벡터 가져오기
     FVector GeneratorLocation = GetActorLocation();
@@ -78,35 +90,43 @@ EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorB
     float RightDot = FVector::DotProduct(RightVector, DirectionToPlayer);
 
     // 방향 판별
-    if (ForwardDot > 0.7f)
-    {
-        return EGeneratorInteractionPosition::Front;  // 위(앞)
-    }
-    else if (ForwardDot < -0.7f)
-    {
-        return EGeneratorInteractionPosition::Back;  // 아래(뒤)
-    }
-    else if (RightDot > 0.7f)
-    {
-        return EGeneratorInteractionPosition::Right; // 오른쪽
-    }
-    else
-    {
-        return EGeneratorInteractionPosition::Left;  // 왼쪽
-    }
+    if (ForwardDot > 0.7f) return EGeneratorInteractionPosition::Front;
+    if (ForwardDot < -0.7f) return EGeneratorInteractionPosition::Back;
+    if (RightDot > 0.7f) return EGeneratorInteractionPosition::Right;
+    return EGeneratorInteractionPosition::Left;
 }
 
 void AD1Generator::StartRepair(AD1SurvivorBase* Player)
 {
-    if (!InteractingPlayer)
-    {
-        InteractingPlayer = Player;
-        UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작!"));
-    }
+    if (InteractingPlayer.IsValid()) return;
+
+    InteractingPlayer = Player;
+    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작!"));
 }
 
 void AD1Generator::StopRepair()
 {
-    InteractingPlayer = nullptr;
-    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+    if (InteractingPlayer.IsValid())
+    {
+        InteractingPlayer = nullptr;
+        UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+    }
+}
+
+void AD1Generator::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+    if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("발전기 근처에 생존자가 접근함!"));
+    }
+}
+
+void AD1Generator::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+    if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+    {
+        InteractingPlayer = nullptr;
+        bIsRepaired = false;
+        UE_LOG(LogTemp, Warning, TEXT("발전기에서 생존자가 멀어짐!"));
+    }
 }

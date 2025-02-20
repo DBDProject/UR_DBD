@@ -19,6 +19,7 @@ enum class ECreatureState : uint8
 UENUM(BlueprintType)
 enum class EGeneratorInteractionPosition : uint8
 {
+	None,
 	Front UMETA(DisplayName = "Front"),
 	Back UMETA(DisplayName = "Back"),
 	Left UMETA(DisplayName = "Left"),

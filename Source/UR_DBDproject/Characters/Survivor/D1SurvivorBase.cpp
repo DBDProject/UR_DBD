@@ -9,6 +9,8 @@
 #include "D1SurvivorState.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/D1SurvivorSet.h"
+#include "Interactables/D1Generator.h"
+#include "Components/BoxComponent.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -28,6 +30,14 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+
+	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
+	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
+	InteractionBox->SetupAttachment(GetCapsuleComponent());
+	InteractionBox->SetBoxExtent(FVector(50.f, 50.f, 100.f));
+	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
+	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -39,6 +49,13 @@ void AD1SurvivorBase::BeginPlay()
 	{
 		Controller->SetControlRotation(FRotator(-45, 0, 0));
 	}
+
+	if (InteractionBox)
+	{
+		// 콜리전 이벤트 바인딩
+		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
+		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
+	}
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
@@ -46,12 +63,17 @@ void AD1SurvivorBase::InitAbilitySystem()
 	if (AD1SurvivorState* PS = GetPlayerState<AD1SurvivorState>())
 	{
 		AbilitySystemComponent = Cast<UD1AbilitySystemComponent>(PS->GetAbilitySystemComponent());
+		if (!AbilitySystemComponent) return;
+
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 
 		AttributeSet = PS->GetD1SurvivorSet();
 		SurvivorSet = Cast<UD1SurvivorSet>(AttributeSet);
-		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
-		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
+		if (SurvivorSet)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
+			GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
+		}
 	}
 }
 
@@ -71,6 +93,8 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 // 웅크릴 때 카메라 보간
 void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 {
+	if (!SpringArm) return;
+
 	float DefaultCapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 	float CrouchCapsuleHalfHeight = GetCharacterMovement()->CrouchedHalfHeight;
 
@@ -82,4 +106,26 @@ void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 
 	float NewHeight = FMath::FInterpTo(CurrentHeight, TargetHeight, DeltaTime, CameraLerpSpeed);
 	SpringArm->SocketOffset = FVector(0.f, 0.f, NewHeight);
+}
+
+void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
+	{
+		DetectedObject = Generator;
+		CurrentGenerator = Generator;
+	}
+}
+
+void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (DetectedObject == OtherActor)
+	{
+		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
+		{
+			Generator->StopRepair();
+			CurrentGenerator = nullptr;
+		}
+		DetectedObject = nullptr;
+	}
 }

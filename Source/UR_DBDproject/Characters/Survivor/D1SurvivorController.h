@@ -30,18 +30,24 @@ private:
 	void Input_RunStop();
 	void Input_StartCrouch();
 	void Input_StopCrouch();
-	void Input_Interact();
+	void Input_StartInteract();
+	void Input_StopInteract();
 
 private:
+	// 발전기 수리 관련 함수
 	UFUNCTION()
-	void InteractWithGenerator();
+	void StartRepair();
+
+	UFUNCTION()
+	void StopRepair();
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class AD1Generator> CurrentGenerator;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<class UD1SurvivorBaseAnim> CachedAnimInstance;
+
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);

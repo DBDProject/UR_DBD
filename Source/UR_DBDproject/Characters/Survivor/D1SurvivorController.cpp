@@ -12,6 +12,7 @@
 #include "AbilitySystem/Attributes/D1SurvivorSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interactables/D1Generator.h"
+#include "Animation/D1SurvivorBaseAnim.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -35,7 +36,11 @@ void AD1SurvivorController::BeginPlay()
 	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
 
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
-	D1Survivor->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+	if (D1Survivor)
+	{
+		D1Survivor->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor->GetMesh()->GetAnimInstance());
+	}
 }
 
 void AD1SurvivorController::SetupInputComponent()
@@ -61,7 +66,8 @@ void AD1SurvivorController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopCrouch);
 
 		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
-		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Interact);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract);
 	}
 }
 
@@ -69,7 +75,8 @@ void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 {
 	FVector2D MovementVector = InputValue.Get<FVector2D>();
 
-	if (!D1Survivor) return;
+	APawn* ControlledPawn = GetPawn();
+	if (!ControlledPawn) return;
 
 	if (MovementVector.X != 0)
 	{
@@ -97,10 +104,7 @@ void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 
 void AD1SurvivorController::Input_RunStart()
 {
-	if (!D1Survivor)
-	{
-		return;
-	}
+	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
 
 	SetCreatureState(ECreatureState::Run);
 	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetRunSpeed();
@@ -108,10 +112,7 @@ void AD1SurvivorController::Input_RunStart()
 
 void AD1SurvivorController::Input_RunStop()
 {
-	if (!D1Survivor)
-	{
-		return;
-	}
+	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
 
 	SetCreatureState(ECreatureState::None);
 	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetWalkSpeed();
@@ -139,33 +140,65 @@ void AD1SurvivorController::Input_StopCrouch()
 	D1Survivor->UnCrouch();
 }
 
-void AD1SurvivorController::Input_Interact()
+void AD1SurvivorController::Input_StartInteract()
 {
-	if (!D1Survivor)
+	if (!D1Survivor) return;
+
+	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
 	{
-		return;
+		StartRepair();
 	}
-
-	SetCreatureState(ECreatureState::Interactable);
-
 }
 
-void AD1SurvivorController::InteractWithGenerator()
+void AD1SurvivorController::Input_StopInteract()
 {
-	if (CurrentGenerator)
+	if (!D1Survivor) return;
+
+	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
 	{
-		CurrentGenerator->StartRepair(D1Survivor);
+		StopRepair();
+	}
+}
+
+void AD1SurvivorController::StartRepair()
+{
+	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+
+
+	if (CachedAnimInstance.IsValid())
+	{
+		// 플레이어 위치 판별
+		EGeneratorInteractionPosition Position = 
+			D1Survivor->GetCurrentGenerator()->FindInteractionPosition(D1Survivor);
+		CachedAnimInstance.Get()->SetInteractionPosition(Position);
+		CachedAnimInstance.Get()->SetIsRepairing(true);
+
+		// 이동 입력 차단
+		D1Survivor->GetCharacterMovement()->DisableMovement();
+		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+
+		D1Survivor->GetCurrentGenerator()->StartRepair(D1Survivor);
+	}
+}
+
+void AD1SurvivorController::StopRepair()
+{
+	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+
+	if (CachedAnimInstance.IsValid())
+	{
+		CachedAnimInstance.Get()->SetIsRepairing(false);
+
+		// 이동 가능하게 변경
+		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+		D1Survivor->GetCurrentGenerator()->StopRepair();
 	}
 }
 
 ECreatureState AD1SurvivorController::GetCreatureState()
 {
-	if (D1Survivor)
-	{
-		return D1Survivor->CreatureState;
-	}
-
-	return ECreatureState::None;
+	return D1Survivor ? D1Survivor->CreatureState : ECreatureState::None;
 }
 
 void AD1SurvivorController::SetCreatureState(ECreatureState InState)
