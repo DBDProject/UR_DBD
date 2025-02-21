@@ -11,6 +11,10 @@ enum class ECreatureState : uint8
 	Walk,
 	Run,
 	Crouch,
-	Skill,
+	Attack1,
+	Skill1,
+	Bat,
+	Dracula,
+	Wolf,
 	Dead,
 };
