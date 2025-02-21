@@ -13,5 +13,14 @@ UCLASS()
 class UR_DBDPROJECT_API UD1KillerSet : public UD1AttributeSet
 {
 	GENERATED_BODY()
-	
+
+public:
+	UD1KillerSet();
+
+public:
+	ATTRIBUTE_ACCESSORS(ThisClass, RunSpeed);
+
+private:
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData RunSpeed;
 };
