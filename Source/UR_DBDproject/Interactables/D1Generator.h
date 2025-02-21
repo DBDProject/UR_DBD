@@ -30,7 +30,7 @@ public:
 
     // 수리 시작
     UFUNCTION(BlueprintCallable, Category = "Generator")
-    void StartRepair(class AD1SurvivorBase* Player);
+    void StartRepair(class AD1SurvivorBase* Player, EGeneratorInteractionPosition Position);
 
     // 수리 종료
     UFUNCTION(BlueprintCallable, Category = "Generator")
@@ -56,6 +56,9 @@ protected:
     // 발전기 메쉬
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
     TObjectPtr<class USkeletalMeshComponent> GeneratorMesh;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator", meta = (AllowPrivateAccess = "true"))
+    TWeakObjectPtr<class UD1GeneratorAnim> CachedAnimInstance;
 
     // 발전기와 상호작용하는 플레이어 저장
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")

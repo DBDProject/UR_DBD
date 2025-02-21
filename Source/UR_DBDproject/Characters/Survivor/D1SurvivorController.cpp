@@ -170,6 +170,10 @@ void AD1SurvivorController::StartRepair()
 		// 플레이어 위치 판별
 		EGeneratorInteractionPosition Position = 
 			D1Survivor->GetCurrentGenerator()->FindInteractionPosition(D1Survivor);
+
+		// 플레이어 위치 이동
+		MoveToGeneratorPosition(Position);
+
 		CachedAnimInstance.Get()->SetInteractionPosition(Position);
 		CachedAnimInstance.Get()->SetIsRepairing(true);
 
@@ -177,7 +181,7 @@ void AD1SurvivorController::StartRepair()
 		D1Survivor->GetCharacterMovement()->DisableMovement();
 		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
 
-		D1Survivor->GetCurrentGenerator()->StartRepair(D1Survivor);
+		D1Survivor->GetCurrentGenerator()->StartRepair(D1Survivor, Position);
 	}
 }
 
@@ -194,6 +198,46 @@ void AD1SurvivorController::StopRepair()
 
 		D1Survivor->GetCurrentGenerator()->StopRepair();
 	}
+}
+
+void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
+{
+	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+
+	AD1Generator* Generator = D1Survivor->GetCurrentGenerator();
+	FVector GeneratorLocation = Generator->GetActorLocation();
+	FVector ForwardVector = Generator->GetActorForwardVector();
+	FVector RightVector = Generator->GetActorRightVector();
+	FVector TargetLocation;
+
+	// 플레이어를 발전기 위치로 이동
+	switch (Position)
+	{
+	case EGeneratorInteractionPosition::Front:
+		TargetLocation = GeneratorLocation + ForwardVector * 100.f;
+		break;
+	case EGeneratorInteractionPosition::Back:
+		TargetLocation = GeneratorLocation - ForwardVector * 90.f;
+		break;
+	case EGeneratorInteractionPosition::Left:
+		TargetLocation = GeneratorLocation - RightVector * 80.f;
+		break;
+	case EGeneratorInteractionPosition::Right:
+		TargetLocation = GeneratorLocation + RightVector * 80.f;
+		break;
+	default:
+		return;
+	}
+	TargetLocation.X -= 6.f;  // X 값 보정
+	TargetLocation.Z += 88.f;  // Z 값 증가
+
+	D1Survivor->SetActorLocation(TargetLocation);
+
+	// 플레이어 방향을 발전기로 조정 (자동 회전)
+	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	D1Survivor->SetActorRotation(LookAtRotation);
 }
 
 ECreatureState AD1SurvivorController::GetCreatureState()

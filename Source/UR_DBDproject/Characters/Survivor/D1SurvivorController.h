@@ -41,6 +41,11 @@ private:
 	UFUNCTION()
 	void StopRepair();
 
+	UFUNCTION()
+	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
+
+
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;

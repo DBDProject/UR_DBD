@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "Animation/D1GeneratorAnim.h"
 
 AD1Generator::AD1Generator()
 {
@@ -50,6 +51,8 @@ void AD1Generator::BeginPlay()
         InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1Generator::OnOverlapBegin);
         InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1Generator::OnOverlapEnd);
     }
+
+    CachedAnimInstance = Cast<UD1GeneratorAnim>(GeneratorMesh->GetAnimInstance());
 }
 
 // Called every frame
@@ -89,18 +92,29 @@ EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorB
     float ForwardDot = FVector::DotProduct(ForwardVector, DirectionToPlayer);
     float RightDot = FVector::DotProduct(RightVector, DirectionToPlayer);
 
-    // 방향 판별
-    if (ForwardDot > 0.7f) return EGeneratorInteractionPosition::Front;
-    if (ForwardDot < -0.7f) return EGeneratorInteractionPosition::Back;
-    if (RightDot > 0.7f) return EGeneratorInteractionPosition::Right;
+    // 정면(Front) 또는 후면(Back) 판별
+    if (FMath::Abs(ForwardDot) >= FMath::Abs(RightDot)) 
+    {
+        if (ForwardDot > 0) return EGeneratorInteractionPosition::Front;
+        return EGeneratorInteractionPosition::Back;
+    }
+
+    // 좌우 판별 
+    if (RightDot > 0) return EGeneratorInteractionPosition::Right;
     return EGeneratorInteractionPosition::Left;
 }
 
-void AD1Generator::StartRepair(AD1SurvivorBase* Player)
+void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position)
 {
     if (InteractingPlayer.IsValid()) return;
 
     InteractingPlayer = Player;
+
+    if (CachedAnimInstance.IsValid())
+    {
+        CachedAnimInstance.Get()->SetInteractionPosition(Position);
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작!"));
 }
 
