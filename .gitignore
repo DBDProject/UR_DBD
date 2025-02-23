@@ -73,5 +73,9 @@ Plugins/**/Intermediate/*
 # Cache files for the editor to use
 DerivedDataCache/*
 
-# Downloading assets from Google Drive
-Content/*
+Content/Art/*
+Content/Post_Apocalyptic/*
+Content/Demonic_Village/Animations/*
+Content/Demonic_Village/Materials/*
+Content/Demonic_Village/Meshes/*
+Content/Demonic_Village/Textures/*
