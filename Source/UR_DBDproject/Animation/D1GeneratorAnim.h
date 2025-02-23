@@ -25,10 +25,19 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsRepairing = false;
+
 public:
 	UFUNCTION(BlueprintCallable)
 	EGeneratorInteractionPosition GetInteractionPosition() const { return InteractionPosition; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsRepairing() const { return bIsRepairing; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsRepairing(bool bNewState) { bIsRepairing = bNewState; }
 };

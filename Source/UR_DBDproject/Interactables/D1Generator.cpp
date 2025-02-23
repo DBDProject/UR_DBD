@@ -113,6 +113,7 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
     if (CachedAnimInstance.IsValid())
     {
         CachedAnimInstance.Get()->SetInteractionPosition(Position);
+        CachedAnimInstance.Get()->SetIsRepairing(true);
     }
 
     UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작!"));
@@ -123,8 +124,14 @@ void AD1Generator::StopRepair()
     if (InteractingPlayer.IsValid())
     {
         InteractingPlayer = nullptr;
-        UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
     }
+
+    if (CachedAnimInstance.IsValid())
+    {
+        CachedAnimInstance.Get()->SetIsRepairing(false);
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
 }
 
 void AD1Generator::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

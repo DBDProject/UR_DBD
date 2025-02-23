@@ -214,21 +214,20 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 	switch (Position)
 	{
 	case EGeneratorInteractionPosition::Front:
-		TargetLocation = GeneratorLocation + ForwardVector * 100.f;
+		TargetLocation = GeneratorLocation + ForwardVector * 94.f;
 		break;
 	case EGeneratorInteractionPosition::Back:
-		TargetLocation = GeneratorLocation - ForwardVector * 90.f;
+		TargetLocation = GeneratorLocation - ForwardVector * 110.f;
 		break;
 	case EGeneratorInteractionPosition::Left:
 		TargetLocation = GeneratorLocation - RightVector * 80.f;
 		break;
 	case EGeneratorInteractionPosition::Right:
-		TargetLocation = GeneratorLocation + RightVector * 80.f;
+		TargetLocation = GeneratorLocation + RightVector * 85.f;
 		break;
 	default:
 		return;
 	}
-	TargetLocation.X -= 6.f;  // X 값 보정
 	TargetLocation.Z += 88.f;  // Z 값 증가
 
 	D1Survivor->SetActorLocation(TargetLocation);
