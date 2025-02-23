@@ -34,15 +34,34 @@ public:
 
     // 수리 종료
     UFUNCTION(BlueprintCallable, Category = "Generator")
-    void StopRepair();
+    void StopRepair(class AD1SurvivorBase* Player);
 
 protected:
     // 오버랩 이벤트 처리 함수
     UFUNCTION()
     void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-
     UFUNCTION()
     void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
+    // 스킬 체크 대성공
+    UFUNCTION()
+    void OnSkillCheckSuccess();
+
+    // 스킬 체크 실패
+    UFUNCTION()
+    void OnSkillCheckFail();
+
+    // 모든 플레이어의 수리를 중단
+    UFUNCTION()
+    void StopRepairAll();
+
+    // 수리 가능 상태로 복구
+    UFUNCTION()
+    void EnableRepair();
+
+    // 수리 완료
+    UFUNCTION()
+    void CompleteRepair();
 
 protected:
     // 물리 충돌 박스
@@ -57,18 +76,26 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
     TObjectPtr<class USkeletalMeshComponent> GeneratorMesh;
 
+    // 애님 인스턴스 캐싱
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator", meta = (AllowPrivateAccess = "true"))
     TWeakObjectPtr<class UD1GeneratorAnim> CachedAnimInstance;
 
-    // 발전기와 상호작용하는 플레이어 저장
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
-    TWeakObjectPtr<class AD1SurvivorBase> InteractingPlayer;
-
     // 발전기 수리중인지
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
-    bool bIsRepaired;
+    bool bIsRepairing = false;
+
+    // 스킬 체크 실패 시 3초간 수리 불가
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    bool bIsRepairBlocked = false;
 
     // 수리 진행도
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
-    float RepairProgress;
+    float RepairProgress = 0.f;
+
+    // 수리 하고 있는 플레이어
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    TArray<TObjectPtr<class AD1SurvivorBase>> RepairingPlayers;
+
+    // 수리 차단 해제 타이머
+    FTimerHandle RepairBlockTimer;
 };

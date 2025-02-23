@@ -164,7 +164,6 @@ void AD1SurvivorController::StartRepair()
 {
 	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
 
-
 	if (CachedAnimInstance.IsValid())
 	{
 		// 플레이어 위치 판별
@@ -195,8 +194,7 @@ void AD1SurvivorController::StopRepair()
 
 		// 이동 가능하게 변경
 		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
-		D1Survivor->GetCurrentGenerator()->StopRepair();
+		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor);
 	}
 }
 

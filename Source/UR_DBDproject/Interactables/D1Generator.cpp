@@ -7,6 +7,7 @@
 #include "Components/PrimitiveComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Animation/D1GeneratorAnim.h"
+#include "Characters/Survivor/D1SurvivorController.h"
 
 AD1Generator::AD1Generator()
 {
@@ -33,11 +34,6 @@ AD1Generator::AD1Generator()
     // 발전기 메쉬
     GeneratorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GeneratorMesh"));
     GeneratorMesh->SetupAttachment(RootComponent);
-
-    // 기본값 설정
-    InteractingPlayer = nullptr;
-    bIsRepaired = false;
-    RepairProgress = 0.f;
 }
 
 // Called when the game starts or when spawned
@@ -61,14 +57,28 @@ void AD1Generator::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
     // 발전기 수리 진행
-    if (InteractingPlayer.IsValid() && RepairProgress < 100.f)
+    if (bIsRepairing && RepairProgress < 100.f)
     {
-        float RepairSpeed = InteractingPlayer->GetSurvivoreSet()->GetRepairSpeed();
-        RepairProgress = FMath::Clamp(RepairProgress + RepairSpeed * DeltaTime, 0.f, 100.f);
+        // 수리 속도 계산
+        float RepairSpeed = 1.0f;
+        int NumPlayers = RepairingPlayers.Num();
 
-        if (RepairProgress >= 100.f)
+        switch (NumPlayers)
         {
-            UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료!"));
+        case 1: RepairSpeed = 1.0f; break;
+        case 2: RepairSpeed = 1.7f; break;
+        case 3: RepairSpeed = 2.1f; break;
+        case 4: RepairSpeed = 2.2f; break;
+        default: RepairSpeed = 1.0f; break;
+        }
+
+        // 진행도 증가
+        RepairProgress += RepairSpeed * DeltaTime;
+        UE_LOG(LogTemp, Warning, TEXT("Repair Progress: %f"), RepairProgress);
+
+        if (RepairProgress >= 100.0f)
+        {
+            CompleteRepair();
         }
     }
 }
@@ -106,9 +116,17 @@ EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorB
 
 void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position)
 {
-    if (InteractingPlayer.IsValid()) return;
+    if (bIsRepairBlocked)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("수리가 현재 차단된 상태입니다!"));
+        return;
+    }
 
-    InteractingPlayer = Player;
+    if (!RepairingPlayers.Contains(Player))
+    {
+        RepairingPlayers.Add(Player);
+    }
+    bIsRepairing = true;
 
     if (CachedAnimInstance.IsValid())
     {
@@ -119,19 +137,21 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
     UE_LOG(LogTemp, Warning, TEXT("발전기 수리 시작!"));
 }
 
-void AD1Generator::StopRepair()
+void AD1Generator::StopRepair(AD1SurvivorBase* Player)
 {
-    if (InteractingPlayer.IsValid())
-    {
-        InteractingPlayer = nullptr;
-    }
+    RepairingPlayers.Remove(Player);
 
-    if (CachedAnimInstance.IsValid())
+    if (RepairingPlayers.Num() == 0)
     {
-        CachedAnimInstance.Get()->SetIsRepairing(false);
-    }
+        bIsRepairing = false;
 
-    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+        if (CachedAnimInstance.IsValid())
+        {
+            CachedAnimInstance.Get()->SetIsRepairing(false);
+        }
+
+        UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+    }
 }
 
 void AD1Generator::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -146,8 +166,56 @@ void AD1Generator::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor
 {
     if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
     {
-        InteractingPlayer = nullptr;
-        bIsRepaired = false;
         UE_LOG(LogTemp, Warning, TEXT("발전기에서 생존자가 멀어짐!"));
     }
+}
+
+void AD1Generator::OnSkillCheckSuccess()
+{
+    RepairProgress += 1.0f;
+    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 대성공!"));
+}
+
+void AD1Generator::OnSkillCheckFail()
+{
+    RepairProgress -= 10.0f;
+    if (RepairProgress < 0.0f) RepairProgress = 0.0f;
+
+    bIsRepairBlocked = false;
+    StopRepairAll();
+
+    UE_LOG(LogTemp, Error, TEXT("스킬 체크 실패! 3초간 수리 불가"));
+
+    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 3.0f, false);
+}
+
+void AD1Generator::StopRepairAll()
+{
+    for (auto& Player : RepairingPlayers)
+    {
+        if (Player)
+        {
+            Cast<AD1SurvivorController>(Player->GetController())->StopRepair(); // 각 플레이어의 수리 중단 함수 호출
+        }
+    }
+
+    // 수리 중인 플레이어 목록 초기화
+    RepairingPlayers.Empty();
+    bIsRepairing = false;
+}
+
+void AD1Generator::EnableRepair()
+{
+    bIsRepairBlocked = false; // 수리 차단 해제
+    UE_LOG(LogTemp, Warning, TEXT("수리 가능 상태로 복구됨"));
+}
+
+void AD1Generator::CompleteRepair()
+{
+    RepairProgress = 100.0f;
+    bIsRepairing = false;
+
+    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 모든 플레이어에게 알림"));
+
+    // 발전기 완료 이벤트 실행 (UI, 사운드, 이펙트 등)
 }

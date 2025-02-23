@@ -123,7 +123,7 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 	{
 		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
 		{
-			Generator->StopRepair();
+			Generator->StopRepair(this);
 			CurrentGenerator = nullptr;
 		}
 		DetectedObject = nullptr;

@@ -33,7 +33,7 @@ private:
 	void Input_StartInteract();
 	void Input_StopInteract();
 
-private:
+public:
 	// 발전기 수리 관련 함수
 	UFUNCTION()
 	void StartRepair();
