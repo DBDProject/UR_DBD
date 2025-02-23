@@ -28,5 +28,8 @@ public class UR_DBDproject : ModuleRules
             "Niagara",
             "UMG"
     });
+
+        PublicDependencyModuleNames.AddRange(new string[] { "DBDUI" });
+
     }
 }
