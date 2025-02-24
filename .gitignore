@@ -75,3 +75,13 @@ DerivedDataCache/*
 
 # Downloading assets from Google Drive
 Content/Art/*
+Content/Demonic_Village/Animations
+Content/Demonic_Village/Blueprints
+Content/Demonic_Village/Sequences
+Content/Functions
+Content/Post_Apocalyptic
+Content/VFXFirePackNiagara
+Content/Demonic_Village/IntroSequence.uasset
+Content/Demonic_Village/Textures
+Content/Demonic_Village/Materials
+Content/Demonic_Village/Meshes
