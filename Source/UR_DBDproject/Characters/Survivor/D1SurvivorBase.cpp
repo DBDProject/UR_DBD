@@ -11,6 +11,7 @@
 #include "AbilitySystem/Attributes/D1SurvivorSet.h"
 #include "Interactables/D1Generator.h"
 #include "Components/BoxComponent.h"
+#include "Interactables/D1VaultObject.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -112,8 +113,14 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 {
 	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 	{
-		DetectedObject = Generator;
+		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
+	}
+
+	if (OtherActor->ActorHasTag("Vaultable"))
+	{
+		DetectedObject = OtherActor;
+		VaultTarget = Cast<AD1VaultObject>(OtherActor);
 	}
 }
 
@@ -126,6 +133,14 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 			Generator->StopRepair(this);
 			CurrentGenerator = nullptr;
 		}
+
+		if (OtherActor->ActorHasTag("Vaultable"))
+		{
+			VaultTarget = nullptr;
+		}
+
 		DetectedObject = nullptr;
 	}
 }
+
+

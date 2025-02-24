@@ -45,6 +45,9 @@ public:
 	UFUNCTION()
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
+	UFUNCTION()
+	void PerformVault();
+
 
 
 protected:

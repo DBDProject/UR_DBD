@@ -56,12 +56,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Generator> CurrentGenerator;
 
+	// 상호작용 중인 창(VaultObject) 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1VaultObject> VaultTarget;
+
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
+	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
 
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 };

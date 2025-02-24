@@ -13,6 +13,7 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Interactables/D1Generator.h"
 #include "Animation/D1SurvivorBaseAnim.h"
+#include "Interactables/D1VaultObject.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -168,10 +169,10 @@ void AD1SurvivorController::Input_StartParkour()
 	if (!D1Survivor) return;
 
 	UE_LOG(LogTemp, Warning, TEXT("Space 입력 감지"));
-	//if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
-	//{
-	//	StartRepair();
-	//}
+	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor->GetVaultTarget()))
+	{
+		PerformVault();
+	}
 }
 
 void AD1SurvivorController::StartRepair()
@@ -250,6 +251,26 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 	D1Survivor->SetActorRotation(LookAtRotation);
 }
+
+void AD1SurvivorController::PerformVault()
+{
+	if (!D1Survivor || !D1Survivor->GetVaultTarget()) return;
+
+	//// 넘기기 속도 결정
+	//bool bIsSprinting = GetCharacterMovement()->IsFalling();
+	//bool bIsCrouching = bIsCrouched;
+	//EVaultType VaultType = EVaultType::Medium; // 기본 보통 넘기기
+	//if (bIsSprinting) VaultType = EVaultType::Fast;
+	//else if (bIsCrouching) VaultType = EVaultType::Slow;
+
+	//// 애니메이션 실행
+	//PlayVaultAnimation(VaultType);
+
+	//// 창 너머로 이동
+	//FVector VaultLocation = VaultTarget->GetActorLocation() + FVector(0, 0, 50.0f);
+	//SetActorLocation(VaultLocation);
+}
+
 
 ECreatureState AD1SurvivorController::GetCreatureState()
 {
