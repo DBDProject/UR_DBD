@@ -9,4 +9,5 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Attack1, "Input.Action.Attack1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Skill1, "Input.Action.Skill1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interact, "Input.Action.Interact");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Parkour, "Input.Action.Parkour");
 }

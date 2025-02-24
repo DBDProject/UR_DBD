@@ -32,6 +32,7 @@ private:
 	void Input_StopCrouch();
 	void Input_StartInteract();
 	void Input_StopInteract();
+	void Input_StartParkour();
 
 public:
 	// 발전기 수리 관련 함수

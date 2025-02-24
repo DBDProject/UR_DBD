@@ -68,6 +68,9 @@ void AD1SurvivorController::SetupInputComponent()
 		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract);
+
+		auto ParkourAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
+		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ThisClass::Input_StartParkour);
 	}
 }
 
@@ -158,6 +161,17 @@ void AD1SurvivorController::Input_StopInteract()
 	{
 		StopRepair();
 	}
+}
+
+void AD1SurvivorController::Input_StartParkour()
+{
+	if (!D1Survivor) return;
+
+	UE_LOG(LogTemp, Warning, TEXT("Space 입력 감지"));
+	//if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
+	//{
+	//	StartRepair();
+	//}
 }
 
 void AD1SurvivorController::StartRepair()
