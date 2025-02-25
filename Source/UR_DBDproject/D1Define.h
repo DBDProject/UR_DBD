@@ -17,7 +17,6 @@ enum class ECreatureState : uint8
 	Dracula,
 	Wolf,
 	Interactable,
-	Skill,
 	Dead,
 };
 
@@ -29,4 +28,12 @@ enum class EGeneratorInteractionPosition : uint8
 	Back UMETA(DisplayName = "Back"),
 	Left UMETA(DisplayName = "Left"),
 	Right UMETA(DisplayName = "Right")
+};
+
+UENUM(BlueprintType)
+enum class EVaultType : uint8
+{
+	Slow UMETA(DisplayName = "Slow"),
+	Medium UMETA(DisplayName = "Medium"),
+	Fast UMETA(DisplayName = "Fast")
 };

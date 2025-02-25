@@ -32,18 +32,24 @@ protected:
 	bool bIsRepairing = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsVaulting = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
-public:		// Getter, Setter
-	UFUNCTION(BlueprintCallable)
-	bool GetIsRepairing() const { return bIsRepairing; }
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EVaultType VaultType = EVaultType::Medium;
 
+public:
 	UFUNCTION(BlueprintCallable)
 	void SetIsRepairing(bool bNewState) { bIsRepairing = bNewState; }
 
 	UFUNCTION(BlueprintCallable)
-	EGeneratorInteractionPosition GetInteractionPosition() const { return InteractionPosition; }
+	void SetIsVaulting(bool bNewState) { bIsVaulting = bNewState; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
+
+	UFUNCTION(BlueprintCallable)
+	void SetVaultType(EVaultType NewVaultType) { VaultType = NewVaultType; };
 };

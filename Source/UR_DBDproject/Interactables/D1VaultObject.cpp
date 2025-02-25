@@ -10,9 +10,13 @@ AD1VaultObject::AD1VaultObject()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+	USceneComponent* RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+	RootComponent = RootScene;
+
 	VaultTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("VaultTrigger"));
-	RootComponent = VaultTrigger;
+	VaultTrigger->SetupAttachment(RootComponent);
 	VaultTrigger->SetCollisionProfileName(TEXT("Trigger"));
+	VaultTrigger->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
 	Tags.Add("Vaultable"); // 창 감지용 태그
 }

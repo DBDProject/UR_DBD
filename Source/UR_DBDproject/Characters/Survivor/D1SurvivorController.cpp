@@ -14,6 +14,7 @@
 #include "Interactables/D1Generator.h"
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Interactables/D1VaultObject.h"
+#include "Components/CapsuleComponent.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -167,8 +168,7 @@ void AD1SurvivorController::Input_StopInteract()
 void AD1SurvivorController::Input_StartParkour()
 {
 	if (!D1Survivor) return;
-
-	UE_LOG(LogTemp, Warning, TEXT("Space 입력 감지"));
+	
 	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor->GetVaultTarget()))
 	{
 		PerformVault();
@@ -256,19 +256,35 @@ void AD1SurvivorController::PerformVault()
 {
 	if (!D1Survivor || !D1Survivor->GetVaultTarget()) return;
 
-	//// 넘기기 속도 결정
-	//bool bIsSprinting = GetCharacterMovement()->IsFalling();
-	//bool bIsCrouching = bIsCrouched;
-	//EVaultType VaultType = EVaultType::Medium; // 기본 보통 넘기기
-	//if (bIsSprinting) VaultType = EVaultType::Fast;
-	//else if (bIsCrouching) VaultType = EVaultType::Slow;
 
-	//// 애니메이션 실행
-	//PlayVaultAnimation(VaultType);
+	// 넘기기 속도 결정
+	EVaultType VaultType = EVaultType::Medium; // 기본 보통 넘기기
+	if (GetCreatureState() == ECreatureState::Run)	VaultType = EVaultType::Fast;		
+	else if (GetCreatureState() == ECreatureState::Crouch) VaultType = EVaultType::Slow;
 
-	//// 창 너머로 이동
-	//FVector VaultLocation = VaultTarget->GetActorLocation() + FVector(0, 0, 50.0f);
-	//SetActorLocation(VaultLocation);
+	if (!VaultMontage) return;
+
+	FName SlotName;
+	switch (VaultType)
+	{
+	case EVaultType::Slow:
+		SlotName = "Vault_Slow";
+		break;
+	case EVaultType::Medium:
+		SlotName = "Vault_Mid";
+		break;
+	case EVaultType::Fast:
+		SlotName = "Vault_Fast";
+		break;
+	}
+
+	// 애니메이션 실행
+	if (CachedAnimInstance.IsValid())
+	{
+		//D1Survivor->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		// 특정 슬롯을 사용하여 몽타주 실행
+		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SlotName);
+	}
 }
 
 

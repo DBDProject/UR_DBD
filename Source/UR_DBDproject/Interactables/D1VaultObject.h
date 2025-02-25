@@ -24,6 +24,6 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
-	UPROPERTY(VisibleAnywhere, Category = "Collision")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UBoxComponent> VaultTrigger;
 };
