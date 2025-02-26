@@ -18,6 +18,7 @@ enum class ECreatureState : uint8
 	Wolf,
 	Interactable,
 	Dead,
+	Parkour,
 };
 
 UENUM(BlueprintType)

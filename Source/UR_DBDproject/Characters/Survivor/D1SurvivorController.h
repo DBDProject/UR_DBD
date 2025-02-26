@@ -46,7 +46,7 @@ public:
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
 	UFUNCTION()
-	void PerformVault();
+	void PerformVault(EVaultType VaultType);
 
 private:
 	UPROPERTY(EditDefaultsOnly)

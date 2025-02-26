@@ -130,6 +130,8 @@ void AD1SurvivorController::Input_StartCrouch()
 		return;
 	}
 
+	if (GetCreatureState() == ECreatureState::Parkour) return;
+
 	SetCreatureState(ECreatureState::Crouch);
 	D1Survivor->Crouch();
 }
@@ -148,6 +150,7 @@ void AD1SurvivorController::Input_StopCrouch()
 void AD1SurvivorController::Input_StartInteract()
 {
 	if (!D1Survivor) return;
+	if (GetCreatureState() == ECreatureState::Parkour) return;
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
 	{
@@ -168,10 +171,20 @@ void AD1SurvivorController::Input_StopInteract()
 void AD1SurvivorController::Input_StartParkour()
 {
 	if (!D1Survivor) return;
-	
+
+	if (GetCreatureState() == ECreatureState::Parkour) return;
+
 	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor->GetVaultTarget()))
 	{
-		PerformVault();
+		// 현재 속도 가져오기
+		float CurrentSpeed = D1Survivor->GetVelocity().Size();
+
+		// 속도 기준으로 파쿠르 속도 결정
+		EVaultType VaultType = EVaultType::Medium; // 기본값 Medium
+		if (CurrentSpeed > 300.0f) VaultType = EVaultType::Fast;  // 달리기 속도
+		else if (CurrentSpeed < 100.0f) VaultType = EVaultType::Slow; // 웅크리기 속도
+
+		PerformVault(VaultType);
 	}
 }
 
@@ -252,15 +265,9 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 	D1Survivor->SetActorRotation(LookAtRotation);
 }
 
-void AD1SurvivorController::PerformVault()
+void AD1SurvivorController::PerformVault(EVaultType VaultType)
 {
 	if (!D1Survivor || !D1Survivor->GetVaultTarget()) return;
-
-
-	// 넘기기 속도 결정
-	EVaultType VaultType = EVaultType::Medium; // 기본 보통 넘기기
-	if (GetCreatureState() == ECreatureState::Run)	VaultType = EVaultType::Fast;		
-	else if (GetCreatureState() == ECreatureState::Crouch) VaultType = EVaultType::Slow;
 
 	if (!VaultMontage) return;
 
@@ -276,13 +283,18 @@ void AD1SurvivorController::PerformVault()
 	case EVaultType::Fast:
 		SlotName = "Vault_Fast";
 		break;
+	default:
+		SlotName = "Vault_Mid";
+		break;
 	}
 
 	// 애니메이션 실행
-	if (CachedAnimInstance.IsValid())
+ 	if (CachedAnimInstance.IsValid())
 	{
-		//D1Survivor->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-		// 특정 슬롯을 사용하여 몽타주 실행
+		SetCreatureState(ECreatureState::Parkour);
+
+		D1Survivor->MoveToVaultStartPosition();
+		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
 		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SlotName);
 	}
 }

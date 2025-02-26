@@ -26,4 +26,12 @@ public:
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UBoxComponent> VaultTrigger;
+
+	// 장애물 매쉬
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<class UStaticMeshComponent> ObstacleMesh;
+
+	// 지푸라기 매쉬
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<class UStaticMeshComponent> HayMesh;
 };

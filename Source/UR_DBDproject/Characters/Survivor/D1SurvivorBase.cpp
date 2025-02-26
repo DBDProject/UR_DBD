@@ -22,7 +22,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetCapsuleComponent());
-	SpringArm->TargetArmLength = 150.f;
+	SpringArm->TargetArmLength = 200.f;
 	SpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
@@ -31,7 +31,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
@@ -108,6 +107,37 @@ void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 	float NewHeight = FMath::FInterpTo(CurrentHeight, TargetHeight, DeltaTime, CameraLerpSpeed);
 	SpringArm->SocketOffset = FVector(0.f, 0.f, NewHeight);
 }
+
+void AD1SurvivorBase::MoveToVaultStartPosition()
+{
+	if (!VaultTarget.IsValid())	return;
+
+	FVector VaultCenter = VaultTarget->GetActorLocation();
+	FVector ObstacleNormal = VaultTarget->GetActorForwardVector();
+	FVector SurvivorLocation = GetActorLocation();
+
+	float OffsetDistance = -50.f; // 장애물 중앙 기준 앞으로 이동할 거리
+
+	// 플레이어가 장애물 기준 앞쪽인지 뒤쪽인지 판단
+	FVector ToObstacle = (VaultCenter - SurvivorLocation).GetSafeNormal();
+	float Dot = FVector::DotProduct(ToObstacle, ObstacleNormal);
+
+	if (Dot > 0)
+	{
+		ObstacleNormal *= -1; // 방향 반전
+	}
+
+	// 장애물 방향으로 이동
+	FVector TargetLocation = VaultCenter - (ObstacleNormal * OffsetDistance);
+	TargetLocation.Z += 88.f;  // 플레이어 위치 보정
+	SetActorLocation(TargetLocation);
+
+	// 장애물 방향으로 회전
+	FRotator LookAtRotation = ObstacleNormal.Rotation();
+	LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
+	SetActorRotation(LookAtRotation);
+}
+
 
 void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {

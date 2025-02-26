@@ -32,9 +32,6 @@ protected:
 	bool bIsRepairing = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsVaulting = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -43,9 +40,6 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetIsRepairing(bool bNewState) { bIsRepairing = bNewState; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetIsVaulting(bool bNewState) { bIsVaulting = bNewState; }
 
 	UFUNCTION(BlueprintCallable)
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };

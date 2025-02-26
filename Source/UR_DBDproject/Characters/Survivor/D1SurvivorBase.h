@@ -30,8 +30,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-private:
 	void SmoothCameraTransition(float DeltaTime);
+	void MoveToVaultStartPosition();
 
 	// 콜리전 이벤트 함수
 	UFUNCTION()

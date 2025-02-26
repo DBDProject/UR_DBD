@@ -13,6 +13,17 @@ AD1VaultObject::AD1VaultObject()
 	USceneComponent* RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
 	RootComponent = RootScene;
 
+	// 장애물 메쉬
+	ObstacleMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("ObstacleMesh"));
+	ObstacleMesh->SetupAttachment(RootComponent);
+	ObstacleMesh->SetCollisionObjectType(ECC_GameTraceChannel2);
+	ObstacleMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	HayMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("HayMesh"));
+	HayMesh->SetupAttachment(RootComponent);
+	HayMesh->SetCollisionObjectType(ECC_GameTraceChannel2);
+	HayMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
 	VaultTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("VaultTrigger"));
 	VaultTrigger->SetupAttachment(RootComponent);
 	VaultTrigger->SetCollisionProfileName(TEXT("Trigger"));
