@@ -7,7 +7,7 @@
 #include "D1Define.h"
 #include "D1Generator.generated.h"
 
-UCLASS()
+UCLASS(Blueprintable)
 class UR_DBDPROJECT_API AD1Generator : public AActor
 {
 	GENERATED_BODY()
@@ -44,11 +44,11 @@ protected:
     void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
     // 스킬 체크 대성공
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void OnSkillCheckSuccess();
 
     // 스킬 체크 실패
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable)
     void OnSkillCheckFail();
 
     // 모든 플레이어의 수리를 중단
