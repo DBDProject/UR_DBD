@@ -76,6 +76,8 @@ void AD1Generator::Tick(float DeltaTime)
         RepairProgress += RepairSpeed * DeltaTime;
         UE_LOG(LogTemp, Warning, TEXT("Repair Progress: %f"), RepairProgress);
 
+      
+
         if (RepairProgress >= 100.0f)
         {
             CompleteRepair();
