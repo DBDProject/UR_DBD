@@ -12,5 +12,15 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Crouch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Attack1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Skill1);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_RightClick);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Interact);
+
+
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_Begin);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_End);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_Begin);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_End);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_DetactStart);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_DetactEnd);
 }

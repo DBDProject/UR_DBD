@@ -8,14 +8,13 @@ UENUM(BlueprintType)
 enum class ECreatureState : uint8
 {
 	None,
+	Idle,
 	Walk,
 	Run,
 	Crouch,
 	Attack1,
 	Skill1,
-	Bat,
-	Dracula,
-	Wolf,
+	InTransform,
 	Interactable,
 	Skill,
 	Dead,
