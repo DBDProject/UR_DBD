@@ -56,6 +56,8 @@ void AD1Generator::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+    if (bIsCompleteRepair) return;
+
     // 발전기 수리 진행
     if (bIsRepairing && RepairProgress < 100.f)
     {
@@ -75,13 +77,11 @@ void AD1Generator::Tick(float DeltaTime)
         // 진행도 증가
         RepairProgress += RepairSpeed * DeltaTime;
         UE_LOG(LogTemp, Warning, TEXT("Repair Progress: %f"), RepairProgress);
+    }
 
-      
-
-        if (RepairProgress >= 100.0f)
-        {
-            CompleteRepair();
-        }
+    if (RepairProgress >= 100.0f)
+    {
+        CompleteRepair();
     }
 }
 
@@ -183,26 +183,27 @@ void AD1Generator::OnSkillCheckFail()
     RepairProgress -= 10.0f;
     if (RepairProgress < 0.0f) RepairProgress = 0.0f;
 
-    bIsRepairBlocked = false;
+    bIsRepairBlocked = true;
     StopRepairAll();
 
-    UE_LOG(LogTemp, Error, TEXT("스킬 체크 실패! 3초간 수리 불가"));
+    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 3초간 수리 불가"));
 
     GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 3.0f, false);
 }
 
 void AD1Generator::StopRepairAll()
 {
-    for (auto& Player : RepairingPlayers)
-    {
-        if (Player)
-        {
-            Cast<AD1SurvivorController>(Player->GetController())->StopRepair(); // 각 플레이어의 수리 중단 함수 호출
-        }
-    }
+    if (RepairingPlayers.Num() == 0) return;
 
-    // 수리 중인 플레이어 목록 초기화
-    RepairingPlayers.Empty();
+    RepairingPlayers.RemoveAll([](TObjectPtr<AD1SurvivorBase> Player)
+        {
+            if (Player)
+            {
+                Cast<AD1SurvivorController>(Player->GetController())->StopRepair();
+            }
+            return true; // 모든 요소 삭제
+        });
+
     bIsRepairing = false;
 }
 
@@ -216,7 +217,9 @@ void AD1Generator::CompleteRepair()
 {
     RepairProgress = 100.0f;
     bIsRepairing = false;
+    bIsCompleteRepair = true;
 
+    StopRepairAll();
     UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 모든 플레이어에게 알림"));
 
     // 발전기 완료 이벤트 실행 (UI, 사운드, 이펙트 등)

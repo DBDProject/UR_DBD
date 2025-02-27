@@ -192,6 +192,9 @@ void AD1SurvivorController::StartRepair()
 {
 	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
 
+	if (D1Survivor->GetCurrentGenerator()->GetIsRepairBlocked() == true ||
+		D1Survivor->GetCurrentGenerator()->GetRepairProgress() >= 100.f) return;
+
 	if (CachedAnimInstance.IsValid())
 	{
 		// 플레이어 위치 판별

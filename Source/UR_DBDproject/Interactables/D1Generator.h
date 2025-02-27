@@ -84,12 +84,16 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairing = false;
 
+    // 발전기 수리완료인지
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
+    bool bIsCompleteRepair = false;
+
     // 스킬 체크 실패 시 3초간 수리 불가
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairBlocked = false;
 
     // 수리 진행도
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Generator")
     float RepairProgress = 0.f;
 
     // 수리 하고 있는 플레이어
@@ -98,4 +102,8 @@ protected:
 
     // 수리 차단 해제 타이머
     FTimerHandle RepairBlockTimer;
+
+public:
+    bool GetIsRepairBlocked() { return bIsRepairBlocked; }
+    float GetRepairProgress() { return RepairProgress; }
 };
