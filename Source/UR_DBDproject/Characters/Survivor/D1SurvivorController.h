@@ -30,9 +30,9 @@ private:
 	void Input_RunStop();
 	void Input_StartCrouch();
 	void Input_StopCrouch();
-	void Input_StartInteract();
-	void Input_StopInteract();
-	void Input_StartParkour();
+	void Input_StartInteract_LeftClick();
+	void Input_StopInteract_LeftClick();
+	void Input_StartInteract_Space();
 
 public:
 	// 발전기 수리 관련 함수
@@ -47,6 +47,9 @@ public:
 
 	UFUNCTION()
 	void PerformVault(EVaultType VaultType);
+
+	UFUNCTION()
+	void DropPallet();
 
 private:
 	UPROPERTY(EditDefaultsOnly)

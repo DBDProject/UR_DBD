@@ -24,6 +24,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class USceneComponent> RootScene;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UBoxComponent> VaultTrigger;
 
