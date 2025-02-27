@@ -14,7 +14,7 @@ AD1Generator::AD1Generator()
     PrimaryActorTick.bCanEverTick = true;
 
     // RootComponent 설정 (SceneComponent 사용)
-    USceneComponent* RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
+    RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
     RootComponent = RootScene;
 
     // 물리 충돌 박스 (Physics Collision)

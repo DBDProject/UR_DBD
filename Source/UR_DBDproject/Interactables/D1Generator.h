@@ -64,6 +64,9 @@ protected:
     void CompleteRepair();
 
 protected:
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+    TObjectPtr<class USceneComponent> RootScene;
+
     // 물리 충돌 박스
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
     TObjectPtr<class UBoxComponent> PhysicsCollisionBox;

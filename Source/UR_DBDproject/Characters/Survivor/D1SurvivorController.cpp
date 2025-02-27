@@ -15,6 +15,7 @@
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Interactables/D1VaultObject.h"
 #include "Components/CapsuleComponent.h"
+#include "Interactables/D1Pallet.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -67,12 +68,14 @@ void AD1SurvivorController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_StartCrouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopCrouch);
 
+		// 좌클릭
 		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_LeftClick);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_LeftClick);
 
-		auto ParkourAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
-		EnhancedInputComponent->BindAction(ParkourAction, ETriggerEvent::Started, this, &ThisClass::Input_StartParkour);
+		// 스페이스
+		auto InteractAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
+		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_Space);
 	}
 }
 
@@ -147,7 +150,7 @@ void AD1SurvivorController::Input_StopCrouch()
 	D1Survivor->UnCrouch();
 }
 
-void AD1SurvivorController::Input_StartInteract()
+void AD1SurvivorController::Input_StartInteract_LeftClick()
 {
 	if (!D1Survivor) return;
 	if (GetCreatureState() == ECreatureState::Parkour) return;
@@ -158,7 +161,7 @@ void AD1SurvivorController::Input_StartInteract()
 	}
 }
 
-void AD1SurvivorController::Input_StopInteract()
+void AD1SurvivorController::Input_StopInteract_LeftClick()
 {
 	if (!D1Survivor) return;
 
@@ -168,7 +171,7 @@ void AD1SurvivorController::Input_StopInteract()
 	}
 }
 
-void AD1SurvivorController::Input_StartParkour()
+void AD1SurvivorController::Input_StartInteract_Space()
 {
 	if (!D1Survivor) return;
 
@@ -185,7 +188,24 @@ void AD1SurvivorController::Input_StartParkour()
 		else if (CurrentSpeed < 100.0f) VaultType = EVaultType::Slow; // 웅크리기 속도
 
 		PerformVault(VaultType);
+
+		return;
 	}
+
+	if (AD1Pallet* Pallet = Cast<AD1Pallet>(D1Survivor->GetCurrentPallet()))
+	{
+		if (Pallet->GetCurrentState() == EPalletState::Up)
+		{
+			DropPallet();
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Pallet Parkour"));
+		}
+
+		return;
+	}
+	
 }
 
 void AD1SurvivorController::StartRepair()
@@ -274,20 +294,20 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 
 	if (!VaultMontage) return;
 
-	FName SlotName;
+	FName SectionName;
 	switch (VaultType)
 	{
 	case EVaultType::Slow:
-		SlotName = "Vault_Slow";
+		SectionName = "Vault_Slow";
 		break;
 	case EVaultType::Medium:
-		SlotName = "Vault_Mid";
+		SectionName = "Vault_Mid";
 		break;
 	case EVaultType::Fast:
-		SlotName = "Vault_Fast";
+		SectionName = "Vault_Fast";
 		break;
 	default:
-		SlotName = "Vault_Mid";
+		SectionName = "Vault_Mid";
 		break;
 	}
 
@@ -298,8 +318,29 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 
 		D1Survivor->MoveToVaultStartPosition();
 		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SlotName);
+		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SectionName);
 	}
+}
+
+void AD1SurvivorController::DropPallet()
+{
+	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
+	if (!D1Survivor || !Pallet) return;
+
+	if (Pallet->GetCurrentState() == EPalletState::Down) return;
+
+	// 플레이어 위치, 방향 이동
+	Pallet->MovePlayerToInteractionPoint(D1Survivor);
+
+	// 애니메이션 실행
+	if (CachedAnimInstance.IsValid())
+	{
+		Pallet->SetCurrentState(EPalletState::Down);
+		//D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName)
+
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
 }
 
 

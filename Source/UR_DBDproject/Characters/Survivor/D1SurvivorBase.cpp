@@ -12,6 +12,7 @@
 #include "Interactables/D1Generator.h"
 #include "Components/BoxComponent.h"
 #include "Interactables/D1VaultObject.h"
+#include "Interactables/D1Pallet.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -138,6 +139,36 @@ void AD1SurvivorBase::MoveToVaultStartPosition()
 	SetActorRotation(LookAtRotation);
 }
 
+void AD1SurvivorBase::MoveToPalletStartPosition()
+{
+	if (!CurrentPallet.IsValid())	return;
+
+	FVector PalletCenter = CurrentPallet->GetActorLocation();
+	FVector PalletNormal = CurrentPallet->GetActorForwardVector();
+	FVector SurvivorLocation = GetActorLocation();
+
+	float OffsetDistance = -50.f; // 장애물 중앙 기준 앞으로 이동할 거리
+
+	// 플레이어가 장애물 기준 앞쪽인지 뒤쪽인지 판단
+	FVector ToPallet = (PalletCenter - SurvivorLocation).GetSafeNormal();
+	float Dot = FVector::DotProduct(ToPallet, PalletNormal);
+
+	if (Dot < 0)
+	{
+		PalletNormal *= -1; // 방향 반전
+	}
+
+	// 장애물 방향으로 이동
+	FVector TargetLocation = PalletCenter - (PalletNormal * OffsetDistance);
+	TargetLocation.Z += 88.f;  // 플레이어 위치 보정
+	SetActorLocation(TargetLocation);
+
+	// 장애물 방향으로 회전
+	FRotator LookAtRotation = PalletNormal.Rotation();
+	//LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
+	SetActorRotation(LookAtRotation);
+}
+
 
 void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -145,6 +176,12 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	{
 		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
+	}
+
+	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+	{
+		DetectedObject = OtherActor; 
+		CurrentPallet = Pallet;
 	}
 
 	if (OtherActor->ActorHasTag("Vaultable"))
@@ -162,6 +199,11 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 		{
 			Generator->StopRepair(this);
 			CurrentGenerator = nullptr;
+		}
+
+		if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
+		{
+			CurrentPallet = nullptr;
 		}
 
 		if (OtherActor->ActorHasTag("Vaultable"))
