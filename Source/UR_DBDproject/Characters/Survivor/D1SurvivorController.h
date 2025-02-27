@@ -51,11 +51,11 @@ public:
 	UFUNCTION()
 	void DropPallet();
 
-private:
-	UPROPERTY(EditDefaultsOnly)
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
 
-	UPROPERTY(EditDefaultsOnly)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> PalletMontage; // 팔레트 몽타주
 
 protected:

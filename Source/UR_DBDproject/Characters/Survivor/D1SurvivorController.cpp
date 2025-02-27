@@ -335,7 +335,7 @@ void AD1SurvivorController::DropPallet()
 	// 애니메이션 실행
 	if (CachedAnimInstance.IsValid())
 	{
-		Pallet->SetCurrentState(EPalletState::Down);
+		//Pallet->SetCurrentState(EPalletState::Down);
 		//D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName)
 
 	}
