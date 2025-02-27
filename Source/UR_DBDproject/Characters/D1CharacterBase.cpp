@@ -28,5 +28,6 @@ void AD1CharacterBase::Tick(float DeltaTime)
 
 }
 
-
-
+void AD1CharacterBase::HandleGameplayEvent(FGameplayTag EventTag)
+{
+}

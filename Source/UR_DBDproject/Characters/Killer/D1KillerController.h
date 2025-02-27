@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/PlayerController.h"
 #include "D1Define.h"
+#include "GameplayTagContainer.h"
 
 #include "D1KillerController.generated.h"
 
@@ -21,6 +22,8 @@ class UR_DBDPROJECT_API AD1KillerController : public APlayerController
 public:
 	AD1KillerController(const FObjectInitializer& ObjectInitializer);
 
+	virtual void HandleGameplayEvent(FGameplayTag EventTag);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void SetupInputComponent() override;
@@ -31,6 +34,8 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UD1KillerSet> KillerSet;
+
+	/*
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
 	UAnimMontage* Dracula_In_Wolf_Montage;
@@ -66,18 +71,38 @@ protected:
 	UAnimMontage* Wolf_In_Bat_Montage;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Wolf_Out_Bat_Montage;
+	UAnimMontage* Wolf_Out_Bat_Montage;*/
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<class UD1KillerBaseAnim> FPVAnimInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<class UD1KillerBaseAnim> WolfAnimInstance;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<class UD1KillerBaseAnim> BatAnimInstance;
 
 public:
-	UFUNCTION(BlueprintCallable, Category = "KDH_Camera")
-	void SwitchCameraToState(ECreatureState NewState, float BlendTime = 1.0f);
+	/*UFUNCTION(BlueprintCallable, Category = "KDH_Camera")
+	void SwitchCameraToState(ECreatureState NewState, float BlendTime = 1.0f);*/
 
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
 	void Input_Attack1(const FInputActionValue& InputValue);
 	void Input_Skill1(const FInputActionValue& InputValue);
+	void Input_RightClick(const FInputActionValue& InputValue);
 
+	void LeftClick_Transform();
+	void RightClick_Transform();
+
+	void TransformToDracula();
+	void TransformToWolf();
+	void TransformToBat();
+
+	void EndTransform();
+	bool bTransform = false;
+	
+	void SetIgnoreInput(bool bEnable);
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
