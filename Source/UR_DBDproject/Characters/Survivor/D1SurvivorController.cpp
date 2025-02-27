@@ -188,6 +188,8 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		else if (CurrentSpeed < 100.0f) VaultType = EVaultType::Slow; // 웅크리기 속도
 
 		PerformVault(VaultType);
+
+		return;
 	}
 
 	if (AD1Pallet* Pallet = Cast<AD1Pallet>(D1Survivor->GetCurrentPallet()))
@@ -200,6 +202,8 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Pallet Parkour"));
 		}
+
+		return;
 	}
 	
 }
@@ -287,20 +291,20 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 
 	if (!VaultMontage) return;
 
-	FName SlotName;
+	FName SectionName;
 	switch (VaultType)
 	{
 	case EVaultType::Slow:
-		SlotName = "Vault_Slow";
+		SectionName = "Vault_Slow";
 		break;
 	case EVaultType::Medium:
-		SlotName = "Vault_Mid";
+		SectionName = "Vault_Mid";
 		break;
 	case EVaultType::Fast:
-		SlotName = "Vault_Fast";
+		SectionName = "Vault_Fast";
 		break;
 	default:
-		SlotName = "Vault_Mid";
+		SectionName = "Vault_Mid";
 		break;
 	}
 
@@ -311,20 +315,28 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 
 		D1Survivor->MoveToVaultStartPosition();
 		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SlotName);
+		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SectionName);
 	}
 }
 
 void AD1SurvivorController::DropPallet()
 {
-	if (!D1Survivor || !D1Survivor->GetCurrentPallet()) return;
+	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
+	if (!D1Survivor || !Pallet) return;
 
-	if (D1Survivor->GetCurrentPallet()->GetCurrentState() == EPalletState::Down) return;
-
-	D1Survivor->GetCurrentPallet()->SetCurrentState(EPalletState::Up);
+	if (Pallet->GetCurrentState() == EPalletState::Down) return;
 
 	// 플레이어 위치, 방향 이동
-	D1Survivor->MoveToPalletStartPosition();
+	Pallet->MovePlayerToInteractionPoint(D1Survivor);
+
+	// 애니메이션 실행
+	if (CachedAnimInstance.IsValid())
+	{
+		Pallet->SetCurrentState(EPalletState::Down);
+		//D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName)
+
+	}
+
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
 }
 

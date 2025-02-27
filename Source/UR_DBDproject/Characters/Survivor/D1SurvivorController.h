@@ -55,6 +55,9 @@ private:
 	UPROPERTY(EditDefaultsOnly)
 	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
 
+	UPROPERTY(EditDefaultsOnly)
+	TObjectPtr<class UAnimMontage> PalletMontage; // 팔레트 몽타주
+
 protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;

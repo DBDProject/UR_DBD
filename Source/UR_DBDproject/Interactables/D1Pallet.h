@@ -29,6 +29,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	FVector FindClosestInteractionPoint(class AD1CharacterBase* Player);
+	void MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -44,6 +46,18 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletState CurrentState;
+
+	// 팔레트가 왼쪽에 있을 때 상호작용 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	USceneComponent* InteractionPoint_Left;
+
+	// 팔레트가 오른쪽에 있을 때 상호작용 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	USceneComponent* InteractionPoint_Right;
+
+	// 중간 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	USceneComponent* InteractionPoint_Center;
 
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
