@@ -68,11 +68,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
+	// 스킬 체크 실패 시 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+	bool bIsFail = false;
+
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
 	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
-
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
+
+	void SetIsFail(bool state) { bIsFail = state; }
 };

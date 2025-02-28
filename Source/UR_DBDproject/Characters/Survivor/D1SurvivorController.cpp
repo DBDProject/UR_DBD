@@ -221,6 +221,8 @@ void AD1SurvivorController::StartRepair()
 
 	if (CachedAnimInstance.IsValid())
 	{
+		D1Survivor->SetIsFail(false);
+
 		// 플레이어 위치 판별
 		EGeneratorInteractionPosition Position = 
 			D1Survivor->GetCurrentGenerator()->FindInteractionPosition(D1Survivor);

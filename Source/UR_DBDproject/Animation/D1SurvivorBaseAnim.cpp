@@ -2,7 +2,7 @@
 
 
 #include "Animation/D1SurvivorBaseAnim.h"
-#include "Characters/D1CharacterBase.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 #include "D1SurvivorBaseAnim.h"
 
 UD1SurvivorBaseAnim::UD1SurvivorBaseAnim(const FObjectInitializer& ObjectInitializer)
@@ -13,15 +13,15 @@ UD1SurvivorBaseAnim::UD1SurvivorBaseAnim(const FObjectInitializer& ObjectInitial
 void UD1SurvivorBaseAnim::NativeInitializeAnimation()
 {
 	Super::NativeInitializeAnimation();
+
+	D1Survivor = Cast<AD1SurvivorBase>(TryGetPawnOwner());
 }
 
 void UD1SurvivorBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	Character = Cast<AD1CharacterBase>(TryGetPawnOwner());
-
-	if (Character == nullptr)
+	if (D1Survivor == nullptr)
 		return;
 
 	if (MovementComponent == nullptr)

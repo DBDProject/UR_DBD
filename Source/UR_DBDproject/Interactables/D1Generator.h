@@ -95,6 +95,10 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairBlocked = false;
 
+    // 스킬 체크 실패 시 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    bool bIsFail = false;
+
     // 수리 진행도
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Generator")
     float RepairProgress = 0.f;
