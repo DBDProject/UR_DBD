@@ -11,6 +11,7 @@ enum class EPalletState : uint8
 {
 	Up,   // 세워진 상태
 	Down, // 넘어져 있는 상태
+	Destroyed, // 부서진 상태
 };
 
 UENUM(BlueprintType)
@@ -39,6 +40,9 @@ public:
 	virtual void Tick(float DeltaTime) override;
 	EPalletLocation FindClosestInteractionPoint(class AD1CharacterBase* Player);
 	EPalletLocation MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
+
+	UFUNCTION(BlueprintCallable)
+	void OnDestroy();
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))

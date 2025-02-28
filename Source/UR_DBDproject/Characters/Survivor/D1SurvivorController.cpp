@@ -395,12 +395,6 @@ void AD1SurvivorController::VaultPallet()
 		return;
 	}
 
-	if (PalletLocation == EPalletLocation::None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
-		return;
-	}
-
 	FName SectionName;
 	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
 	{

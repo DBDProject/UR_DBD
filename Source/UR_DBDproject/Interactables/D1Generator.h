@@ -75,6 +75,10 @@ protected:
     UFUNCTION()
     void CompleteRepair();
 
+    // 틱 데미지
+    UFUNCTION()
+    void DamagePerSeconds();
+
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class USceneComponent> RootScene;
@@ -123,9 +127,10 @@ protected:
 
     // 손상 횟수
     int DamageCount = 0;
-
     // 틱 데미지 판별
     bool bTickDamage = false;
+    // 데미지 타이머 핸들
+    FTimerHandle DamageTimer;
 
 public:
     bool GetIsRepairBlocked() { return bIsRepairBlocked; }
