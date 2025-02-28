@@ -107,3 +107,9 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 
     return PalletLocation;
 }
+
+void AD1Pallet::OnDestroy()
+{
+    PalletMesh->SetHiddenInGame(true);
+    UE_LOG(LogTemp, Warning, TEXT("Pallet Destroyed"));
+}

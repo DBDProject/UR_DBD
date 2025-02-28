@@ -20,5 +20,6 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_End, "Event.Attack.End");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactStart, "Event.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactEnd, "Event.Attack.DetactEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_Generator_End, "Killer.Generator.End");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_GeneratorEnd, "Killer.GeneratorEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_PalletEnd, "Killer.PalletEnd");
 }

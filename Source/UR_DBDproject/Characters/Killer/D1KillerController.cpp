@@ -16,6 +16,7 @@
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
 #include "Interactables/D1Generator.h"
+#include "Interactables//D1Pallet.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -46,7 +47,6 @@ void AD1KillerController::BeginPlay()
 	}
 }
 
-
 void AD1KillerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
@@ -72,6 +72,7 @@ void AD1KillerController::SetupInputComponent()
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar);
 		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::StartDamageGenerator);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::StartDestroyPallet);
 
 	}
 }
@@ -157,9 +158,14 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		EndTransform();
 	}
 
-	if (EventTag.MatchesTag(D1GameplayTags::Killer_Generator_End))
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_GeneratorEnd))
 	{
 		EndDamageGenerator();
+	}
+
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_PalletEnd))
+	{
+		EndDestroyPallet();
 	}
 }
 
@@ -442,7 +448,8 @@ void AD1KillerController::StartDamageGenerator()
 	if (!D1Killer || !Generator)
 		return;
 
-	if (Generator->GetRepairProgress() >= 100.0f || Generator->GetCurrentState() == EGeneratorState::Breaking)
+	if (Generator->GetRepairProgress() == 0.0f || Generator->GetRepairProgress() >= 100.0f
+		|| Generator->GetCurrentState() == EGeneratorState::Breaking)
 		return;
 
 	EGeneratorInteractionPosition Pos =
@@ -467,7 +474,6 @@ void AD1KillerController::EndDamageGenerator()
 	Generator->OnDamage();
 
 	Generator->SetCurrentState(EGeneratorState::Idle);
-
 }
 
 void AD1KillerController::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
@@ -507,6 +513,42 @@ void AD1KillerController::MoveToGeneratorPosition(EGeneratorInteractionPosition 
 	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
 	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 	D1Killer->SetActorRotation(LookAtRotation);
+}
+
+void AD1KillerController::StartDestroyPallet()
+{
+	AD1Pallet* Pallet = D1Killer->GetCurrentPallet();
+	if(!D1Killer ||!Pallet)
+		return;
+
+	if (Pallet->GetCurrentState() == EPalletState::Up)
+		return;
+
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Killer);
+
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	Pallet->SetCurrentState(EPalletState::Destroyed);
+	TPVAnimInstance->Montage_Play(TPV_DestroyPallet, 1.0f);
+	FPVAnimInstance->Montage_Play(FPV_DestroyPallet, 1.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("Destroy Pallet"));
+}
+
+void AD1KillerController::EndDestroyPallet()
+{
+	AD1Pallet* Pallet = D1Killer->GetCurrentPallet();
+	if (!D1Killer || !Pallet)
+		return;
+
+	if (Pallet->GetCurrentState() != EPalletState::Destroyed)
+		return;
+
+	Pallet->OnDestroy();
 }
 
 void AD1KillerController::SetIgnoreInput(bool bEnable)

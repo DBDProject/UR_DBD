@@ -65,6 +65,9 @@ void AD1Generator::Tick(float DeltaTime)
         float RepairSpeed = 1.0f;
         int NumPlayers = RepairingPlayers.Num();
 
+        // 수리시 틱 데미지 중지
+        GetWorld()->GetTimerManager().ClearTimer(DamageTimer);
+
         switch (NumPlayers)
         {
         case 1: RepairSpeed = 1.0f; break;
@@ -159,10 +162,33 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
 
 void AD1Generator::OnDamage()
 {
+	if (DamageCount > 8) {
+		UE_LOG(LogTemp, Warning, TEXT("발전기 최대 손상 횟수 초과"));
+		return;
+	}
     float damage = RepairProgress * 0.05;
 
     RepairProgress -= damage;
+	if (RepairProgress < 0.0f) RepairProgress = 0.0f;
+
     UE_LOG(LogTemp, Warning, TEXT("발전기 손상 %.2f"), damage);
+    UE_LOG(LogTemp, Warning, TEXT("발전기 진행도 %.2f"), RepairProgress);
+
+    DamageCount++;
+
+    GetWorld()->GetTimerManager().SetTimer(DamageTimer, this, &AD1Generator::DamagePerSeconds, 1.0f, true);
+}
+
+void AD1Generator::DamagePerSeconds()
+{
+    float TickDamage = RepairProgress * 0.0025;
+	RepairProgress -= TickDamage;
+    if (RepairProgress < 0.0f) {
+        RepairProgress = 0.0f;
+        GetWorld()->GetTimerManager().ClearTimer(DamageTimer);
+        return;
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("발전기 진행도 %.2f"), RepairProgress);
 }
 

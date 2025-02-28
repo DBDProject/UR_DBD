@@ -106,7 +106,6 @@ private:
 	void TransformToWolf();
 	UFUNCTION()
 	void TransformToBat();
-
 	UFUNCTION()
 	void EndTransform();
 	bool bTransform = false;
@@ -119,6 +118,11 @@ private:
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
 	UFUNCTION()
+	void StartDestroyPallet();
+	UFUNCTION()
+	void EndDestroyPallet();
+
+	UFUNCTION()
 	void SetIgnoreInput(bool bEnable);
 public:
 	ECreatureState GetCreatureState();
@@ -126,8 +130,13 @@ public:
 
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_DamageGenerator; // 발전기 데미지 몽타주
+	TObjectPtr<class UAnimMontage> TPV_DamageGenerator; // 발전기 3인칭 데미지 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 데미지 몽타주
+	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 1인칭 데미지 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_DestroyPallet; // 팔레트 3인칭 데미지 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_DestroyPallet; // 팔레트 1인칭 데미지 몽타주
 
 };

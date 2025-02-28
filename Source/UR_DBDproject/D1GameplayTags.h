@@ -25,5 +25,6 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_End);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_DetactStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Attack_DetactEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Generator_End);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_GeneratorEnd);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PalletEnd);
 }
