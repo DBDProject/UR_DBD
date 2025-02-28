@@ -200,12 +200,16 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		}
 		else
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Pallet Parkour"));
-		}
+			if (!bCanVaultAfterDrop)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("VaultPallet 사용 불가 (쿨다운)"));
+				return;
+			}
 
+			VaultPallet();
+		}
 		return;
 	}
-	
 }
 
 void AD1SurvivorController::StartRepair()
@@ -329,20 +333,97 @@ void AD1SurvivorController::DropPallet()
 
 	if (Pallet->GetCurrentState() == EPalletState::Down) return;
 
+	// 현재 속도 가져오기
+	float CurrentSpeed = D1Survivor->GetVelocity().Size();
+
 	// 플레이어 위치, 방향 이동
-	Pallet->MovePlayerToInteractionPoint(D1Survivor);
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor);
+
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	FName SectionName;
+	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
+	{
+		
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
+		
+	}
+	else
+	{
+		// TEMP
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
+
+		//SectionName = (PalletLocation == EPalletLocation::LT) ? "WalkPullDownLT" : "WalkPullDownRT";
+	}
+
 
 	// 애니메이션 실행
 	if (CachedAnimInstance.IsValid())
 	{
-		//Pallet->SetCurrentState(EPalletState::Down);
-		//D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName)
+		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
 
+		Pallet->SetCurrentState(EPalletState::Down); 
+		
+		bCanVaultAfterDrop = false;
+		GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
 }
 
+void AD1SurvivorController::VaultPallet()
+{
+	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
+	if (!D1Survivor || !Pallet) return;
+
+	if (Pallet->GetCurrentState() == EPalletState::Up) return;
+
+
+	// 현재 속도 가져오기
+	float CurrentSpeed = D1Survivor->GetVelocity().Size();
+
+	// 플레이어 위치, 방향 이동
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor);
+
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	FName SectionName;
+	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
+	{
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLT" : "VaultPalletRT";
+	}
+	else
+	{
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLTFast" : "VaultPalletRTFast";
+	}
+
+	// 애니메이션 실행
+	if (CachedAnimInstance.IsValid())
+	{
+		SetCreatureState(ECreatureState::Parkour);
+
+		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
+		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
+	}
+}
+void AD1SurvivorController::EnableVaultAfterDrop()
+{
+	bCanVaultAfterDrop = true;
+}
 
 ECreatureState AD1SurvivorController::GetCreatureState()
 {
