@@ -85,7 +85,7 @@ void AD1Generator::Tick(float DeltaTime)
     }
 }
 
-EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorBase* Survivor)
+EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1CharacterBase* Survivor)
 {
     if (!Survivor) return EGeneratorInteractionPosition::None;
 

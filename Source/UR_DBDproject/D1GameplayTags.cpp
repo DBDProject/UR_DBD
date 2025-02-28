@@ -8,6 +8,7 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Crouch, "Input.Action.Crouch");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Attack1, "Input.Action.Attack1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_RightClick, "Input.Action.RightClick");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_SpaceBar, "Input.Action.SpaceBar");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Skill1, "Input.Action.Skill1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interact, "Input.Action.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Parkour, "Input.Action.Parkour");
@@ -18,4 +19,5 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_End, "Event.Attack.End");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactStart, "Event.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactEnd, "Event.Attack.DetactEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Generator_End, "Killer.Generator.End");
 }

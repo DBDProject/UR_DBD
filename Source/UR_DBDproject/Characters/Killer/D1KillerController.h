@@ -92,18 +92,39 @@ private:
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
 
+	UFUNCTION()
 	void LeftClick_Transform();
+	UFUNCTION()
 	void RightClick_Transform();
 
+	UFUNCTION()
 	void TransformToDracula();
+	UFUNCTION()
 	void TransformToWolf();
+	UFUNCTION()
 	void TransformToBat();
 
+	UFUNCTION()
 	void EndTransform();
 	bool bTransform = false;
-	
+
+	UFUNCTION()
+	void StartDamageGenerator();
+	UFUNCTION()
+	void EndDamageGenerator();
+	UFUNCTION()
+	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
+
+	UFUNCTION()
 	void SetIgnoreInput(bool bEnable);
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
+
+protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_DamageGenerator; // 발전기 데미지 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 데미지 몽타주
+
 };

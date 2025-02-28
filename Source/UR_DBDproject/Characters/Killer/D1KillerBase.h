@@ -29,24 +29,10 @@ public:
 
 	virtual void HandleGameplayEvent(FGameplayTag EventTag) override;
 
-
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
 protected:
-	// 오버랩 감지용 박스 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class UBoxComponent> InteractionBox;
-
-	// 생존자가 감지한 오브젝트 저장
-	UPROPERTY(VisibleAnywhere, Category = "Interaction")
-	TWeakObjectPtr<class AActor> DetectedObject;
-	
-
-	UPROPERTY(VisibleAnywhere, Category = "Interaction")
-	TWeakObjectPtr<class AD1SurvivorBase> DetectedSurvivor;
-
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 
@@ -70,6 +56,30 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
+
+protected:
+	// 오버랩 감지용 박스 컴포넌트
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UBoxComponent> InteractionBox;
+
+	// 생존자가 감지한 오브젝트 저장
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TWeakObjectPtr<class AActor> DetectedObject;
+
+	// 상호작용 중인 발전기 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1Generator> CurrentGenerator;
+
+	// 상호작용 중인 창(VaultObject) 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1VaultObject> VaultTarget;
+
+	// 상호작용 중인 팔레트 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1Pallet> CurrentPallet;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TWeakObjectPtr<class AD1SurvivorBase> DetectedSurvivor;
 
 private:
 	UFUNCTION()
@@ -97,8 +107,6 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 	UBoxComponent* AttackCollision;
 
-	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
-
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetWolfMesh() const { return WolfMesh; }
@@ -107,6 +115,12 @@ public:
 	TObjectPtr<UCameraComponent> GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 	TObjectPtr<UCameraComponent> GetWolfCameraComponent() const { return WolfCameraComponent; }
 	TObjectPtr<UCameraComponent> GetBatCameraComponent() const { return BatCameraComponent; }
+
+
+	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
+	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
+	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
+	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
 
 public:
 	ETransformationState nowState;

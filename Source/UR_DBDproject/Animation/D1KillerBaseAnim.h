@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Animation/D1CharacterBaseAnim.h"
+#include "D1Define.h"
 #include "D1KillerBaseAnim.generated.h"
 
 /**
@@ -38,6 +39,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bLRClick = false; // 마우스 좌(false) / 우(true)클릭
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsBreakingGenerator = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EVaultType VaultType = EVaultType::Medium;
 
 public:
 	UFUNCTION(BlueprintCallable)
@@ -69,5 +78,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool GetLRClick() { return bLRClick; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsBreakingGenerator(bool bBreaking) { bIsBreakingGenerator = bBreaking; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
 
 };
