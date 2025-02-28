@@ -3,15 +3,18 @@
 
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "Animation/D1KillerBaseAnim.h"
+#include "AbilitySystem/D1AbilitySystemComponent.h"
+#include "AbilitySystem/Attributes/D1KillerSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "AbilitySystem/D1AbilitySystemComponent.h"
-#include "AbilitySystem/Attributes/D1KillerSet.h"
 #include "Components/BoxComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
-#include "Animation/D1KillerBaseAnim.h"
+#include "Interactables/D1Generator.h"
+#include "Interactables/D1VaultObject.h"
+#include "Interactables/D1Pallet.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -96,7 +99,7 @@ AD1KillerBase::AD1KillerBase()
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(SpringArm);
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-300.0f, 0.f, 10.0f)); // Position the camera
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.0f, 0.f, 10.0f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	WolfCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("WolfCamera"));
@@ -115,7 +118,6 @@ AD1KillerBase::AD1KillerBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 	Camera->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 90.f), FRotator(-30.0f, 0.0f, 0.0f)); // Position the camera
-	//Camera->Deactivate();
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
@@ -199,10 +201,40 @@ void AD1KillerBase::SwitchCamera(ETransformationState NewState)
 
 void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
+	{
+		DetectedObject = OtherActor;
+		CurrentGenerator = Generator;
+	}
+
+	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+	{
+		DetectedObject = OtherActor;
+		CurrentPallet = Pallet;
+	}
 }
 
 void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	if (DetectedObject == OtherActor)
+	{
+		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
+		{
+			CurrentGenerator = nullptr;
+		}
+
+		if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
+		{
+			CurrentPallet = nullptr;
+		}
+
+		if (OtherActor->ActorHasTag("Vaultable"))
+		{
+			VaultTarget = nullptr;
+		}
+
+		DetectedObject = nullptr;
+	}
 }
 
 void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

@@ -7,6 +7,14 @@
 #include "D1Define.h"
 #include "D1Generator.generated.h"
 
+UENUM(BlueprintType)
+enum class EGeneratorState : uint8
+{
+    Fix,
+    Breaking,
+    Idle,
+};
+
 UCLASS(Blueprintable)
 class UR_DBDPROJECT_API AD1Generator : public AActor
 {
@@ -26,7 +34,7 @@ public:
 
     // 플레이어의 위치에 따라 상호작용 위치 판별
     UFUNCTION(BlueprintCallable, Category = "Generator")
-    EGeneratorInteractionPosition FindInteractionPosition(class AD1SurvivorBase* Survivor);
+    EGeneratorInteractionPosition FindInteractionPosition(class AD1CharacterBase* Survivor);
 
     // 수리 시작
     UFUNCTION(BlueprintCallable, Category = "Generator")
@@ -35,6 +43,10 @@ public:
     // 수리 종료
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void StopRepair(class AD1SurvivorBase* Player);
+
+    // 데미지
+    UFUNCTION(BlueprintCallable, Category = "Generator")
+    void OnDamage();
 
 protected:
     // 오버랩 이벤트 처리 함수
@@ -107,10 +119,22 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     TArray<TObjectPtr<class AD1SurvivorBase>> RepairingPlayers;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    EGeneratorState CurrentState;
+
     // 수리 차단 해제 타이머
     FTimerHandle RepairBlockTimer;
+
+    // 손상 횟수
+    int DamageCount = 0;
+
+    // 틱 데미지 판별
+    bool bTickDamage = false;
 
 public:
     bool GetIsRepairBlocked() { return bIsRepairBlocked; }
     float GetRepairProgress() { return RepairProgress; }
+
+    EGeneratorState GetCurrentState() { return CurrentState; }
+    void SetCurrentState(EGeneratorState State) { CurrentState = State; }
 };

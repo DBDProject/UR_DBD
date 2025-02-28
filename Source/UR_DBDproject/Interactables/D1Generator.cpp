@@ -85,7 +85,7 @@ void AD1Generator::Tick(float DeltaTime)
     }
 }
 
-EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1SurvivorBase* Survivor)
+EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1CharacterBase* Survivor)
 {
     if (!Survivor) return EGeneratorInteractionPosition::None;
 
@@ -155,6 +155,15 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
 
         UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
     }
+}
+
+void AD1Generator::OnDamage()
+{
+    float damage = RepairProgress * 0.05;
+
+    RepairProgress -= damage;
+    UE_LOG(LogTemp, Warning, TEXT("발전기 손상 %.2f"), damage);
+    UE_LOG(LogTemp, Warning, TEXT("발전기 진행도 %.2f"), RepairProgress);
 }
 
 void AD1Generator::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)

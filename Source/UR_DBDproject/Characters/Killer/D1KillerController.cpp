@@ -15,7 +15,7 @@
 #include "Camera/CameraComponent.h"
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
-#include "DrawDebugHelpers.h" 
+#include "Interactables/D1Generator.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -37,10 +37,10 @@ void AD1KillerController::BeginPlay()
 	D1Killer = Cast<AD1KillerBase>(GetCharacter());
 	if (D1Killer)
 	{
-		TPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetCharacterMesh()->GetAnimInstance());
-		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh()->GetAnimInstance());
-		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh()->GetAnimInstance());
-		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh()->GetAnimInstance());
+		TPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetCharacterMesh().Get()->GetAnimInstance());
+		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh().Get()->GetAnimInstance());
+		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
+		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
 
 		D1Killer->nowState = ETransformationState::Dracula;
 	}
@@ -69,6 +69,9 @@ void AD1KillerController::SetupInputComponent()
 
 		auto Skill1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Skill1);
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
+
+		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::StartDamageGenerator);
 
 	}
 }
@@ -99,7 +102,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
-	
+
 	if (EventTag == (D1GameplayTags::Event_Attack_End))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Event_Attack_End"));
@@ -120,10 +123,10 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->GetFPVMesh()->SetHiddenInGame(false);
 			D1Killer->GetWolfMesh()->SetHiddenInGame(true);
 			D1Killer->GetBatMesh()->SetHiddenInGame(true);
-			
+
 			D1Killer->SwitchCamera(ETransformationState::Dracula);
 			TPVAnimInstance->SetIsInTransforming(true);
-			
+
 			break;
 
 		case ETransformationState::Wolf:
@@ -133,7 +136,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 
 			D1Killer->SwitchCamera(ETransformationState::Wolf);
 			WolfAnimInstance->SetIsInTransforming(true);
-			
+
 			break;
 
 		case ETransformationState::Bat:
@@ -143,7 +146,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 
 			D1Killer->SwitchCamera(ETransformationState::Bat);
 			BatAnimInstance->SetIsInTransforming(true);
-			
+
 			break;
 		}
 	}
@@ -152,6 +155,11 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Event_Transform_End"));
 		EndTransform();
+	}
+
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_Generator_End))
+	{
+		EndDamageGenerator();
 	}
 }
 
@@ -194,14 +202,14 @@ void AD1KillerController::Input_Attack1(const FInputActionValue& InputValue)
 {
 	if (!D1Killer)
 		return;
-	
+
 	if (GetCreatureState() == ECreatureState::InTransform)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Input_LeftClick"));
 		LeftClick_Transform();
 	}
 
-	if(D1Killer->nowState == ETransformationState::Dracula && GetCreatureState() != ECreatureState::InTransform)
+	if (D1Killer->nowState == ETransformationState::Dracula && GetCreatureState() != ECreatureState::InTransform)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		TPVAnimInstance->SetIsAttacking(true);
@@ -238,39 +246,6 @@ void AD1KillerController::Input_Skill1(const FInputActionValue& InputValue)
 	{
 		SetCreatureState(ECreatureState::Idle);
 	}
-	
-
-	/*if (CurrentState == ECreatureState::Dracula)
-	{
-		if (!bTransform)
-		{
-			D1Killer->SwitchCamera(ECreatureState::Wolf);
-			D1Killer->GetFPVMesh()->SetHiddenInGame(true);
-			D1Killer->GetCharacterMesh()->SetOwnerNoSee(false);
-			TPVAnimInstance->SetbIsSkill1(true);
-		}
-
-		if (bTransform)
-		{
-			TPVAnimInstance->SetbIsSkill1(false);
-			D1Killer->GetCharacterMesh()->SetHiddenInGame(true);
-
-			D1Killer->GetWolfMesh()->SetHiddenInGame(false);
-			WolfAnimInstance->SetbIsSkill1(true);
-		}
-
-		SetCreatureState(ECreatureState::Wolf);
-	}
-
-	if (CurrentState == ECreatureState::Wolf)
-	{
-
-	}
-
-	if (CurrentState == ECreatureState::Bat)
-	{
-
-	}*/
 }
 
 ECreatureState AD1KillerController::GetCreatureState()
@@ -461,6 +436,78 @@ void AD1KillerController::EndTransform()
 	SetCreatureState(ECreatureState::Idle);
 }
 
+void AD1KillerController::StartDamageGenerator()
+{
+	AD1Generator* Generator = D1Killer->GetCurrentGenerator();
+	if (!D1Killer || !Generator)
+		return;
+
+	if (Generator->GetRepairProgress() >= 100.0f || Generator->GetCurrentState() == EGeneratorState::Breaking)
+		return;
+
+	EGeneratorInteractionPosition Pos =
+		Generator->FindInteractionPosition(D1Killer);
+
+	MoveToGeneratorPosition(Pos);
+
+	Generator->SetCurrentState(EGeneratorState::Breaking);
+
+	FPVAnimInstance->Montage_Play(FPV_DamageGenerator, 1.0f);
+	TPVAnimInstance->Montage_Play(TPV_DamageGenerator, 1.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("Damage Generator"));
+}
+
+void AD1KillerController::EndDamageGenerator()
+{
+	AD1Generator* Generator = D1Killer->GetCurrentGenerator();
+	if (!D1Killer || !Generator)
+		return;
+
+	Generator->OnDamage();
+
+	Generator->SetCurrentState(EGeneratorState::Idle);
+
+}
+
+void AD1KillerController::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
+{
+	if (!D1Killer || !D1Killer->GetCurrentGenerator()) return;
+
+	AD1Generator* Generator = D1Killer->GetCurrentGenerator();
+	FVector GeneratorLocation = Generator->GetActorLocation();
+	FVector ForwardVector = Generator->GetActorForwardVector();
+	FVector RightVector = Generator->GetActorRightVector();
+	FVector TargetLocation;
+
+	// 플레이어를 발전기 위치로 이동
+	switch (Position)
+	{
+	case EGeneratorInteractionPosition::Front:
+		TargetLocation = GeneratorLocation + ForwardVector * 94.f;
+		break;
+	case EGeneratorInteractionPosition::Back:
+		TargetLocation = GeneratorLocation - ForwardVector * 110.f;
+		break;
+	case EGeneratorInteractionPosition::Left:
+		TargetLocation = GeneratorLocation - RightVector * 80.f;
+		break;
+	case EGeneratorInteractionPosition::Right:
+		TargetLocation = GeneratorLocation + RightVector * 85.f;
+		break;
+	default:
+		return;
+	}
+	TargetLocation.Z += 88.f;  // Z 값 증가
+
+	D1Killer->SetActorLocation(TargetLocation);
+
+	// 플레이어 방향을 발전기로 조정 (자동 회전)
+	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	D1Killer->SetActorRotation(LookAtRotation);
+}
 
 void AD1KillerController::SetIgnoreInput(bool bEnable)
 {
