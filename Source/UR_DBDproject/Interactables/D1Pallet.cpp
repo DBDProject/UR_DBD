@@ -52,10 +52,10 @@ void AD1Pallet::Tick(float DeltaTime)
 
 }
 
-FVector AD1Pallet::FindClosestInteractionPoint(AD1CharacterBase* Player)
+EPalletLocation AD1Pallet::FindClosestInteractionPoint(AD1CharacterBase* Player)
 {
     if (!Player || !InteractionPoint_Left || !InteractionPoint_Right)
-        return FVector::ZeroVector;
+        return EPalletLocation::None;
 
     FVector PlayerLocation = Player->GetActorLocation();
     FVector LeftPoint = InteractionPoint_Left->GetComponentLocation();
@@ -64,28 +64,35 @@ FVector AD1Pallet::FindClosestInteractionPoint(AD1CharacterBase* Player)
     float DistToLeft = FVector::Dist(PlayerLocation, LeftPoint);
     float DistToRight = FVector::Dist(PlayerLocation, RightPoint);
 
-    FVector TargetLocation;
     if (DistToLeft < DistToRight)
     {
-        TargetLocation = LeftPoint;
+        return EPalletLocation::LT;
     }
     else
     {
-        TargetLocation = RightPoint;
+        return EPalletLocation::RT;
     }
-
-    // 플레이어 Z축 보정
-    TargetLocation.Z += 88.f;
-
-    return TargetLocation;
 }
 
-void AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player)
+EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player)
 {
-    if (!Player) return;
+    if (!Player) return EPalletLocation::None;
 
-    FVector TargetLocation = FindClosestInteractionPoint(Player);
-    if (TargetLocation.IsZero()) return;
+    EPalletLocation PalletLocation = FindClosestInteractionPoint(Player);
+    if (EPalletLocation::None == PalletLocation) return EPalletLocation::None;
+
+    FVector TargetLocation;
+    if (PalletLocation == EPalletLocation::LT)
+    {
+        TargetLocation = InteractionPoint_Left->GetComponentLocation();
+    }
+    else
+    {
+        TargetLocation = InteractionPoint_Right->GetComponentLocation();
+    }
+
+    // 플레이어 Z값 보정
+    TargetLocation.Z += 88.f;
 
     Player->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
@@ -97,4 +104,6 @@ void AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player)
 
     // 플레이어 회전
     Player->SetActorRotation(LookAtRotation);
+
+    return PalletLocation;
 }

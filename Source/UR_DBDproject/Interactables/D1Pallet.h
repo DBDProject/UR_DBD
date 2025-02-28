@@ -13,6 +13,14 @@ enum class EPalletState : uint8
 	Down, // 넘어져 있는 상태
 };
 
+UENUM(BlueprintType)
+enum class EPalletLocation : uint8
+{
+	None,
+	LT,   // 플레이어 기준 왼쪽에 팔레트
+	RT, // 플레이어 기준 오른쪽에 팔레트
+};
+
 UCLASS()
 class UR_DBDPROJECT_API AD1Pallet : public AActor
 {
@@ -29,8 +37,8 @@ protected:
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
-	FVector FindClosestInteractionPoint(class AD1CharacterBase* Player);
-	void MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
+	EPalletLocation FindClosestInteractionPoint(class AD1CharacterBase* Player);
+	EPalletLocation MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))

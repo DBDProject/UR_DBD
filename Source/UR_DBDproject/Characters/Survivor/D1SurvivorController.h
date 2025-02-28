@@ -51,6 +51,8 @@ public:
 	UFUNCTION()
 	void DropPallet();
 
+	UFUNCTION()
+	void VaultPallet();
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
@@ -64,6 +66,13 @@ protected:
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1SurvivorBaseAnim> CachedAnimInstance;
+
+private:
+	bool bCanVaultAfterDrop = true; // DropPallet 후 VaultPallet을 막기 위한 변수
+	FTimerHandle VaultCooldownTimer; // 타이머 핸들러 추가
+
+	void EnableVaultAfterDrop(); // VaultPallet 활성화를 위한 함수
+
 
 public:
 	ECreatureState GetCreatureState();
