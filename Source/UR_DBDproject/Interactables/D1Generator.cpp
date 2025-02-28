@@ -156,6 +156,15 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
     }
 }
 
+void AD1Generator::OnDamage()
+{
+    float damage = RepairProgress * 0.05;
+
+    RepairProgress -= damage;
+    UE_LOG(LogTemp, Warning, TEXT("발전기 손상 %.2f"), damage);
+    UE_LOG(LogTemp, Warning, TEXT("발전기 진행도 %.2f"), RepairProgress);
+}
+
 void AD1Generator::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
     if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))

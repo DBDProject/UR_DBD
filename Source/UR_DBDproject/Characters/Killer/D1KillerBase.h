@@ -59,7 +59,7 @@ protected:
 
 protected:
 	// 오버랩 감지용 박스 컴포넌트
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;
 
 	// 생존자가 감지한 오브젝트 저장

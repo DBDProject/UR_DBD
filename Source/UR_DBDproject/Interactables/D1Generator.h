@@ -44,6 +44,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void StopRepair(class AD1SurvivorBase* Player);
 
+    // 데미지
+    UFUNCTION(BlueprintCallable, Category = "Generator")
+    void OnDamage();
+
 protected:
     // 오버랩 이벤트 처리 함수
     UFUNCTION()
@@ -116,6 +120,12 @@ protected:
 
     // 수리 차단 해제 타이머
     FTimerHandle RepairBlockTimer;
+
+    // 손상 횟수
+    int DamageCount = 0;
+
+    // 틱 데미지 판별
+    bool bTickDamage = false;
 
 public:
     bool GetIsRepairBlocked() { return bIsRepairBlocked; }

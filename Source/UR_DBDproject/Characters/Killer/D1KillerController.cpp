@@ -156,6 +156,11 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		UE_LOG(LogTemp, Warning, TEXT("Event_Transform_End"));
 		EndTransform();
 	}
+
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_Generator_End))
+	{
+		EndDamageGenerator();
+	}
 }
 
 void AD1KillerController::Input_Move(const FInputActionValue& InputValue)
@@ -241,39 +246,6 @@ void AD1KillerController::Input_Skill1(const FInputActionValue& InputValue)
 	{
 		SetCreatureState(ECreatureState::Idle);
 	}
-
-
-	/*if (CurrentState == ECreatureState::Dracula)
-	{
-		if (!bTransform)
-		{
-			D1Killer->SwitchCamera(ECreatureState::Wolf);
-			D1Killer->GetFPVMesh()->SetHiddenInGame(true);
-			D1Killer->GetCharacterMesh()->SetOwnerNoSee(false);
-			TPVAnimInstance->SetbIsSkill1(true);
-		}
-
-		if (bTransform)
-		{
-			TPVAnimInstance->SetbIsSkill1(false);
-			D1Killer->GetCharacterMesh()->SetHiddenInGame(true);
-
-			D1Killer->GetWolfMesh()->SetHiddenInGame(false);
-			WolfAnimInstance->SetbIsSkill1(true);
-		}
-
-		SetCreatureState(ECreatureState::Wolf);
-	}
-
-	if (CurrentState == ECreatureState::Wolf)
-	{
-
-	}
-
-	if (CurrentState == ECreatureState::Bat)
-	{
-
-	}*/
 }
 
 ECreatureState AD1KillerController::GetCreatureState()
@@ -479,20 +451,22 @@ void AD1KillerController::StartDamageGenerator()
 	MoveToGeneratorPosition(Pos);
 
 	Generator->SetCurrentState(EGeneratorState::Breaking);
-	TPVAnimInstance.Get()->Montage_Play(TPV_DamageGenerator);
-	FPVAnimInstance.Get()->Montage_Play(FPV_DamageGenerator);
+
+	FPVAnimInstance->Montage_Play(FPV_DamageGenerator, 1.0f);
+	TPVAnimInstance->Montage_Play(TPV_DamageGenerator, 1.0f);
 
 	UE_LOG(LogTemp, Warning, TEXT("Damage Generator"));
 }
 
 void AD1KillerController::EndDamageGenerator()
 {
-	if (!D1Killer || !D1Killer->GetCurrentGenerator())
+	AD1Generator* Generator = D1Killer->GetCurrentGenerator();
+	if (!D1Killer || !Generator)
 		return;
 
-	TPVAnimInstance.Get()->SetIsBreakingGenerator(false);
-	FPVAnimInstance.Get()->SetIsBreakingGenerator(false);
+	Generator->OnDamage();
 
+	Generator->SetCurrentState(EGeneratorState::Idle);
 
 }
 

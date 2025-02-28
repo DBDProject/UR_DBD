@@ -99,7 +99,7 @@ AD1KillerBase::AD1KillerBase()
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(SpringArm);
-	FirstPersonCameraComponent->SetRelativeLocation(FVector(-300.0f, 0.f, 10.0f)); // Position the camera
+	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.0f, 0.f, 10.0f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	WolfCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("WolfCamera"));
@@ -118,7 +118,6 @@ AD1KillerBase::AD1KillerBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 	Camera->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 90.f), FRotator(-30.0f, 0.0f, 0.0f)); // Position the camera
-	//Camera->Deactivate();
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
