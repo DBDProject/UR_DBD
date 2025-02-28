@@ -88,7 +88,10 @@ public:
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
+
+	UFUNCTION()
 	void Input_Attack1(const FInputActionValue& InputValue);
+
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
 

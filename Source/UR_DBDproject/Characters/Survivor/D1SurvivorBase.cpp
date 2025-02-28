@@ -39,6 +39,8 @@ AD1SurvivorBase::AD1SurvivorBase()
 	InteractionBox->SetBoxExtent(FVector(50.f, 50.f, 100.f));
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
+
+	CurrentState = ESurvivorState::Healthy;
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -212,6 +214,39 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 		}
 
 		DetectedObject = nullptr;
+	}
+}
+
+void AD1SurvivorBase::TakeDamageFromKiller()
+{
+	switch (CurrentState)
+	{
+		case ESurvivorState::Healthy:
+		{
+
+			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
+			PlayAnimMontage(HitMontage, 1.0f, "Hit_BK");
+			CurrentState = ESurvivorState::Injured;
+			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
+			break;
+		}
+
+
+		case ESurvivorState::Injured:
+		{
+			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
+			PlayAnimMontage(HitMontage, 1.0f);
+			CurrentState = ESurvivorState::Crawl;
+			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
+			break;
+		}
+
+		case ESurvivorState::Crawl:
+		{
+			UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
+			break;
+		}
+
 	}
 }
 

@@ -52,7 +52,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
 	TObjectPtr<class USkeletalMeshComponent> PalletMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pallet")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletState CurrentState;
 
 	// 팔레트가 왼쪽에 있을 때 상호작용 지점

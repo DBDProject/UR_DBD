@@ -10,6 +10,15 @@
 /**
  *
  */
+
+UENUM(BlueprintType)
+enum class ESurvivorState : uint8
+{
+	Healthy     UMETA(DisplayName = "Healthy"),   // 건강 상태 (기본)
+	Injured     UMETA(DisplayName = "Injured"),   // 부상 상태 (살인마 공격 1회)
+	Crawl      UMETA(DisplayName = "Crawl")     // 기절 상태 (살인마 공격 2회)
+};
+
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 {
@@ -45,6 +54,10 @@ public:
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 protected:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
+
+protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;
@@ -69,8 +82,17 @@ protected:
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
 	// 스킬 체크 실패 시 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bIsFail = false;
+
+	// 생존자 상태 (건강, 부상, 기절)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	ESurvivorState CurrentState;
+
+public:
+	// 생존자 데미지 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void TakeDamageFromKiller();
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
@@ -78,6 +100,7 @@ public:
 	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
+	ESurvivorState GetSurvivorState() const { return CurrentState; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
 };

@@ -76,6 +76,10 @@ void AD1SurvivorController::SetupInputComponent()
 		// 스페이스
 		auto InteractAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_Space);
+
+		// Test(1)
+		auto TestAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_TestInput);
+		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartTestInput_1);
 	}
 }
 
@@ -114,24 +118,43 @@ void AD1SurvivorController::Input_RunStart()
 {
 	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
 
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
+
 	SetCreatureState(ECreatureState::Run);
-	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetRunSpeed();
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetRunSpeed();
+	}
+	else if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetInjRunSpeed();
+	}
 }
 
 void AD1SurvivorController::Input_RunStop()
 {
 	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
 
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
+
 	SetCreatureState(ECreatureState::None);
-	D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetWalkSpeed();
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetWalkSpeed();
+	}
+	else if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetInjWalkSpeed();
+	}
 }
 
 void AD1SurvivorController::Input_StartCrouch()
 {
-	if (!D1Survivor)
-	{
-		return;
-	}
+	if (!D1Survivor) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
 
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
@@ -141,10 +164,9 @@ void AD1SurvivorController::Input_StartCrouch()
 
 void AD1SurvivorController::Input_StopCrouch()
 {
-	if (!D1Survivor)
-	{
-		return;
-	}
+	if (!D1Survivor) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
 
 	SetCreatureState(ECreatureState::None);
 	D1Survivor->UnCrouch();
@@ -176,6 +198,8 @@ void AD1SurvivorController::Input_StartInteract_Space()
 	if (!D1Survivor) return;
 
 	if (GetCreatureState() == ECreatureState::Parkour) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
 
 	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor->GetVaultTarget()))
 	{
@@ -210,6 +234,12 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		}
 		return;
 	}
+}
+
+void AD1SurvivorController::Input_StartTestInput_1()
+{
+	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
+	D1Survivor->TakeDamageFromKiller();
 }
 
 void AD1SurvivorController::StartRepair()
@@ -390,12 +420,6 @@ void AD1SurvivorController::VaultPallet()
 
 	// 플레이어 위치, 방향 이동
 	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor);
-
-	if (PalletLocation == EPalletLocation::None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
-		return;
-	}
 
 	if (PalletLocation == EPalletLocation::None)
 	{

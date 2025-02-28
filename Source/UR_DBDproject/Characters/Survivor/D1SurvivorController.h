@@ -34,6 +34,8 @@ private:
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
 
+	void Input_StartTestInput_1();
+
 public:
 	// 발전기 수리 관련 함수
 	UFUNCTION()

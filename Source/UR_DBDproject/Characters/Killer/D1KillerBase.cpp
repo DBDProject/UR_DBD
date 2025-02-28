@@ -252,10 +252,11 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
 
 		// 💡 캐스팅이 실패하는지 로그로 확인
-		AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor);
-		if (Survivor)
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
+			Survivor->TakeDamageFromKiller();
+
 			DetectedSurvivor = Survivor;
 			KC_TPV->SetAttackHit(true);
 			KC_FPV->SetAttackHit(true);

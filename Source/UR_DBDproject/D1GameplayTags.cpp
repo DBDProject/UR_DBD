@@ -12,6 +12,7 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Skill1, "Input.Action.Skill1");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interact, "Input.Action.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Parkour, "Input.Action.Parkour");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_TestInput, "Input.Action.TestInput");
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_Begin, "Event.Transform.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_End, "Event.Transform.End");

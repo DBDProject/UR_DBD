@@ -20,6 +20,10 @@ public:
 public:
 	ATTRIBUTE_ACCESSORS(ThisClass, RunSpeed);
 	ATTRIBUTE_ACCESSORS(ThisClass, CrouchSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, InjWalkSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, InjRunSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, InjCrouchSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, CrawlSpeed);
 
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
@@ -27,4 +31,16 @@ private:
 
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
 	FGameplayAttributeData CrouchSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData InjWalkSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData InjRunSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData InjCrouchSpeed;
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData CrawlSpeed;
 };

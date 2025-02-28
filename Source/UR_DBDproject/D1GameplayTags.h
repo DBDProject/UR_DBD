@@ -12,6 +12,7 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Crouch);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Interact);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Parkour);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_TestInput);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Attack1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Skill1);
