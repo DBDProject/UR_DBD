@@ -70,7 +70,7 @@ void AD1SurvivorController::SetupInputComponent()
 
 		// 좌클릭
 		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_LeftClick);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::Input_StartInteract_LeftClick);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_LeftClick);
 
 		// 스페이스
@@ -181,6 +181,11 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 	{
 		StartRepair();
 	}
+
+	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor->GetDetectedObject()))
+	{
+		StartHealing(TargetSurvivor);
+	}
 }
 
 void AD1SurvivorController::Input_StopInteract_LeftClick()
@@ -190,6 +195,11 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
 	{
 		StopRepair();
+	}
+
+	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor->GetDetectedObject()))
+	{
+		StopHealing(TargetSurvivor);
 	}
 }
 
@@ -274,6 +284,8 @@ void AD1SurvivorController::StartRepair()
 void AD1SurvivorController::StopRepair()
 {
 	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+	
+	if (D1Survivor->GetCurrentGenerator()->GetIsFail() == true) return;
 
 	if (CachedAnimInstance.IsValid())
 	{
@@ -282,6 +294,53 @@ void AD1SurvivorController::StopRepair()
 		// 이동 가능하게 변경
 		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor);
+	}
+}
+
+void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
+{
+	if (!D1Survivor || !TargetSurvivor) return;
+
+	if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("대상 생존자는 치료가 필요하지 않습니다!"));
+		StopHealing(TargetSurvivor);
+		return;
+	}
+
+
+	// 플레이어 방향 조정 (자동 회전)
+	FRotator LookAtRotation = 
+		(TargetSurvivor->GetActorLocation() - D1Survivor->GetActorLocation()).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	D1Survivor->SetActorRotation(LookAtRotation);
+
+	if (CachedAnimInstance.IsValid())
+	{
+		CachedAnimInstance->SetIsHealing(true);
+		CachedAnimInstance->SetHealingTargetState(TargetSurvivor->GetSurvivorState());
+
+		// 입력 차단
+		D1Survivor->GetCharacterMovement()->DisableMovement();
+
+		TargetSurvivor->BeingHealing(D1Survivor);
+	}
+}
+
+void AD1SurvivorController::StopHealing(AD1SurvivorBase* TargetSurvivor)
+{
+	if (!D1Survivor || !TargetSurvivor) return;
+
+	if (CachedAnimInstance.IsValid())
+	{
+		CachedAnimInstance->SetIsHealing(false);
+
+		// 입력 차단 해제
+		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		CachedAnimInstance->SetHealingTargetState(ESurvivorState::None);
+
+		TargetSurvivor->StopBeingHealing();
 	}
 }
 

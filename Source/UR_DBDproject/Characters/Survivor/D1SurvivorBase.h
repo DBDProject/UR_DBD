@@ -11,14 +11,6 @@
  *
  */
 
-UENUM(BlueprintType)
-enum class ESurvivorState : uint8
-{
-	Healthy     UMETA(DisplayName = "Healthy"),   // 건강 상태 (기본)
-	Injured     UMETA(DisplayName = "Injured"),   // 부상 상태 (살인마 공격 1회)
-	Crawl      UMETA(DisplayName = "Crawl")     // 기절 상태 (살인마 공격 2회)
-};
-
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 {
@@ -40,6 +32,7 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 	void SmoothCameraTransition(float DeltaTime);
+	void UpdateHealingProgress(float DeltaTime);
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
 
@@ -82,17 +75,39 @@ protected:
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
 	// 스킬 체크 실패 시 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESurvivorState CurrentState;
 
+protected: // 치료 기능
+	// 현재 치료 진행도 (0~100%)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	float HealingProgress = 0.f;
+
+	// 초당 치료 속도 (16초 동안 100% 완치)
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	float HealingRate = 100.f / 16.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsBeingHealed = false;
+
 public:
 	// 생존자 데미지 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakeDamageFromKiller();
+
+	// 생존자 치유 받는 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void BeingHealing(AD1SurvivorBase* Healer);
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void StopBeingHealing();
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void FinishHealing();
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }

@@ -126,7 +126,6 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
         UE_LOG(LogTemp, Warning, TEXT("수리가 현재 차단된 상태입니다!"));
         return;
     }
-    bIsFail = false;
 
     if (!RepairingPlayers.Contains(Player))
     {

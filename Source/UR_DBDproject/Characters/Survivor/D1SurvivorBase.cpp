@@ -13,6 +13,7 @@
 #include "Components/BoxComponent.h"
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
+#include "Animation/D1SurvivorBaseAnim.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -91,6 +92,11 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	SmoothCameraTransition(DeltaTime);
+
+	if (bIsBeingHealed)
+	{
+		UpdateHealingProgress(DeltaTime);
+	}
 }
 
 // 웅크릴 때 카메라 보간
@@ -109,6 +115,23 @@ void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 
 	float NewHeight = FMath::FInterpTo(CurrentHeight, TargetHeight, DeltaTime, CameraLerpSpeed);
 	SpringArm->SocketOffset = FVector(0.f, 0.f, NewHeight);
+}
+
+void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
+{
+	if (!bIsBeingHealed) return;
+
+	// 치료 진행도 증가
+	HealingProgress += HealingRate * DeltaTime;
+	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, 100.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
+
+	// 치료가 완료되었는지 확인
+	if (HealingProgress >= 100.0f)
+	{
+		FinishHealing();
+	}
 }
 
 void AD1SurvivorBase::MoveToVaultStartPosition()
@@ -180,6 +203,12 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 		CurrentGenerator = Generator;
 	}
 
+	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("other survivor 감지"));
+		DetectedObject = OtherActor;
+	}
+
 	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
 		DetectedObject = OtherActor; 
@@ -248,6 +277,44 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		}
 
 	}
+}
+
+void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
+{
+	if (!Healer) return;
+
+	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
+	{
+		// 입력 차단
+		GetCharacterMovement()->DisableMovement();
+
+		bIsBeingHealed = true;
+	}
+}
+
+void AD1SurvivorBase::StopBeingHealing()
+{
+	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
+	{
+		// 입력 차단 해제
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+		bIsBeingHealed = false;
+	}
+}
+
+void AD1SurvivorBase::FinishHealing()
+{
+	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));
+
+	if (CurrentState == ESurvivorState::Injured)
+		CurrentState = ESurvivorState::Healthy;
+	else if (CurrentState == ESurvivorState::Crawl)
+		CurrentState = ESurvivorState::Injured;
+
+	// 치료 상태 초기화
+	HealingProgress = 0.0f;
+	bIsBeingHealed = false;
 }
 
 

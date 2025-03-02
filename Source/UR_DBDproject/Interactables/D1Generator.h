@@ -112,7 +112,7 @@ protected:
     bool bIsRepairBlocked = false;
 
     // 스킬 체크 실패 시 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator")
     bool bIsFail = false;
 
     // 수리 진행도
@@ -139,6 +139,7 @@ protected:
 public:
     bool GetIsRepairBlocked() { return bIsRepairBlocked; }
     float GetRepairProgress() { return RepairProgress; }
+    bool GetIsFail() { return bIsFail; }
 
     EGeneratorState GetCurrentState() { return CurrentState; }
     void SetCurrentState(EGeneratorState State) { CurrentState = State; }

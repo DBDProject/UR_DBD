@@ -7,6 +7,7 @@
 #include "D1Define.h"
 #include "D1SurvivorBaseAnim.generated.h"
 
+class AD1SurvivorBase;
 /**
  *
  */
@@ -32,6 +33,12 @@ protected:
 	bool bIsRepairing = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	bool bIsHealing = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	ESurvivorState HealingTargetState;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -40,6 +47,12 @@ protected:
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetIsRepairing(bool bNewState) { bIsRepairing = bNewState; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
+
+	UFUNCTION(BlueprintCallable)
+	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 
 	UFUNCTION(BlueprintCallable)
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };

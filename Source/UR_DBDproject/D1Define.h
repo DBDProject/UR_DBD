@@ -21,6 +21,15 @@ enum class ECreatureState : uint8
 };
 
 UENUM(BlueprintType)
+enum class ESurvivorState : uint8
+{
+	None,
+	Healthy     UMETA(DisplayName = "Healthy"),   // 건강 상태 (기본)
+	Injured     UMETA(DisplayName = "Injured"),   // 부상 상태 (살인마 공격 1회)
+	Crawl      UMETA(DisplayName = "Crawl")     // 기절 상태 (살인마 공격 2회)
+};
+
+UENUM(BlueprintType)
 enum class EGeneratorInteractionPosition : uint8
 {
 	None,

@@ -44,6 +44,13 @@ public:
 	UFUNCTION()
 	void StopRepair();
 
+	// 생존자 치료
+	UFUNCTION()
+	void StartHealing(AD1SurvivorBase* TargetSurvivor);
+
+	UFUNCTION()
+	void StopHealing(AD1SurvivorBase* TargetSurvivor);
+
 	UFUNCTION()
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
