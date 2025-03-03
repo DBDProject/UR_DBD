@@ -83,6 +83,10 @@ protected:
 	ESurvivorState CurrentState;
 
 protected: // 치료 기능
+	// 치료를 해주는 생존자
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	TWeakObjectPtr<AD1SurvivorBase> HealingSource = nullptr;
+
 	// 현재 치료 진행도 (0~100%)
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HealingProgress = 0.f;
@@ -93,6 +97,13 @@ protected: // 치료 기능
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bIsBeingHealed = false;
+
+	// 치료가 가능한 상태인지 여부
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bCanBeHealed = true;
+
+	// 치료 불가 타이머 핸들
+	FTimerHandle HealingCooldownTimer;
 
 public:
 	// 생존자 데미지 처리 함수
@@ -109,6 +120,8 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
 
+	void ResetHealingCooldown();
+
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
@@ -118,4 +131,5 @@ public:
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
+	bool GetCanBeHealed() { return bCanBeHealed; }
 };

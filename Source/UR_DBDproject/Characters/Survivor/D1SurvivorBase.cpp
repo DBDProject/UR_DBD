@@ -130,6 +130,7 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	// 치료가 완료되었는지 확인
 	if (HealingProgress >= 100.0f)
 	{
+		StopBeingHealing();
 		FinishHealing();
 	}
 }
@@ -283,6 +284,8 @@ void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
 {
 	if (!Healer) return;
 
+	HealingSource = Healer;
+
 	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
 	{
 		// 입력 차단
@@ -296,6 +299,8 @@ void AD1SurvivorBase::StopBeingHealing()
 {
 	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
 	{
+		HealingSource = nullptr;
+
 		// 입력 차단 해제
 		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
@@ -312,9 +317,19 @@ void AD1SurvivorBase::FinishHealing()
 	else if (CurrentState == ESurvivorState::Crawl)
 		CurrentState = ESurvivorState::Injured;
 
+	bCanBeHealed = false;
+	GetWorldTimerManager().SetTimer(HealingCooldownTimer, this, &AD1SurvivorBase::ResetHealingCooldown, 1.0f, false);
+
 	// 치료 상태 초기화
 	HealingProgress = 0.0f;
 	bIsBeingHealed = false;
+	HealingSource = nullptr;
+}
+
+void AD1SurvivorBase::ResetHealingCooldown()
+{
+	bCanBeHealed = true;
+	UE_LOG(LogTemp, Warning, TEXT("치료 가능 상태로 변경됨"));
 }
 
 

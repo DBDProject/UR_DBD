@@ -308,6 +308,12 @@ void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
 		return;
 	}
 
+	if (!TargetSurvivor->GetCanBeHealed())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("대상 생존자는 현재 치료 불가 상태입니다!"));
+		StopHealing(TargetSurvivor);
+		return;
+	}
 
 	// 플레이어 방향 조정 (자동 회전)
 	FRotator LookAtRotation = 
