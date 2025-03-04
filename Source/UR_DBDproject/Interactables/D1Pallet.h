@@ -22,6 +22,8 @@ enum class EPalletLocation : uint8
 	RT, // 플레이어 기준 오른쪽에 팔레트
 };
 
+class USceneComponent;
+
 UCLASS()
 class UR_DBDPROJECT_API AD1Pallet : public AActor
 {
@@ -46,7 +48,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<class USceneComponent> RootScene;
+	TObjectPtr<USceneComponent> RootScene;
 
 	// 상호작용 범위 콜라이더
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
@@ -61,15 +63,15 @@ protected:
 
 	// 팔레트가 왼쪽에 있을 때 상호작용 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	USceneComponent* InteractionPoint_Left;
+	TObjectPtr<USceneComponent> InteractionPoint_Left;
 
 	// 팔레트가 오른쪽에 있을 때 상호작용 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	USceneComponent* InteractionPoint_Right;
+	TObjectPtr<USceneComponent> InteractionPoint_Right;
 
 	// 중간 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	USceneComponent* InteractionPoint_Center;
+	TObjectPtr<USceneComponent> InteractionPoint_Center;
 
 public:
 	EPalletState GetCurrentState() { return CurrentState; }

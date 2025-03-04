@@ -22,7 +22,6 @@ AD1Pallet::AD1Pallet()
     InteractionBox->SetCollisionProfileName(TEXT("Trigger")); // 오버랩 전용
     InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
-    // 발전기 메쉬
     PalletMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PalletMesh"));
     PalletMesh->SetupAttachment(RootComponent);
 
