@@ -33,28 +33,28 @@ protected:
 	virtual void BeginPlay() override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> WolfCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> BatCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class USpringArmComponent> BatSpringArm;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> FPVMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> WolfMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
 
 protected:
@@ -77,9 +77,16 @@ protected:
 	// 상호작용 중인 팔레트 저장
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Pallet> CurrentPallet;
+
+	// 상호작용 중인 훅 저장
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1Hook> CurrentHook;
 	
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedSurvivor;
+	
+	UPROPERTY(VisibleAnywhere, Category = "Interaction")
+	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
 private:
 	UFUNCTION()
@@ -121,6 +128,9 @@ public:
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
 	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
+	AD1Hook* GetCurrentHook() const { return CurrentHook.IsValid() ? CurrentHook.Get() : nullptr; }
+	AD1SurvivorBase* GetDetectedSurvivor() const { return DetectedSurvivor.IsValid() ? DetectedSurvivor.Get() : nullptr; }
+	AD1SurvivorBase* GetDetectedCrawlSurvivor() const { return DetectedCrawlSurvivor.IsValid() ? DetectedCrawlSurvivor.Get() : nullptr; }
 
 public:
 	ETransformationState nowState;

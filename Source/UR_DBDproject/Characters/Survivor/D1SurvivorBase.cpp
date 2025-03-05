@@ -280,6 +280,16 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	}
 }
 
+void AD1SurvivorBase::TakePickUpFromKiller()
+{
+	// TO DO
+}
+
+void AD1SurvivorBase::OnHooked()
+{
+	// TO DO
+}
+
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
 {
 	if (!Healer) return;

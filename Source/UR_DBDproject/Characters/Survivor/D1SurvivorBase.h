@@ -109,6 +109,14 @@ public:
 	// 생존자 데미지 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakeDamageFromKiller();
+	
+	// 생존자 픽업 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void TakePickUpFromKiller();
+	
+	// 생존자 훅 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHooked();
 
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -129,6 +137,8 @@ public:
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
+
+	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
 	bool GetCanBeHealed() { return bCanBeHealed; }

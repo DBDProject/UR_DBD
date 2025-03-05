@@ -31,6 +31,12 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	FVector Velocity = FVector::ZeroVector;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float  MovementDirection = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float YawDelta = 0.0f;
+
 	UPROPERTY(BlueprintReadOnly)
 	float GroundSpeed = 0.f;
 
