@@ -9,6 +9,7 @@
 #include "D1GameplayTags.h"
 #include "Kismet/KismetMathLibrary.h"
 #include "Characters/Killer/D1KillerBase.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -17,6 +18,7 @@
 #include "Components/BoxComponent.h"
 #include "Interactables/D1Generator.h"
 #include "Interactables//D1Pallet.h"
+#include "Interactables//D1Hook.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -71,8 +73,7 @@ void AD1KillerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar);
-		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::StartDamageGenerator);
-		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::StartDestroyPallet);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
 
 	}
 }
@@ -166,6 +167,16 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 	if (EventTag.MatchesTag(D1GameplayTags::Killer_PalletEnd))
 	{
 		EndDestroyPallet();
+	}
+
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_PickUpEnd))
+	{
+		EndPickUpPlayer();
+	}
+
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_HookEnd))
+	{
+		EndHookPlayer();
 	}
 }
 
@@ -445,7 +456,7 @@ void AD1KillerController::EndTransform()
 void AD1KillerController::StartDamageGenerator()
 {
 	AD1Generator* Generator = D1Killer->GetCurrentGenerator();
-	if (!D1Killer || !Generator)
+	if (!Generator)
 		return;
 
 	if (Generator->GetRepairProgress() == 0.0f || Generator->GetRepairProgress() >= 100.0f
@@ -518,7 +529,7 @@ void AD1KillerController::MoveToGeneratorPosition(EGeneratorInteractionPosition 
 void AD1KillerController::StartDestroyPallet()
 {
 	AD1Pallet* Pallet = D1Killer->GetCurrentPallet();
-	if(!D1Killer ||!Pallet)
+	if (!Pallet)
 		return;
 
 	if (Pallet->GetCurrentState() == EPalletState::Up)
@@ -549,6 +560,105 @@ void AD1KillerController::EndDestroyPallet()
 		return;
 
 	Pallet->OnDestroy();
+}
+
+void AD1KillerController::StartPickUpPlayer()
+{
+	AD1SurvivorBase* Survivor = D1Killer->GetDetectedCrawlSurvivor();
+	if (!Survivor)
+		return;
+	
+	Survivor->SetSurvivorState(ESurvivorState::PickedUp);
+	Survivor->TakePickUpFromKiller();
+
+	FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
+	UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
+		TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
+	if (TargetLocation.IsZero())
+	{
+		TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
+	}
+	FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+
+	D1Killer->SetActorRotation(LookAtRotation);
+	SetControlRotation(LookAtRotation);
+
+	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor, 1.0f);
+	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor, 1.0f);
+
+	CarriedSurvivor = Survivor;
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 픽업"));
+}
+
+void AD1KillerController::EndPickUpPlayer()
+{
+	if (!D1Killer)
+		return;
+
+	TPVAnimInstance->SetIsCarryingSurvivor(true);
+	FPVAnimInstance->SetIsCarryingSurvivor(true);
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 픽업 끝"));
+}
+
+void AD1KillerController::StartHookPlayer()
+{
+	AD1Hook* Hook = D1Killer->GetCurrentHook();
+	if (!Hook)
+		return;
+
+	if (!CarriedSurvivor)
+		return;
+
+	CarriedSurvivor->SetSurvivorState(ESurvivorState::Hooked);
+	CarriedSurvivor->OnHooked();
+
+	TPVAnimInstance->Montage_Play(TPV_HookSurvivor, 1.0f);
+	FPVAnimInstance->Montage_Play(FPV_HookSurvivor, 1.0f);
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 시작"));
+
+}
+
+void AD1KillerController::EndHookPlayer()
+{
+	if (!D1Killer)
+		return;
+
+	CarriedSurvivor = nullptr;
+
+	TPVAnimInstance->SetIsCarryingSurvivor(false);
+	FPVAnimInstance->SetIsCarryingSurvivor(false);
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 끝"));
+}
+
+void AD1KillerController::HandleInteraction()
+{
+	if (!D1Killer) return;
+
+	AActor* DetectedObject = D1Killer->GetDetectedObject();
+	if (!DetectedObject) return;
+
+	if (D1Killer->GetCurrentHook() && CarriedSurvivor != nullptr)
+	{
+		StartHookPlayer();
+	}
+	else if (D1Killer->GetDetectedCrawlSurvivor())
+	{
+		StartPickUpPlayer();
+	}
+	else if (D1Killer->GetCurrentPallet())
+	{
+		StartDestroyPallet();
+	}
+	else if (D1Killer->GetCurrentGenerator())
+	{
+		StartDamageGenerator();
+	}
 }
 
 void AD1KillerController::SetIgnoreInput(bool bEnable)

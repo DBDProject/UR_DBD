@@ -26,7 +26,9 @@ enum class ESurvivorState : uint8
 	None,
 	Healthy     UMETA(DisplayName = "Healthy"),   // 건강 상태 (기본)
 	Injured     UMETA(DisplayName = "Injured"),   // 부상 상태 (살인마 공격 1회)
-	Crawl      UMETA(DisplayName = "Crawl")     // 기절 상태 (살인마 공격 2회)
+	Crawl		UMETA(DisplayName = "Crawl"),     // 기절 상태 (살인마 공격 2회)
+	PickedUp	UMETA(DisplayName = "Picked Up"), // 킬러가 들고 있는 상태
+	Hooked		UMETA(DisplayName = "Hooked"),    // 갈고리 상태 (갈고리에 걸림)
 };
 
 UENUM(BlueprintType)

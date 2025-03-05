@@ -21,8 +21,13 @@ public:
 public:
 	virtual void NativeInitializeAnimation() override;
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+	void UpdateYawDelta(float DeltaTime);
 	
 protected:
+	UPROPERTY()
+	float PreviousYaw = 0.0f;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsAttacking = false;
 
@@ -41,6 +46,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsBreakingGenerator = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bCarryingSurvivor = false; // 들고 있는 중인지
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
@@ -84,5 +92,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsCarryingSurvivor(bool bCarry) { bCarryingSurvivor = bCarry; }	
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsCarryingSurvivor() { return bCarryingSurvivor; }	
 
 };

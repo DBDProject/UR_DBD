@@ -15,6 +15,7 @@
 #include "Interactables/D1Generator.h"
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
+#include "Interactables/D1Hook.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -89,13 +90,15 @@ AD1KillerBase::AD1KillerBase()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetCapsuleComponent());
-	SpringArm->TargetArmLength = 300.0f;
-	SpringArm->bUsePawnControlRotation = false;				// 플레이어가 아니라 컨트롤러 회전을 따름
+	SpringArm->TargetArmLength = 0.0f;
+	SpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
+	SpringArm->bDoCollisionTest = false;
 
 	BatSpringArm = CreateDefaultSubobject<USpringArmComponent>("BatSpringArm");
 	BatSpringArm->SetupAttachment(BatMesh);
 	BatSpringArm->TargetArmLength = 0.0f;
-	BatSpringArm->bUsePawnControlRotation = false;				// 플레이어가 아니라 컨트롤러 회전을 따름
+	BatSpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
+	BatSpringArm->bDoCollisionTest = false;
 
 	FirstPersonCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("FirstPersonCamera"));
 	FirstPersonCameraComponent->SetupAttachment(SpringArm);
@@ -212,6 +215,23 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
+
+	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+	{
+		if (Survivor->GetSurvivorState() == ESurvivorState::Crawl)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
+			DetectedObject = OtherActor;
+			DetectedCrawlSurvivor = Survivor;
+		}
+	}
+
+	if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("범위 내 훅 감지"));
+		DetectedObject = OtherActor;
+		CurrentHook = Hook;
+	}
 }
 
 void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -226,6 +246,11 @@ void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent,
 		if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
 		{
 			CurrentPallet = nullptr;
+		}
+
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		{
+			DetectedCrawlSurvivor = nullptr;
 		}
 
 		if (OtherActor->ActorHasTag("Vaultable"))

@@ -35,6 +35,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UD1KillerSet> KillerSet;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class AD1SurvivorBase> CarriedSurvivor;
+
 	/*
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
@@ -81,19 +84,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> BatAnimInstance;
 
-public:
-	/*UFUNCTION(BlueprintCallable, Category = "KDH_Camera")
-	void SwitchCameraToState(ECreatureState NewState, float BlendTime = 1.0f);*/
-
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
-
-	UFUNCTION()
 	void Input_Attack1(const FInputActionValue& InputValue);
-
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
+
+	void HandleInteraction();
 
 	UFUNCTION()
 	void LeftClick_Transform();
@@ -123,6 +121,16 @@ private:
 	void EndDestroyPallet();
 
 	UFUNCTION()
+	void StartPickUpPlayer();
+	UFUNCTION()
+	void EndPickUpPlayer();
+
+	UFUNCTION()
+	void StartHookPlayer();
+	UFUNCTION()
+	void EndHookPlayer();
+
+	UFUNCTION()
 	void SetIgnoreInput(bool bEnable);
 public:
 	ECreatureState GetCreatureState();
@@ -135,8 +143,18 @@ protected:
 	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 1인칭 데미지 몽타주
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_DestroyPallet; // 팔레트 3인칭 데미지 몽타주
+	TObjectPtr<class UAnimMontage> TPV_DestroyPallet; // 팔레트 3인칭 파괴 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_DestroyPallet; // 팔레트 1인칭 데미지 몽타주
+	TObjectPtr<class UAnimMontage> FPV_DestroyPallet; // 팔레트 1인칭 파괴 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_PickUpSurvivor; // 생존자 픽업 3인칭 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_PickUpSurvivor; // 생존자 픽업 1인칭 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_HookSurvivor; // 생존자 훅(갈고리) 3인칭 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_HookSurvivor; // 생존자 훅(갈고리) 1인칭 몽타주
 
 };
