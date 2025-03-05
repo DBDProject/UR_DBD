@@ -251,6 +251,7 @@ void AD1Generator::StopRepairAll()
 void AD1Generator::EnableRepair()
 {
     bIsRepairBlocked = false; // 수리 차단 해제
+    bIsFail = false;
     UE_LOG(LogTemp, Warning, TEXT("수리 가능 상태로 복구됨"));
 }
 
