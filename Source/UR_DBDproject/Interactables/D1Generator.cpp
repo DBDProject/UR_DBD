@@ -246,6 +246,7 @@ void AD1Generator::StopRepairAll()
         });
 
     bIsRepairing = false;
+    CachedAnimInstance->SetIsRepairing(false);
 }
 
 void AD1Generator::EnableRepair()
