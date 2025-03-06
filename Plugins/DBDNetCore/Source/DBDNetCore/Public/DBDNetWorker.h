@@ -15,13 +15,15 @@ class DBDNetWorker : public FRunnable
 {
 private:
 	UDBDNetManager* m_pNetManager;
-	FThreadSafeCounter	m_stopTaskCounter;
-	char 				m_recvBuffer[MAX_BUFFER_SIZE];
-	DBDPacket			m_streamPacket;
+	char 			m_recvBuffer[MAX_BUFFER_SIZE];
+	int				m_readPos;
+	bool			m_bRunning;
 
 public:
 	DBDNetWorker(UDBDNetManager* pNetManager);
 	~DBDNetWorker();
+
+	void ReceivePacket();
 
 public:
 	virtual bool Init() override;

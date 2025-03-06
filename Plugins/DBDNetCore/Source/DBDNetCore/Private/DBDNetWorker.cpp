@@ -8,15 +8,67 @@
 
 #include "DBDNetWorker.h"
 
-DBDNetWorker::DBDNetWorker(UDBDNetManager* pNetManager) : m_stopTaskCounter(0)
+DBDNetWorker::DBDNetWorker(UDBDNetManager* pNetManager)
 {
 	m_pNetManager = pNetManager;
+	m_bRunning = true;
+	m_readPos = 0;
 }
 
 DBDNetWorker::~DBDNetWorker()
 {
 	m_pNetManager = nullptr;
-	m_stopTaskCounter.Decrement();
+}
+
+void DBDNetWorker::ReceivePacket()
+{
+	int recvByte = recv(m_pNetManager->m_socket, reinterpret_cast<char*>(&m_recvBuffer[m_readPos]),
+		MAX_BUFFER_SIZE, 0);
+
+	if (recvByte < 0)
+	{
+		if (m_pNetManager->HasSockError(WSAGetLastError()))
+		{
+			UE_LOG(LogClass, Error, TEXT("[DBDNet]Failed to receive data"));
+			m_pNetManager->Disconnect();
+			m_bRunning = false;
+		}
+	}
+	else if (recvByte == 0)
+	{
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet]Connection closed"));
+		m_pNetManager->Disconnect();
+		m_bRunning = false;
+	}
+	else
+	{
+		m_readPos += recvByte;
+
+		if (m_readPos >= MAX_BUFFER_SIZE)
+		{
+			UE_LOG(LogClass, Error, TEXT("[DBDNet]Too Large Packet"));
+			m_pNetManager->Disconnect();
+			m_bRunning = false;
+		}
+
+		HPACKET* m_packet = (HPACKET*)m_recvBuffer;
+
+		if (m_readPos >= PACKET_HEADER_SIZE)
+		{
+			if (m_packet->ph.len <= m_readPos)
+			{
+				TSharedPtr<HPACKET> AddPacket = MakeShared<HPACKET>();
+				FMemory::Memzero(AddPacket.Get(), sizeof(HPACKET));
+				FMemory::Memcpy(AddPacket.Get(), m_recvBuffer, static_cast<SIZE_T>(m_packet->ph.len));
+
+				// 리스트에 추가
+				m_pNetManager->m_packetQueueLock.Lock();
+				m_pNetManager->m_packetQueue.Enqueue(AddPacket);
+				m_pNetManager->m_packetQueueLock.Unlock();
+				m_readPos = 0;
+			}
+		}
+	}
 }
 
 
@@ -27,25 +79,16 @@ bool DBDNetWorker::Init()
 
 uint32 DBDNetWorker::Run()
 {
-	while (m_stopTaskCounter.GetValue() == 0)
+	while (m_bRunning)
 	{
 		if (IsValid(m_pNetManager))
 		{
-			int recvByte = recv(m_pNetManager->m_socket, reinterpret_cast<char*>(&m_recvBuffer),
-				MAX_BUFFER_SIZE, 0);
-
-			if (recvByte < 0)
-			{
-				if (m_pNetManager->HasSockError(WSAGetLastError()))
-				{
-					UE_LOG(LogClass, Error, TEXT("[DBDNet]Failed to receive data"));
-					m_pNetManager->Disconnect();
-					break;
-				}
-			}
-
-			m_streamPacket.Put(m_recvBuffer, recvByte);
-			m_streamPacket.ProcessPacket(m_pNetManager);
+			ReceivePacket();
+		}
+		else
+		{
+			m_bRunning = false;
+			break;
 		}
 		FPlatformProcess::Sleep(0.01f);
 	}
@@ -54,7 +97,7 @@ uint32 DBDNetWorker::Run()
 
 void DBDNetWorker::Stop()
 {
-	m_stopTaskCounter.Increment();
+	m_bRunning = false;
 }
 
 void DBDNetWorker::Exit()

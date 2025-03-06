@@ -135,11 +135,39 @@ bool UDBDNetManager::SendChatMessage(const FString& message)
 	HProtocol::Chat chatMsg;
 	HPACKET packet;
 
-	chatMsg.set_msg(TCHAR_TO_UTF8(*message));
-	DBDPacket::SerializePacket(HPACKET_TYPE::CHAT_MSG, chatMsg, packet);
+	std::string packetData = TCHAR_TO_UTF8(*message);
+
+	chatMsg.set_msg(packetData);
+	UDBDNetManager::SerializePacket(HPACKET_TYPE::CHAT_MSG, chatMsg, packet);
 	SendPacket(packet);
 
 	return true;
+}
+
+void UDBDNetManager::ProcessPacket()
+{
+	if (!m_packetQueueLock.TryLock())
+		return;
+
+	while (!m_packetQueue.IsEmpty())
+	{
+		TSharedPtr<HPACKET> packet;
+
+		m_packetQueue.Dequeue(packet);
+		m_packetQueue.Pop();
+
+		switch (packet->ph.type)
+		{
+		case HPACKET_TYPE::CHAT_MSG:
+			HProtocol::Chat chatMsg;
+			UDBDNetManager::DeserializePacket(*(packet.Get()), chatMsg);
+
+			FString fMsg = FString(UTF8_TO_TCHAR(chatMsg.msg().c_str()));
+			OnChatMessageReceived.Broadcast(fMsg);
+		}
+	}
+
+	m_packetQueueLock.Unlock();
 }
 
 void UDBDNetManager::SendPacket(const HPACKET& packet)
