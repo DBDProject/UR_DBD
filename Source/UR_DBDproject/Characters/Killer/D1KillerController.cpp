@@ -568,22 +568,21 @@ void AD1KillerController::StartPickUpPlayer()
 	if (!Survivor)
 		return;
 	
-	Survivor->SetSurvivorState(ESurvivorState::PickedUp);
-	Survivor->TakePickUpFromKiller();
+	Survivor->TakePickUpFromKiller(D1Killer);
 
-	FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
-	UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
-		TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
-	if (TargetLocation.IsZero())
-	{
-		TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
-	}
-	FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
-	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	//FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
+	//UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
+	//	TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
+	//if (TargetLocation.IsZero())
+	//{
+	//	TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
+	//}
+	//FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
+	//LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	//LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 
-	D1Killer->SetActorRotation(LookAtRotation);
-	SetControlRotation(LookAtRotation);
+	//D1Killer->SetActorRotation(LookAtRotation);
+	//SetControlRotation(LookAtRotation);
 
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor, 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor, 1.0f);

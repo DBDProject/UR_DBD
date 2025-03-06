@@ -14,6 +14,7 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Animation/D1SurvivorBaseAnim.h"
+#include "Characters/Killer/D1KillerBase.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -280,9 +281,19 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	}
 }
 
-void AD1SurvivorBase::TakePickUpFromKiller()
+void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 {
-	// TO DO
+	if (!Killer) return;
+
+	SetSurvivorState(ESurvivorState::PickedUp);
+
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 물리 시뮬레이션 중지
+	GetMesh()->SetSimulatePhysics(false);
+
+	PlayAnimMontage(PickUpMontage);
 }
 
 void AD1SurvivorBase::OnHooked()

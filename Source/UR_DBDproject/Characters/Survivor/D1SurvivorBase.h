@@ -50,6 +50,9 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
+
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -112,7 +115,7 @@ public:
 	
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void TakePickUpFromKiller();
+	void TakePickUpFromKiller(class AD1KillerBase* Killer);
 	
 	// 생존자 훅 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
