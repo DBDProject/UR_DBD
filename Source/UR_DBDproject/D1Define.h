@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "D1Define.generated.h"
 
 #define D(x) if(GEngine) { GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, x); }
 
@@ -49,6 +50,47 @@ enum class EVaultType : uint8
 	Fast UMETA(DisplayName = "Fast")
 };
 
+UENUM(BlueprintType)
+enum class EPlayerCharacter : uint8
+{
+	/*
+		Survivor
+	*/
+	NONE UMETA(DisplayName = "None"),
+	MEG UMETA(DisplayName = "Meg"),
+
+	/*
+		Killer
+	*/
+	VAMPIRE UMETA(DisplayName = "Vampire"),
+};
+
+USTRUCT(BlueprintType)
+struct FPlayerInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	FString userIP;
+
+	UPROPERTY(BlueprintReadWrite)
+	EPlayerCharacter playerCharacter;
+
+	// Default constructor
+	FPlayerInfo() : userIP(""), playerCharacter(EPlayerCharacter::NONE) {}
+};
+
+USTRUCT(BlueprintType)
+struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 할 정보
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FPlayerInfo> survivorInfo;
+
+	UPROPERTY(BlueprintReadWrite)
+	FPlayerInfo killerInfo;
+};
 UENUM(BlueprintType)
 enum class EVaultInteractionPosition : uint8
 {

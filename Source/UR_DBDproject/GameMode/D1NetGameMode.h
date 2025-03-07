@@ -20,6 +20,7 @@ class UR_DBDPROJECT_API AD1NetGameMode : public AGameModeBase
 	GENERATED_BODY()
 
 private:
+	UDBDNetManager* m_pNetManager;
 	FTimerHandle m_gameTimerHandle;
 
 private:
