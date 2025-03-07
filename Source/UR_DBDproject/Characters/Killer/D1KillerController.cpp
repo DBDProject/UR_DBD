@@ -612,8 +612,7 @@ void AD1KillerController::StartHookPlayer()
 	if (!CarriedSurvivor)
 		return;
 
-	CarriedSurvivor->SetSurvivorState(ESurvivorState::Hooked);
-	CarriedSurvivor->OnHooked();
+	CarriedSurvivor->OnHooked(Hook);
 
 	TPVAnimInstance->Montage_Play(TPV_HookSurvivor, 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_HookSurvivor, 1.0f);

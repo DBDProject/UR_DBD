@@ -15,6 +15,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Characters/Killer/D1KillerBase.h"
+#include "Interactables/D1Hook.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -285,20 +286,38 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 {
 	if (!Killer) return;
 
-	SetSurvivorState(ESurvivorState::PickedUp);
-
 	// 충돌 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
 	// 물리 시뮬레이션 중지
 	GetMesh()->SetSimulatePhysics(false);
 
-	PlayAnimMontage(PickUpMontage);
+	FName AttachSocketName = "joint_CarryLT_01"; // 살인자의 왼손 본
+
+	// 캐릭터를 본(소켓)에 부착
+	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -1.07f), FRotator(0.f, 0.f, 0.f));
+
+	SetSurvivorState(ESurvivorState::PickedUp);
 }
 
-void AD1SurvivorBase::OnHooked()
+void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
 {
-	// TO DO
+	if (!Hook) return;
+	if (CurrentState == ESurvivorState::Hooked) return;
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	FName HookSocket = "socket_SurvivorHook";
+
+	AttachToComponent(Hook->GetHookMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		HookSocket);
+
+	GetMesh()->SetRelativeLocationAndRotation(FVector(65.f, 0.f, 0.f), FRotator(0.f, -90.f, 0.f));
+
+	SetSurvivorState(ESurvivorState::Hooked);
 }
 
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)

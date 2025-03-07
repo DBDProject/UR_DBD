@@ -119,7 +119,7 @@ public:
 	
 	// 생존자 훅 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnHooked();
+	void OnHooked(class AD1Hook* Hook);
 
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")

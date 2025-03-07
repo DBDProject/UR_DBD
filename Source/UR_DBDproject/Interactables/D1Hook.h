@@ -35,4 +35,7 @@ protected:
 	// 메쉬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")
 	TObjectPtr<class USkeletalMeshComponent> HookMesh;
+
+public:
+	TObjectPtr<class USkeletalMeshComponent> GetHookMesh() { return HookMesh; }
 };
