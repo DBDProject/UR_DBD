@@ -35,7 +35,17 @@ void UD1KillerBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 	Velocity = MovementComponent->Velocity;
 
 	FVector ForwardVector = Character->GetActorForwardVector();
-	MovementDirection = FVector::DotProduct(ForwardVector, Velocity.GetSafeNormal());
+	FVector RightVector = Character->GetActorRightVector(); 
+	FVector NormalizedVelocity = Velocity.GetSafeNormal();
+
+	// ✅ 앞뒤 이동 (Blend Space의 Vertical 입력값)
+	float ForwardMovement = FVector::DotProduct(ForwardVector, NormalizedVelocity);
+
+	// ✅ 좌우 이동 (Blend Space의 Horizontal 입력값)
+	float RightMovement = FVector::DotProduct(RightVector, NormalizedVelocity);
+
+	MovementDirection = ForwardMovement;
+	MovementDirectionRight = RightMovement;
 
 	GroundSpeed = Velocity.Size2D();
 

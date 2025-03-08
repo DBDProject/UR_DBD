@@ -131,6 +131,14 @@ private:
 	void EndHookPlayer();
 
 	UFUNCTION()
+	void StartVault();
+	UFUNCTION()
+	void EndVault();
+	void VaultUpdate();
+	FTimerHandle VaultTimerHandle;
+	float VaultTimeElapsed = 0.0f;
+
+	UFUNCTION()
 	void SetIgnoreInput(bool bEnable);
 public:
 	ECreatureState GetCreatureState();
@@ -156,5 +164,10 @@ protected:
 	TObjectPtr<class UAnimMontage> TPV_HookSurvivor; // 생존자 훅(갈고리) 3인칭 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> FPV_HookSurvivor; // 생존자 훅(갈고리) 1인칭 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_VaultWindow; // 창문 넘기 3인칭 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_VaultWindow; // 창문 넘기 1인칭 몽타주
 
 };

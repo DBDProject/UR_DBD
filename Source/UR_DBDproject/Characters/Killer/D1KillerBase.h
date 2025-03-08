@@ -31,30 +31,32 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void InitAbilitySystem() override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> WolfCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> BatCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class USpringArmComponent> BatSpringArm;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> FPVMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> WolfMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
 
 protected:
@@ -132,6 +134,7 @@ public:
 	AD1SurvivorBase* GetDetectedSurvivor() const { return DetectedSurvivor.IsValid() ? DetectedSurvivor.Get() : nullptr; }
 	AD1SurvivorBase* GetDetectedCrawlSurvivor() const { return DetectedCrawlSurvivor.IsValid() ? DetectedCrawlSurvivor.Get() : nullptr; }
 
+	void ActivateAbility(FGameplayTag AbilityTag);
 public:
 	ETransformationState nowState;
 };

@@ -16,7 +16,9 @@
 #include "Camera/CameraComponent.h"
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "Interactables/D1Generator.h"
+#include "Interactables/D1VaultObject.h"
 #include "Interactables//D1Pallet.h"
 #include "Interactables//D1Hook.h"
 
@@ -80,34 +82,34 @@ void AD1KillerController::SetupInputComponent()
 
 void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
-	if (EventTag == (D1GameplayTags::Event_Attack_Begin))
+	if (EventTag == (D1GameplayTags::Killer_Attack_Begin))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Attack_Begin"));
+		UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_Begin"));
 	}
 
-	if (EventTag == (D1GameplayTags::Event_Attack_DetactStart))
+	if (EventTag == (D1GameplayTags::Killer_Attack_DetactStart))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Attack_DetactStart"));
 		if (D1Killer && D1Killer->AttackCollision)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactStart"));
 			D1Killer->AttackCollision->SetActive(true);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
 	}
 
-	if (EventTag == (D1GameplayTags::Event_Attack_DetactEnd))
+	if (EventTag == (D1GameplayTags::Killer_Attack_DetactEnd))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Attack_DetactEnd"));
 		if (D1Killer && D1Killer->AttackCollision)
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactEnd"));
 			D1Killer->AttackCollision->SetActive(false);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 
-	if (EventTag == (D1GameplayTags::Event_Attack_End))
+	if (EventTag == (D1GameplayTags::Killer_Attack_End))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Attack_End"));
+		UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_End"));
 		// 공격 종료 후 애니메이션 변수 초기화
 		TPVAnimInstance->SetIsAttacking(false);
 		FPVAnimInstance->SetIsAttacking(false);
@@ -178,6 +180,10 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 	{
 		EndHookPlayer();
 	}
+	if (EventTag.MatchesTag(D1GameplayTags::Killer_VaultWindowEnd))
+	{
+		EndVault();
+	}
 }
 
 void AD1KillerController::Input_Move(const FInputActionValue& InputValue)
@@ -229,8 +235,11 @@ void AD1KillerController::Input_Attack1(const FInputActionValue& InputValue)
 	if (D1Killer->nowState == ETransformationState::Dracula && GetCreatureState() != ECreatureState::InTransform)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
-		TPVAnimInstance->SetIsAttacking(true);
-		FPVAnimInstance->SetIsAttacking(true);
+
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
+
+		//TPVAnimInstance->SetIsAttacking(true);
+		//FPVAnimInstance->SetIsAttacking(true);
 
 		SetCreatureState(ECreatureState::Attack1);
 	}
@@ -571,20 +580,20 @@ void AD1KillerController::StartPickUpPlayer()
 	Survivor->SetSurvivorState(ESurvivorState::PickedUp);
 	Survivor->TakePickUpFromKiller();
 
-	FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
-	UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
-		TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
-	if (TargetLocation.IsZero())
-	{
-		TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
-	}
-	FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
-	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	//FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
+	//UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
+	//	TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
+	//if (TargetLocation.IsZero())
+	//{
+	//	TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
+	//}
+	//FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
+	//LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	//LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 
-	D1Killer->SetActorRotation(LookAtRotation);
-	SetControlRotation(LookAtRotation);
-
+	/*D1Killer->SetActorRotation(LookAtRotation);
+	SetControlRotation(LookAtRotation);*/
+	
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor, 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor, 1.0f);
 
@@ -636,6 +645,40 @@ void AD1KillerController::EndHookPlayer()
 	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 끝"));
 }
 
+void AD1KillerController::StartVault()
+{
+	AD1VaultObject* VaultObj = D1Killer->GetVaultTarget();
+	if (!VaultObj)
+		return;
+
+	VaultObj->MoveToVaultInteractionLocation(D1Killer);
+
+	D1Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
+	FPVAnimInstance->Montage_Play(FPV_VaultWindow, 1.0f);
+	TPVAnimInstance->Montage_Play(TPV_VaultWindow, 1.0f);
+
+}
+
+void AD1KillerController::EndVault()
+{
+	AD1VaultObject* VaultObj = D1Killer->GetVaultTarget();
+	if (!VaultObj)
+		return;
+	FVector StartLocation = VaultObj->GetStartPos();
+	FVector TargetLocation = VaultObj->GetTargetPos();
+
+	D1Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
+	
+	D1Killer->SetActorLocation(TargetLocation);
+
+
+}
+
+void AD1KillerController::VaultUpdate()
+{
+
+}
+
 void AD1KillerController::HandleInteraction()
 {
 	if (!D1Killer) return;
@@ -658,6 +701,11 @@ void AD1KillerController::HandleInteraction()
 	else if (D1Killer->GetCurrentGenerator())
 	{
 		StartDamageGenerator();
+	}
+	else if (D1Killer->GetVaultTarget())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Vault"));
+		StartVault();
 	}
 }
 

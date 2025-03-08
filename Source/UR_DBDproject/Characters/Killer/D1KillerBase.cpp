@@ -3,6 +3,7 @@
 
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "Characters/Killer/D1KillerState.h"
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
@@ -135,7 +136,6 @@ AD1KillerBase::AD1KillerBase()
 	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-	AttackCollision->SetActive(false);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
@@ -147,13 +147,9 @@ void AD1KillerBase::BeginPlay()
 	// 모든 카메라 비활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
-
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
 	// 기본 카메라 활성화
-	if (Camera)
-	{
-		Camera->Deactivate();
-	}
+	if (Camera) Camera->Activate();
 
 	if (InteractionBox)
 	{
@@ -168,6 +164,27 @@ void AD1KillerBase::BeginPlay()
 		AttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapPlayerEnd);
 	}
 }
+
+void AD1KillerBase::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	InitAbilitySystem();
+}
+
+void AD1KillerBase::InitAbilitySystem()
+{
+	Super::InitAbilitySystem();
+
+	if (AD1KillerState* PS = GetPlayerState<AD1KillerState>())
+	{
+		AbilitySystemComponent = Cast<UD1AbilitySystemComponent>(PS->GetAbilitySystemComponent());
+		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+		AttributeSet = PS->GetD1KillerSet();
+	}
+}
+
 
 void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
 {
@@ -206,12 +223,14 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 {
 	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
 		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
 	}
 
 	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
 		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
@@ -232,6 +251,13 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 		DetectedObject = OtherActor;
 		CurrentHook = Hook;
 	}
+
+	if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
+		DetectedObject = OtherActor;
+		VaultTarget = VaultObj;
+	}	
 }
 
 void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -248,9 +274,14 @@ void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent,
 			CurrentPallet = nullptr;
 		}
 
-		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 		{
 			DetectedCrawlSurvivor = nullptr;
+		}
+
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		{
+			DetectedObject = nullptr;
 		}
 
 		if (OtherActor->ActorHasTag("Vaultable"))
@@ -300,11 +331,15 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 
 void AD1KillerBase::OnOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Log, TEXT("공격 끝"));
 	if (DetectedObject == OtherActor)
 	{
 		DetectedSurvivor = nullptr;
 		DetectedObject = nullptr;
 	}
 
+}
+
+void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
+{
+	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }

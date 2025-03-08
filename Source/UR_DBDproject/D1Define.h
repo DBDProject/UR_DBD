@@ -48,3 +48,10 @@ enum class EVaultType : uint8
 	Medium UMETA(DisplayName = "Medium"),
 	Fast UMETA(DisplayName = "Fast")
 };
+
+UENUM(BlueprintType)
+enum class EVaultInteractionPosition : uint8
+{
+	Front UMETA(DisplayName = "Front"),
+	Back UMETA(DisplayName = "Back"),
+};
