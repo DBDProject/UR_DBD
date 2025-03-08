@@ -1,6 +1,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Engine/DataTable.h"
 #include "D1Define.generated.h"
 
 #define D(x) if(GEngine) { GEngine->AddOnScreenDebugMessage(-1, 1.0f, FColor::Cyan, x); }
@@ -51,18 +52,20 @@ enum class EVaultType : uint8
 };
 
 UENUM(BlueprintType)
-enum class EPlayerCharacter : uint8
+enum class ECharacterType : uint8
 {
+	// 열거형 이름이랑 DisplayeName이랑 같아야 함
+
 	/*
 		Survivor
 	*/
-	NONE UMETA(DisplayName = "None"),
-	MEG UMETA(DisplayName = "Meg"),
+	NONE UMETA(DisplayName = "NONE"),
+	MEG UMETA(DisplayName = "MEG"),
 
 	/*
 		Killer
 	*/
-	VAMPIRE UMETA(DisplayName = "Vampire"),
+	DRACULA UMETA(DisplayName = "DRACULA"),
 };
 
 USTRUCT(BlueprintType)
@@ -74,10 +77,9 @@ struct FPlayerInfo
 	FString userIP;
 
 	UPROPERTY(BlueprintReadWrite)
-	EPlayerCharacter playerCharacter;
+	ECharacterType characterType;
 
 	// Default constructor
-	FPlayerInfo() : userIP(""), playerCharacter(EPlayerCharacter::NONE) {}
 };
 
 USTRUCT(BlueprintType)
@@ -86,11 +88,27 @@ struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 
 	GENERATED_BODY()
 
 	UPROPERTY(BlueprintReadWrite)
-	TArray<FPlayerInfo> survivorInfo;
+	TArray<FPlayerInfo> survivorInfos;
 
 	UPROPERTY(BlueprintReadWrite)
 	FPlayerInfo killerInfo;
 };
+
+USTRUCT(BlueprintType)
+struct FCharacterDataSet : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APawn> PawnClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APlayerController> ControllerClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TSubclassOf<APlayerState> PlayerStateClass;
+};
+
 UENUM(BlueprintType)
 enum class EVaultInteractionPosition : uint8
 {
