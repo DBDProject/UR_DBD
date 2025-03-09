@@ -16,6 +16,7 @@
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
+#include "Interactables/D1ExitGate.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -222,6 +223,13 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	{
 		DetectedObject = OtherActor;
 		VaultTarget = Cast<AD1VaultObject>(OtherActor);
+	}
+
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
+		DetectedObject = OtherActor;
 	}
 }
 

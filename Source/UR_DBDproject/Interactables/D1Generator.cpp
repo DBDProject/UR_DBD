@@ -8,6 +8,7 @@
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Animation/D1GeneratorAnim.h"
 #include "Characters/Survivor/D1SurvivorController.h"
+#include "System/D1GameState.h"
 
 AD1Generator::AD1Generator()
 {
@@ -263,7 +264,11 @@ void AD1Generator::CompleteRepair()
     bIsCompleteRepair = true;
 
     StopRepairAll();
-    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 모든 플레이어에게 알림"));
 
+    UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 모든 플레이어에게 알림"));
+    if (AD1GameState* GameState = GetWorld()->GetGameState<AD1GameState>())
+    {
+        GameState->UpdateGeneratorState();
+    }
     // 발전기 완료 이벤트 실행 (UI, 사운드, 이펙트 등)
 }

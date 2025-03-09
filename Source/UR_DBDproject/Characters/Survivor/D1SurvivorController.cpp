@@ -16,6 +16,7 @@
 #include "Interactables/D1VaultObject.h"
 #include "Components/CapsuleComponent.h"
 #include "Interactables/D1Pallet.h"
+#include "Interactables/D1ExitGate.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -76,6 +77,7 @@ void AD1SurvivorController::SetupInputComponent()
 		// 스페이스
 		auto InteractAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_Space);
+		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_Space);
 
 		// Test(1)
 		auto TestAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_TestInput);
@@ -244,6 +246,23 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		}
 		return;
 	}
+
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	{
+		StartOpening();
+
+		return;
+	}
+}
+
+void AD1SurvivorController::Input_StopInteract_Space()
+{
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	{
+		StopOpening();
+
+		return;
+	}
 }
 
 void AD1SurvivorController::Input_StartTestInput_1()
@@ -347,6 +366,62 @@ void AD1SurvivorController::StopHealing(AD1SurvivorBase* TargetSurvivor)
 		CachedAnimInstance->SetHealingTargetState(ESurvivorState::None);
 
 		TargetSurvivor->StopBeingHealing();
+	}
+}
+
+void AD1SurvivorController::StartOpening()
+{
+	if (!D1Survivor) return;
+
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	{
+		if (!(Gate->GetCrrentState() == EGateState::Closed))
+			return;
+		if (Gate->GetActivateExitGate() == false)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("아직 탈출구가 활성화되지 않음!"));
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("StartOpening"));
+		// 플레이어 위치 이동
+		Gate->MovePlayerToInteractionPoint(D1Survivor);
+
+		if (CachedAnimInstance.IsValid())
+		{
+			CachedAnimInstance.Get()->SetIsOpening(true);
+
+			// 이동 입력 차단
+			D1Survivor->GetCharacterMovement()->DisableMovement();
+			D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+
+			Gate->StartOpening(D1Survivor);
+		}
+	}
+}
+
+void AD1SurvivorController::StopOpening()
+{
+	if (!D1Survivor) return;
+
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	{
+		if (Gate->GetActivateExitGate() == false)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("아직 탈출구가 활성화되지 않음!"));
+			return;
+		}
+
+		UE_LOG(LogTemp, Warning, TEXT("StopOpening"));
+		if (CachedAnimInstance.IsValid())
+		{
+			CachedAnimInstance.Get()->SetIsOpening(false);
+
+			// 이동 가능하게 변경
+			D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+			Gate->StopOpening();
+		}
 	}
 }
 
