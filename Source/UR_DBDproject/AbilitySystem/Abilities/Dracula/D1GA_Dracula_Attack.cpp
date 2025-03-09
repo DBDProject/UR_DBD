@@ -1,17 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Abilities/Dracula/D1GameplayAbility_Dracula_Attack.h"
+#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Attack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
 #include "Characters/Killer/D1KillerBase.h"
 
-UD1GameplayAbility_Dracula_Attack::UD1GameplayAbility_Dracula_Attack(const FObjectInitializer& ObjectInitializer)
+UD1GA_Dracula_Attack::UD1GA_Dracula_Attack(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
 {
-
 }
 
-bool UD1GameplayAbility_Dracula_Attack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+bool UD1GA_Dracula_Attack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
@@ -21,7 +20,7 @@ bool UD1GameplayAbility_Dracula_Attack::CanActivateAbility(const FGameplayAbilit
 	return true;
 }
 
-void UD1GameplayAbility_Dracula_Attack::ActivateAbility(
+void UD1GA_Dracula_Attack::ActivateAbility(
     const FGameplayAbilitySpecHandle Handle,
     const FGameplayAbilityActorInfo* ActorInfo,
     const FGameplayAbilityActivationInfo ActivationInfo,
@@ -29,7 +28,7 @@ void UD1GameplayAbility_Dracula_Attack::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    UE_LOG(LogTemp, Log, TEXT("Dracula Attack Ability Activated!"));
+    //UE_LOG(LogTemp, Log, TEXT("Dracula Attack Ability Activated!"));
 
     if (!HasAuthority(&ActivationInfo))
         return;
@@ -68,16 +67,16 @@ void UD1GameplayAbility_Dracula_Attack::ActivateAbility(
 
     // ✅ "In" 섹션이 끝나면 `OnInMontageEnded()` 실행
     FOnMontageBlendingOutStarted BlendOutDelegate;
-    BlendOutDelegate.BindUObject(this, &UD1GameplayAbility_Dracula_Attack::OnInMontageEnded);
+    BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnInMontageEnded);
     TPVAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, TPV_Attack.Get());
 }
 
-void UD1GameplayAbility_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
     if (!Montage)
         return;
 
-    UE_LOG(LogTemp, Log, TEXT("✅ 'In' Section Completed - Jumping to Hit or Miss"));
+    //UE_LOG(LogTemp, Log, TEXT("✅ 'In' Section Completed - Jumping to Hit or Miss"));
 
     AD1KillerBase* Killer = Cast<AD1KillerBase>(GetCurrentActorInfo()->AvatarActor.Get());
     if (!Killer) return;
@@ -90,34 +89,39 @@ void UD1GameplayAbility_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, 
 
     TPVAnimInstance->Montage_Play(TPV_Attack.Get());
     FPVAnimInstance->Montage_Play(FPV_Attack.Get());
+
+    
     // ✅ 적중 여부에 따라 "Hit" 또는 "Miss"로 이동
     if (bAttackHit)
     {
+        UE_LOG(LogTemp, Log, TEXT("✅ bAttackHit = true"));
         TPVAnimInstance->Montage_JumpToSection(FName("Hit"), TPV_Attack.Get());
         FPVAnimInstance->Montage_JumpToSection(FName("Hit"), FPV_Attack.Get());
     }
     else
     {
+        UE_LOG(LogTemp, Log, TEXT("✅ bAttackHit = false"));
         TPVAnimInstance->Montage_JumpToSection(FName("Miss"), TPV_Attack.Get());
         FPVAnimInstance->Montage_JumpToSection(FName("Miss"), FPV_Attack.Get());
     }
 
     // ✅ "Hit" 또는 "Miss"가 끝나면 `OnFinalMontageEnded()` 실행
     FOnMontageBlendingOutStarted FinalBlendOutDelegate;
-    FinalBlendOutDelegate.BindUObject(this, &UD1GameplayAbility_Dracula_Attack::OnFinalMontageEnded);
+    FinalBlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnFinalMontageEnded);
     TPVAnimInstance->Montage_SetBlendingOutDelegate(FinalBlendOutDelegate, TPV_Attack.Get());
 }
 
-void UD1GameplayAbility_Dracula_Attack::OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UD1GA_Dracula_Attack::OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-    UE_LOG(LogTemp, Log, TEXT("✅ Attack Montage Completed - Ending Ability"));
+    //UE_LOG(LogTemp, Log, TEXT("✅ Attack Montage Completed - Ending Ability"));
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 
-void UD1GameplayAbility_Dracula_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+void UD1GA_Dracula_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled); 
+    
+	bAttackHit = false;
     UE_LOG(LogTemp, Log, TEXT("✅ Attack GAS END "));
-
 }

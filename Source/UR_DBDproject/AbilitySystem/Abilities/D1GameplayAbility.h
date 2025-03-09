@@ -13,5 +13,5 @@ UCLASS()
 class UR_DBDPROJECT_API UD1GameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
-	
+
 };

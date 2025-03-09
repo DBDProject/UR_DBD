@@ -4,18 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1GameplayAbility_Dracula_Attack.generated.h"
+#include "D1GA_Dracula_Attack.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GameplayAbility_Dracula_Attack : public UD1GameplayAbility
+class UR_DBDPROJECT_API UD1GA_Dracula_Attack : public UD1GameplayAbility
 {
 	GENERATED_BODY()
 
 public:
-	UD1GameplayAbility_Dracula_Attack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UD1GA_Dracula_Attack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	virtual bool CanActivateAbility(
@@ -44,11 +44,13 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> FPV_Attack;
 
-private:
-	void OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	void JumpToMontageSection(FName SectionName);
-
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	bool bAttackHit = false;
 
+private:
+	void OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+public:
+	void SetAttackHit(bool bHit) { bAttackHit = bHit; }
 };

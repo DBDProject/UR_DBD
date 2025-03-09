@@ -21,6 +21,8 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables//D1Pallet.h"
 #include "Interactables//D1Hook.h"
+#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -47,7 +49,7 @@ void AD1KillerController::BeginPlay()
 		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
 
-		D1Killer->nowState = ETransformationState::Dracula;
+		D1Killer->nowState = EDraculaTransformationState::Dracula; 
 	}
 }
 
@@ -66,13 +68,14 @@ void AD1KillerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
 		auto Attack1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Attack1);
-		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Started, this, &ThisClass::Input_Attack1);
+		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Started, this, &ThisClass::Input_LeftClick);
 
 		auto RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
 		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Started, this, &ThisClass::Input_RightClick);
 
 		auto Skill1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Skill1);
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
+		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Completed, this, &ThisClass::Input_OnCtrlReleased);
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar);
 		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
@@ -82,11 +85,6 @@ void AD1KillerController::SetupInputComponent()
 
 void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
-	if (EventTag == (D1GameplayTags::Killer_Attack_Begin))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_Begin"));
-	}
-
 	if (EventTag == (D1GameplayTags::Killer_Attack_DetactStart))
 	{
 		if (D1Killer && D1Killer->AttackCollision)
@@ -105,60 +103,6 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->AttackCollision->SetActive(false);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
-	}
-
-	if (EventTag == (D1GameplayTags::Killer_Attack_End))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_End"));
-		// 공격 종료 후 애니메이션 변수 초기화
-		TPVAnimInstance->SetIsAttacking(false);
-		FPVAnimInstance->SetIsAttacking(false);
-
-		SetCreatureState(ECreatureState::Idle);
-	}
-
-	if (EventTag.MatchesTag(D1GameplayTags::Event_Transform_Begin))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Transform_Begin"));
-		switch (D1Killer->nowState)
-		{
-		case ETransformationState::Dracula:
-			D1Killer->GetCharacterMesh()->SetHiddenInGame(false);
-			D1Killer->GetFPVMesh()->SetHiddenInGame(false);
-			D1Killer->GetWolfMesh()->SetHiddenInGame(true);
-			D1Killer->GetBatMesh()->SetHiddenInGame(true);
-
-			D1Killer->SwitchCamera(ETransformationState::Dracula);
-			TPVAnimInstance->SetIsInTransforming(true);
-
-			break;
-
-		case ETransformationState::Wolf:
-			D1Killer->GetCharacterMesh()->SetHiddenInGame(true);
-			D1Killer->GetWolfMesh()->SetHiddenInGame(false);
-			D1Killer->GetBatMesh()->SetHiddenInGame(true);
-
-			D1Killer->SwitchCamera(ETransformationState::Wolf);
-			WolfAnimInstance->SetIsInTransforming(true);
-
-			break;
-
-		case ETransformationState::Bat:
-			D1Killer->GetCharacterMesh()->SetHiddenInGame(true);
-			D1Killer->GetWolfMesh()->SetHiddenInGame(true);
-			D1Killer->GetBatMesh()->SetHiddenInGame(false);
-
-			D1Killer->SwitchCamera(ETransformationState::Bat);
-			BatAnimInstance->SetIsInTransforming(true);
-
-			break;
-		}
-	}
-
-	if (EventTag.MatchesTag(D1GameplayTags::Event_Transform_End))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Event_Transform_End"));
-		EndTransform();
 	}
 
 	if (EventTag.MatchesTag(D1GameplayTags::Killer_GeneratorEnd))
@@ -221,27 +165,22 @@ void AD1KillerController::Input_Look(const FInputActionValue& InputValue)
 	GetPawn()->AddControllerPitchInput(-LookAxisVector.Y);
 }
 
-void AD1KillerController::Input_Attack1(const FInputActionValue& InputValue)
+void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 {
 	if (!D1Killer)
 		return;
 
-	if (GetCreatureState() == ECreatureState::InTransform)
+	if (bIsCtrlPressed)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Input_LeftClick"));
+		UE_LOG(LogTemp, Log, TEXT("🎯 Ctrl + Left Click Activated!"));
 		LeftClick_Transform();
+		return;
 	}
 
-	if (D1Killer->nowState == ETransformationState::Dracula && GetCreatureState() != ECreatureState::InTransform)
+	if (CurrentTransformState == EDraculaTransformationState::Dracula)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
-
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
-
-		//TPVAnimInstance->SetIsAttacking(true);
-		//FPVAnimInstance->SetIsAttacking(true);
-
-		SetCreatureState(ECreatureState::Attack1);
 	}
 }
 
@@ -250,28 +189,23 @@ void AD1KillerController::Input_RightClick(const FInputActionValue& InputValue)
 	if (!D1Killer)
 		return;
 
-	if (GetCreatureState() == ECreatureState::InTransform)
+	if (bIsCtrlPressed)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Input_RightClick"));
+		UE_LOG(LogTemp, Log, TEXT("🎯 Ctrl + Right Click Activated!"));
 		RightClick_Transform();
 	}
 }
 
 void AD1KillerController::Input_Skill1(const FInputActionValue& InputValue)
 {
-	if (!D1Killer)
-		return;
+	UE_LOG(LogTemp, Log, TEXT("✅ Ctrl Key Pressed!"));
+	bIsCtrlPressed = true;
+}
 
-	UE_LOG(LogTemp, Warning, TEXT("Input_Skill1"));
-	bTransform = !bTransform;
-	if (bTransform)
-	{
-		SetCreatureState(ECreatureState::InTransform);
-	}
-	else
-	{
-		SetCreatureState(ECreatureState::Idle);
-	}
+void AD1KillerController::Input_OnCtrlReleased(const FInputActionValue& InputValue)
+{
+	UE_LOG(LogTemp, Log, TEXT("⛔ Ctrl Key Released!"));
+	bIsCtrlPressed = false;
 }
 
 ECreatureState AD1KillerController::GetCreatureState()
@@ -292,174 +226,45 @@ void AD1KillerController::SetCreatureState(ECreatureState InState)
 	}
 }
 
-//void AD1KillerController::SwitchCameraToState(ECreatureState NewState, float BlendTime)
-//{
-//	if (!D1Killer)
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("SwitchCameraToState: Pawn is not a KillerBase!"));
-//		return;
-//	}
-//
-//	TObjectPtr<UCameraComponent> TargetCamComp = nullptr;
-//
-//	switch (NewState)
-//	{
-//	case ECreatureState::Dracula:
-//		TargetCamComp = D1Killer->GetFirstPersonCameraComponent();
-//		break;
-//	case ECreatureState::Wolf:
-//		TargetCamComp = D1Killer->GetWolfCameraComponent();
-//		break;
-//	case ECreatureState::Bat:
-//		TargetCamComp = D1Killer->GetBatCameraComponent();
-//		break;
-//	}
-//	if (!TargetCamComp)
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("SwitchCameraToState: Target camera component is null!"));
-//		return;
-//	}
-//
-//	D1Killer->SwitchCamera(NewState);
-//	FTransform TargetCamTransform = TargetCamComp->GetComponentTransform();
-//
-//	FActorSpawnParameters SpawnParams;
-//	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-//	ACameraActor* TempCam = GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(), TargetCamTransform, SpawnParams);
-//	if (!TempCam)
-//	{
-//		UE_LOG(LogTemp, Warning, TEXT("SwitchCameraToState: Failed to spawn temporary camera actor!"));
-//		return;
-//	}
-//
-//	if (UCameraComponent* TempCamComp = TempCam->GetCameraComponent())
-//	{
-//		TempCamComp->SetFieldOfView(TargetCamComp->FieldOfView);
-//	}
-//
-//	EViewTargetBlendFunction BlendFunc = VTBlend_EaseInOut;
-//	float BlendExp = 2.0f;
-//	bool bLockOutgoing = false;
-//	SetViewTargetWithBlend(TempCam, BlendTime, BlendFunc, BlendExp, bLockOutgoing);
-//
-//	AD1KillerBase* Killer = Cast<AD1KillerBase>(GetCharacter());
-//	// BlendTime 후에 뷰 타겟을 다시 KillerBase로 전환하고 임시 카메라 파괴
-//	FTimerHandle TimerHandle;
-//	GetWorld()->GetTimerManager().SetTimer(TimerHandle, FTimerDelegate::CreateLambda([this, Killer, TempCam]()
-//		{
-//			SetViewTarget(Killer);
-//			if (TempCam)
-//			{
-//				TempCam->Destroy();
-//			}
-//		}), BlendTime, false);
-//}
-
 void AD1KillerController::LeftClick_Transform()
 {
-	//SetIgnoreInput(true);
+	if (D1Killer->nowState == EDraculaTransformationState::Dracula)
+	{
+		PrevTransformState = EDraculaTransformationState::Dracula;
+		CurrentTransformState = EDraculaTransformationState::Wolf;
+	}
+	else if (D1Killer->nowState == EDraculaTransformationState::Wolf)
+	{
+		PrevTransformState = EDraculaTransformationState::Wolf;
+		CurrentTransformState = EDraculaTransformationState::Bat;
+	}
+	else if (D1Killer->nowState == EDraculaTransformationState::Bat)
+	{
+		PrevTransformState = EDraculaTransformationState::Bat;
+		CurrentTransformState = EDraculaTransformationState::Dracula;
+	}
 
-	if (D1Killer->nowState == ETransformationState::Dracula)
-	{
-		TPVAnimInstance->SetLRClick(false);
-		WolfAnimInstance->SetLRClick(false);
-		TransformToWolf();
-	}
-	else if (D1Killer->nowState == ETransformationState::Wolf)
-	{
-		WolfAnimInstance->SetLRClick(false);
-		BatAnimInstance->SetLRClick(false);
-		TransformToBat();
-	}
-	else if (D1Killer->nowState == ETransformationState::Bat)
-	{
-		BatAnimInstance->SetLRClick(false);
-		TPVAnimInstance->SetLRClick(false);
-		TransformToDracula();
-	}
+	D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
 }
 
 void AD1KillerController::RightClick_Transform()
 {
-	//SetIgnoreInput(true);
-
-	if (D1Killer->nowState == ETransformationState::Dracula)
+	if (D1Killer->nowState == EDraculaTransformationState::Dracula)
 	{
-		BatAnimInstance->SetLRClick(true);
-		TPVAnimInstance->SetLRClick(true);
-		TransformToBat();
+		PrevTransformState = EDraculaTransformationState::Dracula;
+		CurrentTransformState = EDraculaTransformationState::Bat;
 	}
-	else if (D1Killer->nowState == ETransformationState::Wolf)
+	else if (D1Killer->nowState == EDraculaTransformationState::Wolf)
 	{
-		TPVAnimInstance->SetLRClick(true);
-		WolfAnimInstance->SetLRClick(true);
-		TransformToDracula();
+		PrevTransformState = EDraculaTransformationState::Wolf;
+		CurrentTransformState = EDraculaTransformationState::Dracula;
 	}
-	else if (D1Killer->nowState == ETransformationState::Bat)
+	else if (D1Killer->nowState == EDraculaTransformationState::Bat)
 	{
-		WolfAnimInstance->SetLRClick(true);
-		BatAnimInstance->SetLRClick(true);
-		TransformToWolf();
+		PrevTransformState = EDraculaTransformationState::Bat;
+		CurrentTransformState = EDraculaTransformationState::Wolf;
 	}
-}
-
-void AD1KillerController::TransformToDracula()
-{
-	if (D1Killer->nowState == ETransformationState::Wolf)
-	{
-		WolfAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Dracula;
-	}
-	else if (D1Killer->nowState == ETransformationState::Bat)
-	{
-		BatAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Dracula;
-	}
-}
-
-void AD1KillerController::TransformToWolf()
-{
-	if (D1Killer->nowState == ETransformationState::Dracula)
-	{
-		D1Killer->GetFPVMesh()->SetHiddenInGame(true);
-		TPVAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Wolf;
-	}
-	else if (D1Killer->nowState == ETransformationState::Bat)
-	{
-		BatAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Wolf;
-	}
-}
-
-void AD1KillerController::TransformToBat()
-{
-	if (D1Killer->nowState == ETransformationState::Dracula)
-	{
-		D1Killer->GetFPVMesh()->SetHiddenInGame(true);
-		TPVAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Bat;
-	}
-	else if (D1Killer->nowState == ETransformationState::Wolf)
-	{
-		WolfAnimInstance->SetIsOutTransforming(true);
-		D1Killer->nowState = ETransformationState::Bat;
-	}
-}
-
-void AD1KillerController::EndTransform()
-{
-	TPVAnimInstance->SetIsOutTransforming(false);
-	WolfAnimInstance->SetIsOutTransforming(false);
-	BatAnimInstance->SetIsOutTransforming(false);
-
-	TPVAnimInstance->SetIsInTransforming(false);
-	WolfAnimInstance->SetIsInTransforming(false);
-	BatAnimInstance->SetIsInTransforming(false);
-
-	bTransform = false;
-	SetIgnoreInput(false);
-	SetCreatureState(ECreatureState::Idle);
+	D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
 }
 
 void AD1KillerController::StartDamageGenerator()

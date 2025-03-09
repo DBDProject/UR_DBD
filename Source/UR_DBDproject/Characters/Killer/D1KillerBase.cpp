@@ -7,6 +7,7 @@
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
+#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Attack.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -17,6 +18,7 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
+#include "AbilitySystemBlueprintLibrary.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -195,24 +197,24 @@ void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
 	}
 }
 
-void AD1KillerBase::SwitchCamera(ETransformationState NewState)
+void AD1KillerBase::SwitchCamera(EDraculaTransformationState NewState)
 {
 	if (Camera) Camera->Deactivate();
 	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
 
-	if (NewState == ETransformationState::Dracula)
+	if (NewState == EDraculaTransformationState::Dracula)
 	{
 		if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 		return;
 	}
-	if (NewState == ETransformationState::Wolf)
+	if (NewState == EDraculaTransformationState::Wolf)
 	{
 		if (WolfCameraComponent) WolfCameraComponent->Activate();
 		return;
 	}
-	if (NewState == ETransformationState::Bat)
+	if (NewState == EDraculaTransformationState::Bat)
 	{
 		if (BatCameraComponent) BatCameraComponent->Activate();
 		return;
@@ -300,32 +302,27 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	if (!AttackCollision->IsActive())
 		return;
 
-	UD1KillerBaseAnim* KC_TPV = Cast<UD1KillerBaseAnim>(CharacterMesh->GetAnimInstance());
-	UD1KillerBaseAnim* KC_FPV = Cast<UD1KillerBaseAnim>(FPVMesh->GetAnimInstance());
-
 	if (OtherActor && OtherActor != this)
 	{
-		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
 
 		// 💡 캐스팅이 실패하는지 로그로 확인
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
-			Survivor->TakeDamageFromKiller();
 
+			//Survivor->TakeDamageFromKiller();
 			DetectedSurvivor = Survivor;
-			KC_TPV->SetAttackHit(true);
-			KC_FPV->SetAttackHit(true);
+
+			FGameplayTag HitEventTag = FGameplayTag::RequestGameplayTag("Event.Killer.HitResult");
+			FGameplayEventData EventData;
+			EventData.EventTag = HitEventTag;
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, HitEventTag, EventData);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Error, TEXT("캐스팅 실패! OtherActor 클래스: %s"), *OtherActor->GetClass()->GetName());
 		}
-	}
-	else
-	{
-		KC_TPV->SetAttackHit(false);
-		KC_FPV->SetAttackHit(false);
 	}
 }
 

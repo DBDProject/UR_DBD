@@ -8,14 +8,6 @@
 
 class UCameraComponent;
 class USkeletalMeshComponent;
-UENUM(BlueprintType)
-enum class ETransformationState : uint8
-{
-	Dracula UMETA(DisplayName = "Dracula"),
-	Wolf UMETA(DisplayName = "Wolf"),
-	Bat UMETA(DisplayName = "Bat"),
-	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
-};
 /**
  *
  */
@@ -111,7 +103,7 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
-	void SwitchCamera(ETransformationState NewState);
+	void SwitchCamera(EDraculaTransformationState NewState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 	UBoxComponent* AttackCollision;
@@ -135,6 +127,7 @@ public:
 	AD1SurvivorBase* GetDetectedCrawlSurvivor() const { return DetectedCrawlSurvivor.IsValid() ? DetectedCrawlSurvivor.Get() : nullptr; }
 
 	void ActivateAbility(FGameplayTag AbilityTag);
+	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 public:
-	ETransformationState nowState;
+	EDraculaTransformationState nowState;
 };

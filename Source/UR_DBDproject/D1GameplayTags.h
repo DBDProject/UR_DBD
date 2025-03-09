@@ -21,6 +21,9 @@ namespace D1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_Begin);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_End);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Killer_HitResult);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Killer_Transform);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_Begin);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_End);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactStart);
@@ -32,4 +35,5 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_VaultWindowEnd);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Transform);
 }
