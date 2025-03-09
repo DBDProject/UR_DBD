@@ -618,7 +618,6 @@ void AD1KillerController::StartHookPlayer()
 	FPVAnimInstance->Montage_Play(FPV_HookSurvivor, 1.0f);
 
 	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 시작"));
-
 }
 
 void AD1KillerController::EndHookPlayer()
