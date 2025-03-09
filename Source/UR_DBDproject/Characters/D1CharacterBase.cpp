@@ -14,6 +14,8 @@ AD1CharacterBase::AD1CharacterBase()
 void AD1CharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+
+	AddCharacterAbilities();
 }
 
 void AD1CharacterBase::InitAbilitySystem()
@@ -30,4 +32,15 @@ void AD1CharacterBase::Tick(float DeltaTime)
 
 void AD1CharacterBase::HandleGameplayEvent(FGameplayTag EventTag)
 {
+}
+
+void AD1CharacterBase::AddCharacterAbilities()
+{
+	UD1AbilitySystemComponent* ASC = Cast<UD1AbilitySystemComponent>(AbilitySystemComponent);
+	if (ASC == nullptr)
+	{
+		return;
+	}
+
+	ASC->AddCharacterAbilities(StartupAbilities);
 }

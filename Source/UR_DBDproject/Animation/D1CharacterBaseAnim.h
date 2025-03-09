@@ -35,6 +35,9 @@ protected:
 	float  MovementDirection = 0.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float  MovementDirectionRight = 0.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float YawDelta = 0.0f;
 
 	UPROPERTY(BlueprintReadOnly)

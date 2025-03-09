@@ -6,6 +6,7 @@
 #include "GameFramework/PlayerController.h"
 #include "D1Define.h"
 #include "GameplayTagContainer.h"
+#include "AbilitySystem/D1AbilitySystemComponent.h"
 
 #include "D1KillerController.generated.h"
 
@@ -87,9 +88,10 @@ protected:
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
-	void Input_Attack1(const FInputActionValue& InputValue);
-	void Input_Skill1(const FInputActionValue& InputValue);
+	void Input_LeftClick(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
+	void Input_Skill1(const FInputActionValue& InputValue);
+	void Input_OnCtrlReleased(const FInputActionValue& InputValue);
 
 	void HandleInteraction();
 
@@ -98,15 +100,7 @@ private:
 	UFUNCTION()
 	void RightClick_Transform();
 
-	UFUNCTION()
-	void TransformToDracula();
-	UFUNCTION()
-	void TransformToWolf();
-	UFUNCTION()
-	void TransformToBat();
-	UFUNCTION()
-	void EndTransform();
-	bool bTransform = false;
+	bool bIsCtrlPressed = false;
 
 	UFUNCTION()
 	void StartDamageGenerator();
@@ -131,13 +125,29 @@ private:
 	void EndHookPlayer();
 
 	UFUNCTION()
+	void StartVault();
+	UFUNCTION()
+	void EndVault();
+	void VaultUpdate();
+	FTimerHandle VaultTimerHandle;
+	float VaultTimeElapsed = 0.0f;
+
+	UFUNCTION()
 	void SetIgnoreInput(bool bEnable);
+
+	EDraculaTransformationState PrevTransformState;
+	EDraculaTransformationState CurrentTransformState;
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
 
+	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
+	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
+
 protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UAbilitySystemComponent* ASC;
+
 	TObjectPtr<class UAnimMontage> TPV_DamageGenerator; // 발전기 3인칭 데미지 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 1인칭 데미지 몽타주
@@ -156,5 +166,10 @@ protected:
 	TObjectPtr<class UAnimMontage> TPV_HookSurvivor; // 생존자 훅(갈고리) 3인칭 몽타주
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> FPV_HookSurvivor; // 생존자 훅(갈고리) 1인칭 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> TPV_VaultWindow; // 창문 넘기 3인칭 몽타주
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> FPV_VaultWindow; // 창문 넘기 1인칭 몽타주
 
 };

@@ -48,3 +48,19 @@ enum class EVaultType : uint8
 	Medium UMETA(DisplayName = "Medium"),
 	Fast UMETA(DisplayName = "Fast")
 };
+
+UENUM(BlueprintType)
+enum class EVaultInteractionPosition : uint8
+{
+	Front UMETA(DisplayName = "Front"),
+	Back UMETA(DisplayName = "Back"),
+};
+
+UENUM(BlueprintType)
+enum class EDraculaTransformationState : uint8
+{
+	Dracula UMETA(DisplayName = "Dracula"),
+	Wolf UMETA(DisplayName = "Wolf"),
+	Bat UMETA(DisplayName = "Bat"),
+	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
+};

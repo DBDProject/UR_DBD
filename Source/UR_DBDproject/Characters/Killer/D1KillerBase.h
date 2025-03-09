@@ -8,14 +8,6 @@
 
 class UCameraComponent;
 class USkeletalMeshComponent;
-UENUM(BlueprintType)
-enum class ETransformationState : uint8
-{
-	Dracula UMETA(DisplayName = "Dracula"),
-	Wolf UMETA(DisplayName = "Wolf"),
-	Bat UMETA(DisplayName = "Bat"),
-	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
-};
 /**
  *
  */
@@ -31,30 +23,32 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void InitAbilitySystem() override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> FirstPersonCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> WolfCameraComponent;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<UCameraComponent> BatCameraComponent;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class USpringArmComponent> BatSpringArm;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> CharacterMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> FPVMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> WolfMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = KDH)
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
 
 protected:
@@ -109,7 +103,7 @@ private:
 
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
-	void SwitchCamera(ETransformationState NewState);
+	void SwitchCamera(EDraculaTransformationState NewState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 	UBoxComponent* AttackCollision;
@@ -132,6 +126,6 @@ public:
 	AD1SurvivorBase* GetDetectedSurvivor() const { return DetectedSurvivor.IsValid() ? DetectedSurvivor.Get() : nullptr; }
 	AD1SurvivorBase* GetDetectedCrawlSurvivor() const { return DetectedCrawlSurvivor.IsValid() ? DetectedCrawlSurvivor.Get() : nullptr; }
 
-public:
-	ETransformationState nowState;
+	void ActivateAbility(FGameplayTag AbilityTag);
+	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 };

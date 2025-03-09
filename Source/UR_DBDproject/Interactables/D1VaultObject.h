@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "Characters/D1CharacterBase.h"
 #include "D1VaultObject.generated.h"
 
 UCLASS()
@@ -23,6 +24,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	void MoveToVaultInteractionLocation(AD1CharacterBase* Character);
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> RootScene;
@@ -37,4 +40,14 @@ protected:
 	// 지푸라기 매쉬
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UStaticMeshComponent> HayMesh;
+
+	UPROPERTY()
+	FVector StartPos;
+	
+	UPROPERTY()
+	FVector TargetPos;
+
+public:
+	FVector GetStartPos() { return StartPos; }
+	FVector GetTargetPos() { return TargetPos; }
 };
