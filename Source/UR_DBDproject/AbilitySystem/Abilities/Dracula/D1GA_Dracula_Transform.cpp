@@ -188,7 +188,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 		{
 			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Dracula"));
 			Killer->GetCharacterMesh()->SetHiddenInGame(false);
+			Killer->GetCharacterMesh()->SetOwnerNoSee(true);
 			Killer->GetFPVMesh()->SetHiddenInGame(false);
+			Killer->GetFPVMesh()->SetOnlyOwnerSee(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(true);
 			Killer->SwitchCamera(EDraculaTransformationState::Dracula);
@@ -227,7 +229,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 		{
 			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Dracula"));
 			Killer->GetCharacterMesh()->SetHiddenInGame(false);
+			Killer->GetCharacterMesh()->SetOwnerNoSee(true);
 			Killer->GetFPVMesh()->SetHiddenInGame(false);
+			Killer->GetFPVMesh()->SetOnlyOwnerSee(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(true);
 			Killer->SwitchCamera(EDraculaTransformationState::Dracula);

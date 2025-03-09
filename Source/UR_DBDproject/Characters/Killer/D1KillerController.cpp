@@ -49,7 +49,7 @@ void AD1KillerController::BeginPlay()
 		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
 
-		D1Killer->nowState = EDraculaTransformationState::Dracula; 
+		CurrentTransformState = EDraculaTransformationState::Dracula;
 	}
 }
 
@@ -228,17 +228,17 @@ void AD1KillerController::SetCreatureState(ECreatureState InState)
 
 void AD1KillerController::LeftClick_Transform()
 {
-	if (D1Killer->nowState == EDraculaTransformationState::Dracula)
+	if (CurrentTransformState == EDraculaTransformationState::Dracula)
 	{
 		PrevTransformState = EDraculaTransformationState::Dracula;
 		CurrentTransformState = EDraculaTransformationState::Wolf;
 	}
-	else if (D1Killer->nowState == EDraculaTransformationState::Wolf)
+	else if (CurrentTransformState == EDraculaTransformationState::Wolf)
 	{
 		PrevTransformState = EDraculaTransformationState::Wolf;
 		CurrentTransformState = EDraculaTransformationState::Bat;
 	}
-	else if (D1Killer->nowState == EDraculaTransformationState::Bat)
+	else if (CurrentTransformState == EDraculaTransformationState::Bat)
 	{
 		PrevTransformState = EDraculaTransformationState::Bat;
 		CurrentTransformState = EDraculaTransformationState::Dracula;
@@ -249,17 +249,17 @@ void AD1KillerController::LeftClick_Transform()
 
 void AD1KillerController::RightClick_Transform()
 {
-	if (D1Killer->nowState == EDraculaTransformationState::Dracula)
+	if (CurrentTransformState == EDraculaTransformationState::Dracula)
 	{
 		PrevTransformState = EDraculaTransformationState::Dracula;
 		CurrentTransformState = EDraculaTransformationState::Bat;
 	}
-	else if (D1Killer->nowState == EDraculaTransformationState::Wolf)
+	else if (CurrentTransformState == EDraculaTransformationState::Wolf)
 	{
 		PrevTransformState = EDraculaTransformationState::Wolf;
 		CurrentTransformState = EDraculaTransformationState::Dracula;
 	}
-	else if (D1Killer->nowState == EDraculaTransformationState::Bat)
+	else if (CurrentTransformState == EDraculaTransformationState::Bat)
 	{
 		PrevTransformState = EDraculaTransformationState::Bat;
 		CurrentTransformState = EDraculaTransformationState::Wolf;

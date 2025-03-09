@@ -128,6 +128,4 @@ public:
 
 	void ActivateAbility(FGameplayTag AbilityTag);
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
-public:
-	EDraculaTransformationState nowState;
 };
