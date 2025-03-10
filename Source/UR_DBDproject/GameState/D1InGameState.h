@@ -3,15 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "AIController.h"
-#include "D1AIController.generated.h"
+#include "GameFramework/GameStateBase.h"
+#include "D1InGameState.generated.h"
 
 /**
- *
+ * 
  */
 UCLASS()
-class UR_DBDPROJECT_API AD1AIController : public AAIController
+class UR_DBDPROJECT_API AD1InGameState : public AGameStateBase
 {
 	GENERATED_BODY()
-
+	
 };
