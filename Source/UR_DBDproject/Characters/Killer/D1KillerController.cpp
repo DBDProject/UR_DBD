@@ -90,7 +90,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->AttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactStart"));
-			D1Killer->AttackCollision->SetActive(true);
+			//D1Killer->AttackCollision->SetActive(true);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
 	}
@@ -100,7 +100,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->AttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactEnd"));
-			D1Killer->AttackCollision->SetActive(false);
+			//D1Killer->AttackCollision->SetActive(false);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}

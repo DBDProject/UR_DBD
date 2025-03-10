@@ -133,8 +133,8 @@ AD1KillerBase::AD1KillerBase()
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
 	AttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollision"));
-	AttackCollision->SetupAttachment(CharacterMesh, TEXT("joint_RingERT_01")); // 오른손에 부착
-	AttackCollision->SetBoxExtent(FVector(0.1f, 0.1f, 0.1f));
+	AttackCollision->SetupAttachment(CharacterMesh, TEXT("AttackCollision")); // 오른손에 부착
+	AttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
 	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -149,9 +149,9 @@ void AD1KillerBase::BeginPlay()
 	// 모든 카메라 비활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 	// 기본 카메라 활성화
-	if (Camera) Camera->Activate();
+	if (Camera) Camera->Deactivate();
 
 	if (InteractionBox)
 	{
@@ -299,8 +299,8 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!AttackCollision->IsActive())
-		return;
+	//if (!AttackCollision->IsActive())
+	//	return;
 
 	if (OtherActor && OtherActor != this)
 	{

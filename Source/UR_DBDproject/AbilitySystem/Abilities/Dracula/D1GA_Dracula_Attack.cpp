@@ -66,9 +66,10 @@ void UD1GA_Dracula_Attack::ActivateAbility(
     FPVAnimInstance->Montage_JumpToSection(FName("In"), FPV_Attack.Get());
 
     // ✅ "In" 섹션이 끝나면 `OnInMontageEnded()` 실행
-    FOnMontageBlendingOutStarted BlendOutDelegate;
-    BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnInMontageEnded);
-    TPVAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, TPV_Attack.Get());
+    FOnMontageEnded EndDelegate;
+    EndDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnInMontageEnded);
+    TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, TPV_Attack.Get());
+
 }
 
 void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -107,9 +108,9 @@ void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterru
     }
 
     // ✅ "Hit" 또는 "Miss"가 끝나면 `OnFinalMontageEnded()` 실행
-    FOnMontageBlendingOutStarted FinalBlendOutDelegate;
-    FinalBlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnFinalMontageEnded);
-    TPVAnimInstance->Montage_SetBlendingOutDelegate(FinalBlendOutDelegate, TPV_Attack.Get());
+    FOnMontageEnded EndDelegate;
+    EndDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnFinalMontageEnded);
+    TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, TPV_Attack.Get());
 }
 
 void UD1GA_Dracula_Attack::OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
