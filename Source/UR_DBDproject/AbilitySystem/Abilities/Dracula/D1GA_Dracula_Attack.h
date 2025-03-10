@@ -50,7 +50,4 @@ protected:
 private:
 	void OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-
-public:
-	void SetAttackHit(bool bHit) { bAttackHit = bHit; }
 };

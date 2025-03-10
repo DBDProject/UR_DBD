@@ -39,43 +39,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class AD1SurvivorBase> CarriedSurvivor;
 
-	/*
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Dracula_In_Wolf_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Dracula_Out_Wolf_Montage;
-	
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Dracula_In_Bat_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Dracula_Out_Bat_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Bat_In_Wolf_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Bat_Out_Wolf_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Bat_In_Dracula_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Bat_Out_Dracula_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Wolf_In_Dracula_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Wolf_Out_Dracula_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Wolf_In_Bat_Montage;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "KDH_Animation")
-	UAnimMontage* Wolf_Out_Bat_Montage;*/
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
@@ -101,13 +64,6 @@ private:
 	void RightClick_Transform();
 
 	bool bIsCtrlPressed = false;
-
-	UFUNCTION()
-	void StartDamageGenerator();
-	UFUNCTION()
-	void EndDamageGenerator();
-	UFUNCTION()
-	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
 	UFUNCTION()
 	void StartDestroyPallet();

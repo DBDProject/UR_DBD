@@ -90,6 +90,7 @@ void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterru
     TPVAnimInstance->Montage_Play(TPV_Attack.Get());
     FPVAnimInstance->Montage_Play(FPV_Attack.Get());
 
+    bAttackHit = Killer->GetbSurvivorHit();
     
     // ✅ 적중 여부에 따라 "Hit" 또는 "Miss"로 이동
     if (bAttackHit)
@@ -122,6 +123,6 @@ void UD1GA_Dracula_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled); 
     
-	bAttackHit = false;
+    bAttackHit = false;
     UE_LOG(LogTemp, Log, TEXT("✅ Attack GAS END "));
 }

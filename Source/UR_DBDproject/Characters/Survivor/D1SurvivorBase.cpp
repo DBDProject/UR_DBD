@@ -270,7 +270,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		case ESurvivorState::Healthy:
 		{
 
-			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
+			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
 			PlayAnimMontage(HitMontage, 1.0f, "Hit_BK");
 			CurrentState = ESurvivorState::Injured;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
@@ -280,7 +280,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 
 		case ESurvivorState::Injured:
 		{
-			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
+			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
 			PlayAnimMontage(HitMontage, 1.0f);
 			CurrentState = ESurvivorState::Crawl;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
