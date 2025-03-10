@@ -52,6 +52,22 @@ enum class EVaultType : uint8
 };
 
 UENUM(BlueprintType)
+enum class EVaultInteractionPosition : uint8
+{
+	Front UMETA(DisplayName = "Front"),
+	Back UMETA(DisplayName = "Back"),
+};
+
+UENUM(BlueprintType)
+enum class EDraculaTransformationState : uint8
+{
+	Dracula UMETA(DisplayName = "Dracula"),
+	Wolf UMETA(DisplayName = "Wolf"),
+	Bat UMETA(DisplayName = "Bat"),
+	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
+};
+
+UENUM(BlueprintType)
 enum class ECharacterType : uint8
 {
 	// 열거형 이름이랑 DisplayeName이랑 같아야 함
@@ -107,20 +123,4 @@ struct FCharacterDataSet : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APlayerState> PlayerStateClass;
-};
-
-UENUM(BlueprintType)
-enum class EVaultInteractionPosition : uint8
-{
-	Front UMETA(DisplayName = "Front"),
-	Back UMETA(DisplayName = "Back"),
-};
-
-UENUM(BlueprintType)
-enum class EDraculaTransformationState : uint8
-{
-	Dracula UMETA(DisplayName = "Dracula"),
-	Wolf UMETA(DisplayName = "Wolf"),
-	Bat UMETA(DisplayName = "Bat"),
-	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
 };
