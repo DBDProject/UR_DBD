@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "System/D1GameInstance.h"
-#include "GameFramework/GameModeBase.h"
+#include "GameFramework/GameMode.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
@@ -15,7 +15,7 @@
  *
  */
 UCLASS()
-class UR_DBDPROJECT_API AD1InGameMode : public AGameModeBase
+class UR_DBDPROJECT_API AD1InGameMode : public AGameMode
 {
 	GENERATED_BODY()
 
@@ -30,7 +30,6 @@ private:
 	AActor* FindRoleBasedPlayerStart();
 
 public:
-
 	FCharacterDataSet* GetCharacterData(ECharacterType CharacaterType);
 	FName GetEnumRowName(ECharacterType CharacterType);
 
@@ -40,3 +39,4 @@ public:
 	virtual void Logout(AController* Exiting) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };
+
