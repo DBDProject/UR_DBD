@@ -17,6 +17,9 @@
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
 #include "Interactables/D1ExitGate.h"
+#include "Items/D1ItemBase.h"
+#include "Items/D1Medkit.h"
+#include "Items/D1Toolbox.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -63,6 +66,9 @@ void AD1SurvivorBase::BeginPlay()
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
 	}
+
+	// Temp
+	//EquipItem(BP_ToolboxClass);
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
@@ -372,6 +378,37 @@ void AD1SurvivorBase::FinishHealing()
 	HealingProgress = 0.0f;
 	bIsBeingHealed = false;
 	HealingSource = nullptr;
+}
+
+// 아이템 장착 함수
+void AD1SurvivorBase::EquipItem(TSubclassOf<AD1ItemBase> ItemClass)
+{
+	if (!ItemClass) return;
+
+	// 기존 장착 아이템 제거
+	if (EquippedItem.IsValid())
+	{
+		EquippedItem->Destroy();
+		EquippedItem = nullptr;
+	}
+
+	// 새 아이템 생성 및 장착
+	EquippedItem = GetWorld()->SpawnActor<AD1ItemBase>(ItemClass);
+	if (EquippedItem.IsValid())
+	{
+		FName AttachSocketName = "RightHandItemSocket";  // 생존자의 오른손 소켓
+		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+
+		UE_LOG(LogTemp, Warning, TEXT("%s을(를) 장착했습니다."), *EquippedItem->GetName());
+	}
+}
+
+void AD1SurvivorBase::UseCurrentItem()
+{
+	if (EquippedItem.IsValid())
+	{
+		EquippedItem.Get()->UseItem(this);
+	}
 }
 
 void AD1SurvivorBase::ResetHealingCooldown()
