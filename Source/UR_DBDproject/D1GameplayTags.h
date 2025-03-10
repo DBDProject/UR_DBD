@@ -19,16 +19,8 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_RightClick);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SpaceBar);
 
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_Begin);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Transform_End);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Killer_HitResult);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Event_Killer_Transform);
-
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_Begin);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_End);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_GeneratorEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PalletEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PickUpEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_HookEnd);
@@ -36,4 +28,5 @@ namespace D1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Transform);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_DamageGenerator);
 }

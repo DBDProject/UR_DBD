@@ -82,6 +82,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
+	bool bSurvivorHit = false;
+
 private:
 	UFUNCTION()
 	void OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -128,4 +130,6 @@ public:
 
 	void ActivateAbility(FGameplayTag AbilityTag);
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
+
+	bool GetbSurvivorHit() { return bSurvivorHit; }
 };

@@ -134,7 +134,7 @@ AD1KillerBase::AD1KillerBase()
 
 	AttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollision"));
 	AttackCollision->SetupAttachment(CharacterMesh, TEXT("joint_RingERT_01")); // 오른손에 부착
-	AttackCollision->SetBoxExtent(FVector(0.5f, 0.5f, 0.5f));
+	AttackCollision->SetBoxExtent(FVector(0.1f, 0.1f, 0.1f));
 	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -304,25 +304,26 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 
 	if (OtherActor && OtherActor != this)
 	{
-		//UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
+		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
 
 		// 💡 캐스팅이 실패하는지 로그로 확인
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
 
-			//Survivor->TakeDamageFromKiller();
+			Survivor->TakeDamageFromKiller();
 			DetectedSurvivor = Survivor;
 
-			FGameplayTag HitEventTag = FGameplayTag::RequestGameplayTag("Event.Killer.HitResult");
-			FGameplayEventData EventData;
-			EventData.EventTag = HitEventTag;
-			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(this, HitEventTag, EventData);
+			bSurvivorHit = true;
 		}
 		else
 		{
 			UE_LOG(LogTemp, Error, TEXT("캐스팅 실패! OtherActor 클래스: %s"), *OtherActor->GetClass()->GetName());
 		}
+	}
+	else
+	{
+		bSurvivorHit = false;
 	}
 }
 
