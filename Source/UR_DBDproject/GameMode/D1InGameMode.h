@@ -7,7 +7,6 @@
 #include "GameFramework/GameModeBase.h"
 #include "GameFramework/PlayerState.h"
 #include "GameFramework/Character.h"
-#include "Data/D1CharacterDataTable.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
 #include "D1InGameMode.generated.h"
