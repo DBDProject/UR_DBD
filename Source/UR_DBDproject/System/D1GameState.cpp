@@ -8,13 +8,14 @@
 
 AD1GameState::AD1GameState()
 {
+	bReplicates = true;
 }
 
 void AD1GameState::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    FindExitGates();
+	FindExitGates();
 }
 
 void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -25,38 +26,46 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
 }
 
-void AD1GameState::FindExitGates()
+void AD1GameState::OnRep_RepairedGenerators()
 {
-    ExitGates.Empty();
-
-    TArray<AActor*> FoundGates;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AD1ExitGate::StaticClass(), FoundGates);
-
-    for (AActor* GateActor : FoundGates)
-    {
-        if (AD1ExitGate* ExitGate = Cast<AD1ExitGate>(GateActor))
-        {
-            ExitGates.Add(ExitGate);
-        }
-    }
-    UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출구를 찾음!"), ExitGates.Num());
+	OnGeneratorRepaired.Broadcast(RepairedGenerators);
 }
 
-void AD1GameState::UpdateGeneratorState()
+void AD1GameState::FindExitGates()
 {
-    ++RepairedGenerators;
-    UE_LOG(LogTemp, Warning, TEXT("현재 수리된 발전기 개수: %d"), RepairedGenerators);
+	ExitGates.Empty();
 
-    if (RepairedGenerators >= 5) // DBD는 발전기 5개 수리 필요
-    {
-        bAllGeneratorsRepaired = true;
+	TArray<AActor*> FoundGates;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AD1ExitGate::StaticClass(), FoundGates);
 
-        for (AD1ExitGate* ExitGate : ExitGates)
-        {
-            if (ExitGate)
-            {
-                ExitGate->ActivateExitGate();
-            }
-        }
-    }
+	for (AActor* GateActor : FoundGates)
+	{
+		if (AD1ExitGate* ExitGate = Cast<AD1ExitGate>(GateActor))
+		{
+			ExitGates.Add(ExitGate);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출구를 찾음!"), ExitGates.Num());
+}
+
+void AD1GameState::UpdateGeneratorState_Implementation()
+{
+	if (!HasAuthority())
+		return;
+
+	++RepairedGenerators;
+	UE_LOG(LogTemp, Warning, TEXT("현재 수리된 발전기 개수: %d"), RepairedGenerators);
+
+	if (RepairedGenerators >= 5) // DBD는 발전기 5개 수리 필요
+	{
+		bAllGeneratorsRepaired = true;
+
+		for (AD1ExitGate* ExitGate : ExitGates)
+		{
+			if (ExitGate)
+			{
+				ExitGate->ActivateExitGate();
+			}
+		}
+	}
 }
