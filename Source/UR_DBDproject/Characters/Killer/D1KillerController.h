@@ -65,13 +65,6 @@ private:
 
 	bool bIsCtrlPressed = false;
 
-	//UFUNCTION()
-	//void StartDamageGenerator();
-	//UFUNCTION()
-	//void EndDamageGenerator();
-	//UFUNCTION()
-	//void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
-
 	UFUNCTION()
 	void StartDestroyPallet();
 	UFUNCTION()
