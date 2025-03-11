@@ -37,7 +37,7 @@ protected:
 	TObjectPtr<class UD1KillerSet> KillerSet;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class AD1SurvivorBase> CarriedSurvivor;
+	class AD1SurvivorBase* CarriedSurvivor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
@@ -64,32 +64,7 @@ private:
 	void RightClick_Transform();
 
 	bool bIsCtrlPressed = false;
-
-	UFUNCTION()
-	void StartDestroyPallet();
-	UFUNCTION()
-	void EndDestroyPallet();
-
-	UFUNCTION()
-	void StartPickUpPlayer();
-	UFUNCTION()
-	void EndPickUpPlayer();
-
-	UFUNCTION()
-	void StartHookPlayer();
-	UFUNCTION()
-	void EndHookPlayer();
-
-	UFUNCTION()
-	void StartVault();
-	UFUNCTION()
-	void EndVault();
-	void VaultUpdate();
-	FTimerHandle VaultTimerHandle;
-	float VaultTimeElapsed = 0.0f;
-
-	UFUNCTION()
-	void SetIgnoreInput(bool bEnable);
+	bool bIgnoreInputLook = false;
 
 	EDraculaTransformationState PrevTransformState;
 	EDraculaTransformationState CurrentTransformState;
@@ -97,35 +72,15 @@ public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
 
+	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
+
 	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
 
+	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) {	CarriedSurvivor = survivor;	}
+	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* ASC;
-
-	TObjectPtr<class UAnimMontage> TPV_DamageGenerator; // 발전기 3인칭 데미지 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_DamageGenerator; // 발전기 1인칭 데미지 몽타주
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_DestroyPallet; // 팔레트 3인칭 파괴 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_DestroyPallet; // 팔레트 1인칭 파괴 몽타주
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_PickUpSurvivor; // 생존자 픽업 3인칭 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_PickUpSurvivor; // 생존자 픽업 1인칭 몽타주
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_HookSurvivor; // 생존자 훅(갈고리) 3인칭 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_HookSurvivor; // 생존자 훅(갈고리) 1인칭 몽타주
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> TPV_VaultWindow; // 창문 넘기 3인칭 몽타주
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> FPV_VaultWindow; // 창문 넘기 1인칭 몽타주
 
 };

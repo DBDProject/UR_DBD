@@ -134,7 +134,7 @@ AD1KillerBase::AD1KillerBase()
 
 	AttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollision"));
 	AttackCollision->SetupAttachment(CharacterMesh, TEXT("joint_RingERT_01")); // 오른손에 부착
-	AttackCollision->SetBoxExtent(FVector(0.1f, 0.1f, 0.1f));
+	AttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
 	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
@@ -146,16 +146,14 @@ void AD1KillerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	// 모든 카메라 비활성화
+	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
 	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
-	// 기본 카메라 활성화
 	if (Camera) Camera->Activate();
 
 	if (InteractionBox)
 	{
-		// 콜리전 이벤트 바인딩
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapObjectBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapObjectEnd);
 	}
@@ -223,6 +221,18 @@ void AD1KillerBase::SwitchCamera(EDraculaTransformationState NewState)
 
 void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
+	if (!OtherActor || DetectedObject == OtherActor) return;
+
+	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+	{
+		if (Survivor->GetSurvivorState() == ESurvivorState::Crawl)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
+			DetectedObject = OtherActor;
+			DetectedCrawlSurvivor = Survivor;
+		}
+	}
+
 	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
@@ -237,15 +247,6 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 		CurrentPallet = Pallet;
 	}
 
-	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-	{
-		if (Survivor->GetSurvivorState() == ESurvivorState::Crawl)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
-			DetectedObject = OtherActor;
-			DetectedCrawlSurvivor = Survivor;
-		}
-	}
 
 	if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 	{
@@ -264,35 +265,34 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 
 void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	if (DetectedObject == OtherActor)
+	if (!OtherActor || DetectedObject != OtherActor) return;
+
+	if (CurrentGenerator == OtherActor)
 	{
-		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
-		{
-			CurrentGenerator = nullptr;
-		}
-
-		if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
-		{
-			CurrentPallet = nullptr;
-		}
-
-		if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
-		{
-			DetectedCrawlSurvivor = nullptr;
-		}
-
-		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-		{
-			DetectedObject = nullptr;
-		}
-
-		if (OtherActor->ActorHasTag("Vaultable"))
-		{
-			VaultTarget = nullptr;
-		}
-
-		DetectedObject = nullptr;
+		CurrentGenerator = nullptr;
 	}
+
+	if (CurrentPallet == OtherActor)
+	{
+		CurrentPallet = nullptr;
+	}
+
+	if (CurrentHook == OtherActor)
+	{
+		CurrentHook = nullptr;
+	}
+
+	if (DetectedCrawlSurvivor == OtherActor)
+	{
+		DetectedCrawlSurvivor = nullptr;
+	}
+
+	if (VaultTarget == OtherActor)
+	{
+		VaultTarget = nullptr;
+	}
+
+	DetectedObject = nullptr;
 }
 
 void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -302,11 +302,13 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	if (!AttackCollision->IsActive())
 		return;
 
-	if (OtherActor && OtherActor != this)
+	if (bAttackSuccess)
+		return;
+
+	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
 		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
 
-		// 💡 캐스팅이 실패하는지 로그로 확인
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
@@ -315,6 +317,7 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 			DetectedSurvivor = Survivor;
 
 			bSurvivorHit = true;
+			bAttackSuccess = true;
 		}
 		else
 		{

@@ -83,6 +83,7 @@ protected:
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
 	bool bSurvivorHit = false;
+	bool bAttackSuccess = false;
 
 private:
 	UFUNCTION()
@@ -132,4 +133,5 @@ public:
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 
 	bool GetbSurvivorHit() { return bSurvivorHit; }
+	bool SetbAttackSuccess(bool bValue) { return bAttackSuccess = bValue; }
 };

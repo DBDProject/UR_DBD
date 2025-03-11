@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1GA_Dracula_DamageGenerator.generated.h"
+#include "D1Define.h"
+#include "D1GA_Dracula_DestroyPallet.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GA_Dracula_DamageGenerator : public UD1GameplayAbility
+class UR_DBDPROJECT_API UD1GA_Dracula_DestroyPallet : public UD1GameplayAbility
 {
 	GENERATED_BODY()
+	
 public:
-	UD1GA_Dracula_DamageGenerator(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UD1GA_Dracula_DestroyPallet(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	virtual bool CanActivateAbility(
@@ -38,12 +40,12 @@ protected:
 		bool bWasCancelled) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> TPV_DamageGenerator;
+	TObjectPtr<class UAnimMontage> TPV_DestroyPallet;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> FPV_DamageGenerator;
+	TObjectPtr<class UAnimMontage> FPV_DestroyPallet;
 
 private:
-	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
+
 };
