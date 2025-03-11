@@ -40,31 +40,29 @@ private:
 
 
 protected: // Run
-	void RunStart_Local();
-	void RunStop_Local();
-	void RunStart_Server();
-	void RunStop_Server();
+	void StartRun_Local();
+	void StopRun_Local();
 	UFUNCTION(Server, Reliable)
-	void Server_RunStart();
+	void Server_StartRun();
 	UFUNCTION(Server, Reliable)
-	void Server_RunStop(); 
+	void Server_StopRun(); 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_RunStart();
+	void Multi_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_RunStop();
+	void Multi_StopRun();
 
 
 protected: // Repair
 	void StartRepair_Local();
 	void StopRepair_Local();
-	void StartRepair_Server();
-	void StopRepair_Server();
-
 	UFUNCTION(Server, Reliable)
 	void Server_StartRepair();
-
 	UFUNCTION(Server, Reliable)
 	void Server_StopRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_RunStart();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_RunStop();
 
 public:
 	// 생존자 치료

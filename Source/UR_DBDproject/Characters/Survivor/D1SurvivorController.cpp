@@ -133,7 +133,7 @@ void AD1SurvivorController::Input_RunStart()
 	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
 	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
-	Server_RunStart();
+	Server_StartRun();
 
 }
 
@@ -188,17 +188,17 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StartRepair_Local();
+		//StartRepair_Local();
 
-		// 서버에도 동기화 요청
-		if (HasAuthority())
-		{
-			StartRepair_Server();
-		}
-		else
-		{
-			Server_StartRepair();
-		}
+		//// 서버에도 동기화 요청
+		//if (HasAuthority())
+		//{
+		//	StartRepair_Server();
+		//}
+		//else
+		//{
+		//	Server_StartRepair();
+		//}
 	}
 
 	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
@@ -287,7 +287,7 @@ void AD1SurvivorController::Input_StartTestInput_1()
 	D1Survivor.Get()->TakeDamageFromKiller();
 }
 
-void AD1SurvivorController::RunStart_Local()
+void AD1SurvivorController::StartRun_Local()
 {
 	if (!D1Survivor.IsValid()) return;
 
@@ -301,7 +301,7 @@ void AD1SurvivorController::RunStart_Local()
 	}
 }
 
-void AD1SurvivorController::RunStop_Local()
+void AD1SurvivorController::StopRun_Local()
 {
 	if (!D1Survivor.IsValid()) return;
 
@@ -317,34 +317,26 @@ void AD1SurvivorController::RunStop_Local()
 	}
 }
 
-void AD1SurvivorController::RunStart_Server()
+
+
+void AD1SurvivorController::Multi_StartRun_Implementation()
 {
-	Multi_RunStart();
+	StartRun_Local();
 }
 
-void AD1SurvivorController::RunStop_Server()
+void AD1SurvivorController::Multi_StopRun_Implementation()
 {
-	Multi_RunStop();
+	StopRun_Local();
 }
 
-void AD1SurvivorController::Multi_RunStart_Implementation()
+void AD1SurvivorController::Server_StartRun_Implementation()
 {
-	RunStart_Local();
+	Multi_StartRun();
 }
 
-void AD1SurvivorController::Multi_RunStop_Implementation()
+void AD1SurvivorController::Server_StopRun_Implementation()
 {
-	RunStop_Local();
-}
-
-void AD1SurvivorController::Server_RunStart_Implementation()
-{
-	RunStart_Server();
-}
-
-void AD1SurvivorController::Server_RunStop_Implementation()
-{
-	RunStop_Server();
+	Multi_StopRun();
 }
 
 void AD1SurvivorController::StartRepair_Local()
