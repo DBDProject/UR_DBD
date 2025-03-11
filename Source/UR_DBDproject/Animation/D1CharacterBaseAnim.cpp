@@ -36,7 +36,4 @@ void UD1CharacterBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 	GroundSpeed = Velocity.Size2D();
 	bShouldMove = (GroundSpeed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector);
 	bIsFalling = MovementComponent->IsFalling();
-
-	if (!Character->HasAuthority())
-		UE_LOG(LogTemp, Warning, TEXT("GroundSpeed: %.2f%%"), GroundSpeed);
 }

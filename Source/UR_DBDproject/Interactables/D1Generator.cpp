@@ -235,19 +235,19 @@ void AD1Generator::OnSkillCheckFail()
 
 void AD1Generator::StopRepairAll()
 {
-    if (RepairingPlayers.Num() == 0) return;
+    //if (RepairingPlayers.Num() == 0) return;
 
-    RepairingPlayers.RemoveAll([](TObjectPtr<AD1SurvivorBase> Player)
-        {
-            if (Player)
-            {
-                Cast<AD1SurvivorController>(Player->GetController())->StopRepair();
-            }
-            return true; // 모든 요소 삭제
-        });
+    //RepairingPlayers.RemoveAll([](TObjectPtr<AD1SurvivorBase> Player)
+    //    {
+    //        if (Player)
+    //        {
+    //            Cast<AD1SurvivorController>(Player->GetController())->StopRepair();
+    //        }
+    //        return true; // 모든 요소 삭제
+    //    });
 
-    bIsRepairing = false;
-    CachedAnimInstance->SetIsRepairing(false);
+    //bIsRepairing = false;
+    //CachedAnimInstance->SetIsRepairing(false);
 }
 
 void AD1Generator::EnableRepair()

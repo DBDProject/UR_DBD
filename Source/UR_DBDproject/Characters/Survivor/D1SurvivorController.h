@@ -22,6 +22,7 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void OnPossess(APawn* InPawn) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupInputComponent() override;
 
 private:
@@ -37,26 +38,35 @@ private:
 	void Input_StopInteract_Space();
 	void Input_StartTestInput_1();
 
-protected:
+
+protected: // Run
+	void RunStart_Local();
+	void RunStop_Local();
 	void RunStart_Server();
 	void RunStop_Server();
 	UFUNCTION(Server, Reliable)
 	void Server_RunStart();
 	UFUNCTION(Server, Reliable)
-	void Server_RunStop();
+	void Server_RunStop(); 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_RunStart();
+	void Multi_RunStart();
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_RunStop();
+	void Multi_RunStop();
+
+
+protected: // Repair
+	void StartRepair_Local();
+	void StopRepair_Local();
+	void StartRepair_Server();
+	void StopRepair_Server();
+
+	UFUNCTION(Server, Reliable)
+	void Server_StartRepair();
+
+	UFUNCTION(Server, Reliable)
+	void Server_StopRepair();
 
 public:
-	// 발전기 수리 관련 함수
-	UFUNCTION()
-	void StartRepair();
-
-	UFUNCTION()
-	void StopRepair();
-
 	// 생존자 치료
 	UFUNCTION()
 	void StartHealing(AD1SurvivorBase* TargetSurvivor);
@@ -105,4 +115,5 @@ private:
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
+
 };
