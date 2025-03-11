@@ -38,12 +38,16 @@ void AD1SurvivorController::BeginPlay()
 	// 카메라 Pitch(위/아래) 제한 설정
 	PlayerCameraManager->ViewPitchMin = -35.0f; // 최소 Pitch (아래 제한)
 	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
+}
 
-	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
-	if (D1Survivor)
+void AD1SurvivorController::OnPossess(APawn* InPawn)
+{
+	Super::OnPossess(InPawn);
+	D1Survivor = Cast<AD1SurvivorBase>(InPawn); // 컨트롤러가 새로운 캐릭터를 제어할 때 갱신
+	if (D1Survivor.IsValid())
 	{
-		D1Survivor->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor->GetMesh()->GetAnimInstance());
+		D1Survivor.Get()->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
 	}
 }
 
@@ -87,6 +91,8 @@ void AD1SurvivorController::SetupInputComponent()
 
 void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	FVector2D MovementVector = InputValue.Get<FVector2D>();
 
 	APawn* ControlledPawn = GetPawn();
@@ -118,73 +124,67 @@ void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 
 void AD1SurvivorController::Input_RunStart()
 {
-	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
-
-	SetCreatureState(ECreatureState::Run);
-
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	if (HasAuthority())
 	{
-		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetRunSpeed();
+		RunStart_Server();
 	}
-	else if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	else
 	{
-		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetInjRunSpeed();
+		Server_RunStart();
 	}
 }
 
 void AD1SurvivorController::Input_RunStop()
 {
-	if (!D1Survivor || !D1Survivor->GetSurvivoreSet()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
-
-	SetCreatureState(ECreatureState::None);
-
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	if (HasAuthority())
 	{
-		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetWalkSpeed();
+		RunStop_Server();
 	}
-	else if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	else
 	{
-		D1Survivor->GetCharacterMovement()->MaxWalkSpeed = D1Survivor->GetSurvivoreSet()->GetInjWalkSpeed();
+		Server_RunStop();
 	}
 }
 
 void AD1SurvivorController::Input_StartCrouch()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
 	SetCreatureState(ECreatureState::Crouch);
-	D1Survivor->Crouch();
+	D1Survivor.Get()->Crouch();
 }
 
 void AD1SurvivorController::Input_StopCrouch()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
 	SetCreatureState(ECreatureState::None);
-	D1Survivor->UnCrouch();
+	D1Survivor.Get()->UnCrouch();
 }
 
 void AD1SurvivorController::Input_StartInteract_LeftClick()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
-	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
+	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StartRepair();
 	}
 
-	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor->GetDetectedObject()))
+	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StartHealing(TargetSurvivor);
 	}
@@ -192,14 +192,14 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 void AD1SurvivorController::Input_StopInteract_LeftClick()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
-	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor->GetDetectedObject()))
+	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StopRepair();
 	}
 
-	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor->GetDetectedObject()))
+	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StopHealing(TargetSurvivor);
 	}
@@ -207,16 +207,16 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 void AD1SurvivorController::Input_StartInteract_Space()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) return;
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
-	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor->GetVaultTarget()))
+	if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor.Get()->GetVaultTarget()))
 	{
 		// 현재 속도 가져오기
-		float CurrentSpeed = D1Survivor->GetVelocity().Size();
+		float CurrentSpeed = D1Survivor.Get()->GetVelocity().Size();
 
 		// 속도 기준으로 파쿠르 속도 결정
 		EVaultType VaultType = EVaultType::Medium; // 기본값 Medium
@@ -228,7 +228,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		return;
 	}
 
-	if (AD1Pallet* Pallet = Cast<AD1Pallet>(D1Survivor->GetCurrentPallet()))
+	if (AD1Pallet* Pallet = Cast<AD1Pallet>(D1Survivor.Get()->GetCurrentPallet()))
 	{
 		if (Pallet->GetCurrentState() == EPalletState::Up)
 		{
@@ -247,7 +247,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 		return;
 	}
 
-	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StartOpening();
 
@@ -257,7 +257,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 void AD1SurvivorController::Input_StopInteract_Space()
 {
-	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StopOpening();
 
@@ -268,23 +268,87 @@ void AD1SurvivorController::Input_StopInteract_Space()
 void AD1SurvivorController::Input_StartTestInput_1()
 {
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
-	D1Survivor->TakeDamageFromKiller();
+	D1Survivor.Get()->TakeDamageFromKiller();
+}
+
+void AD1SurvivorController::RunStart_Server()
+{
+
+	if (!D1Survivor.IsValid()) return;
+
+	SetCreatureState(ECreatureState::Run);
+
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor.Get()->GetCharacterMovement()->MaxWalkSpeed = D1Survivor.Get()->GetSurvivoreSet()->GetRunSpeed();
+	}
+	else if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor.Get()->GetCharacterMovement()->MaxWalkSpeed = D1Survivor.Get()->GetSurvivoreSet()->GetInjRunSpeed();
+	}
+
+	//Multicast_RunStart();
+}
+
+void AD1SurvivorController::RunStop_Server()
+{
+	if (!D1Survivor.IsValid()) return;
+
+	SetCreatureState(ECreatureState::None);
+
+	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor.Get()->GetCharacterMovement()->MaxWalkSpeed = D1Survivor.Get()->GetSurvivoreSet()->GetWalkSpeed();
+	}
+	else if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor.Get()->GetCharacterMovement()->MaxWalkSpeed = D1Survivor.Get()->GetSurvivoreSet()->GetInjWalkSpeed();
+	}
+
+	//Multicast_RunStop();
+}
+
+
+void AD1SurvivorController::Server_RunStart_Implementation()
+{
+	RunStart_Server();
+}
+
+void AD1SurvivorController::Server_RunStop_Implementation()
+{
+	RunStop_Server();
+}
+
+void AD1SurvivorController::Multicast_RunStart_Implementation()
+{
+	if (!HasAuthority())
+	{
+		RunStart_Server();
+	}
+}
+
+void AD1SurvivorController::Multicast_RunStop_Implementation()
+{
+	if (!HasAuthority())
+	{
+		RunStop_Server();
+	}
 }
 
 void AD1SurvivorController::StartRepair()
 {
-	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetCurrentGenerator()) return;
 
-	if (D1Survivor->GetCurrentGenerator()->GetIsRepairBlocked() == true ||
-		D1Survivor->GetCurrentGenerator()->GetRepairProgress() >= 100.f) return;
+	if (D1Survivor.Get()->GetCurrentGenerator()->GetIsRepairBlocked() == true ||
+		D1Survivor.Get()->GetCurrentGenerator()->GetRepairProgress() >= 100.f) return;
 
 	if (CachedAnimInstance.IsValid())
 	{
-		D1Survivor->SetIsFail(false);
+		D1Survivor.Get()->SetIsFail(false);
 
 		// 플레이어 위치 판별
 		EGeneratorInteractionPosition Position = 
-			D1Survivor->GetCurrentGenerator()->FindInteractionPosition(D1Survivor);
+			D1Survivor.Get()->GetCurrentGenerator()->FindInteractionPosition(D1Survivor.Get());
 
 		// 플레이어 위치 이동
 		MoveToGeneratorPosition(Position);
@@ -293,16 +357,16 @@ void AD1SurvivorController::StartRepair()
 		CachedAnimInstance.Get()->SetIsRepairing(true);
 
 		// 이동 입력 차단
-		D1Survivor->GetCharacterMovement()->DisableMovement();
-		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+		D1Survivor.Get()->GetCharacterMovement()->DisableMovement();
+		D1Survivor.Get()->GetCharacterMovement()->StopMovementImmediately();
 
-		D1Survivor->GetCurrentGenerator()->StartRepair(D1Survivor, Position);
+		D1Survivor.Get()->GetCurrentGenerator()->StartRepair(D1Survivor.Get(), Position);
 	}
 }
 
 void AD1SurvivorController::StopRepair()
 {
-	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor->GetCurrentGenerator()) return;
 	
 	if (D1Survivor->GetCurrentGenerator()->GetIsFail() == true) return;
 
@@ -312,13 +376,13 @@ void AD1SurvivorController::StopRepair()
 
 		// 이동 가능하게 변경
 		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor);
+		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor.Get());
 	}
 }
 
 void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
 {
-	if (!D1Survivor || !TargetSurvivor) return;
+	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
 	if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Healthy)
 	{
@@ -349,13 +413,13 @@ void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
 		// 입력 차단
 		D1Survivor->GetCharacterMovement()->DisableMovement();
 
-		TargetSurvivor->BeingHealing(D1Survivor);
+		TargetSurvivor->BeingHealing(D1Survivor.Get());
 	}
 }
 
 void AD1SurvivorController::StopHealing(AD1SurvivorBase* TargetSurvivor)
 {
-	if (!D1Survivor || !TargetSurvivor) return;
+	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
 	if (CachedAnimInstance.IsValid())
 	{
@@ -371,7 +435,7 @@ void AD1SurvivorController::StopHealing(AD1SurvivorBase* TargetSurvivor)
 
 void AD1SurvivorController::StartOpening()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
 	{
@@ -385,7 +449,7 @@ void AD1SurvivorController::StartOpening()
 
 		UE_LOG(LogTemp, Warning, TEXT("StartOpening"));
 		// 플레이어 위치 이동
-		Gate->MovePlayerToInteractionPoint(D1Survivor);
+		Gate->MovePlayerToInteractionPoint(D1Survivor.Get());
 
 		if (CachedAnimInstance.IsValid())
 		{
@@ -395,14 +459,14 @@ void AD1SurvivorController::StartOpening()
 			D1Survivor->GetCharacterMovement()->DisableMovement();
 			D1Survivor->GetCharacterMovement()->StopMovementImmediately();
 
-			Gate->StartOpening(D1Survivor);
+			Gate->StartOpening(D1Survivor.Get());
 		}
 	}
 }
 
 void AD1SurvivorController::StopOpening()
 {
-	if (!D1Survivor) return;
+	if (!D1Survivor.IsValid()) return;
 
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
 	{
@@ -427,7 +491,7 @@ void AD1SurvivorController::StopOpening()
 
 void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
 {
-	if (!D1Survivor || !D1Survivor->GetCurrentGenerator()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor->GetCurrentGenerator()) return;
 
 	AD1Generator* Generator = D1Survivor->GetCurrentGenerator();
 	FVector GeneratorLocation = Generator->GetActorLocation();
@@ -466,7 +530,7 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 
 void AD1SurvivorController::PerformVault(EVaultType VaultType)
 {
-	if (!D1Survivor || !D1Survivor->GetVaultTarget()) return;
+	if (!D1Survivor.IsValid() || !D1Survivor->GetVaultTarget()) return;
 
 	if (!VaultMontage) return;
 
@@ -501,7 +565,7 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 void AD1SurvivorController::DropPallet()
 {
 	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
-	if (!D1Survivor || !Pallet) return;
+	if (!D1Survivor.IsValid() || !Pallet) return;
 
 	if (Pallet->GetCurrentState() == EPalletState::Down) return;
 
@@ -509,7 +573,7 @@ void AD1SurvivorController::DropPallet()
 	float CurrentSpeed = D1Survivor->GetVelocity().Size();
 
 	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor);
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
 
 	if (PalletLocation == EPalletLocation::None)
 	{
@@ -550,7 +614,7 @@ void AD1SurvivorController::DropPallet()
 void AD1SurvivorController::VaultPallet()
 {
 	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
-	if (!D1Survivor || !Pallet) return;
+	if (!D1Survivor.IsValid() || !Pallet) return;
 
 	if (Pallet->GetCurrentState() == EPalletState::Up) return;
 
@@ -559,7 +623,7 @@ void AD1SurvivorController::VaultPallet()
 	float CurrentSpeed = D1Survivor->GetVelocity().Size();
 
 	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor);
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
 
 	if (PalletLocation == EPalletLocation::None)
 	{
@@ -593,12 +657,12 @@ void AD1SurvivorController::EnableVaultAfterDrop()
 
 ECreatureState AD1SurvivorController::GetCreatureState()
 {
-	return D1Survivor ? D1Survivor->CreatureState : ECreatureState::None;
+	return D1Survivor.IsValid() ? D1Survivor->CreatureState : ECreatureState::None;
 }
 
 void AD1SurvivorController::SetCreatureState(ECreatureState InState)
 {
-	if (D1Survivor)
+	if (D1Survivor.IsValid())
 	{
 		D1Survivor->CreatureState = InState;
 	}

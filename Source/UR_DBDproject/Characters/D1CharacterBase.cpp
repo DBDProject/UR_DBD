@@ -2,6 +2,8 @@
 
 
 #include "D1CharacterBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AD1CharacterBase::AD1CharacterBase()
@@ -27,6 +29,12 @@ void AD1CharacterBase::InitAbilitySystem()
 void AD1CharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+}
+
+void AD1CharacterBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 }
 

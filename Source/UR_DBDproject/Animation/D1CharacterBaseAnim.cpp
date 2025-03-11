@@ -4,6 +4,7 @@
 #include "Animation/D1CharacterBaseAnim.h"
 #include "Characters/D1CharacterBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
 
 UD1CharacterBaseAnim::UD1CharacterBaseAnim(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -33,7 +34,9 @@ void UD1CharacterBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 
 	Velocity = MovementComponent->Velocity;
 	GroundSpeed = Velocity.Size2D();
-
 	bShouldMove = (GroundSpeed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector);
 	bIsFalling = MovementComponent->IsFalling();
+
+	if (!Character->HasAuthority())
+		UE_LOG(LogTemp, Warning, TEXT("GroundSpeed: %.2f%%"), GroundSpeed);
 }

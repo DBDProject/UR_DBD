@@ -21,6 +21,7 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
 	virtual void SetupInputComponent() override;
 
 private:
@@ -34,8 +35,19 @@ private:
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
 	void Input_StopInteract_Space();
-
 	void Input_StartTestInput_1();
+
+protected:
+	void RunStart_Server();
+	void RunStop_Server();
+	UFUNCTION(Server, Reliable)
+	void Server_RunStart();
+	UFUNCTION(Server, Reliable)
+	void Server_RunStop();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_RunStart();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_RunStop();
 
 public:
 	// 발전기 수리 관련 함수
@@ -78,7 +90,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AD1SurvivorBase> D1Survivor;
+	TWeakObjectPtr<class AD1SurvivorBase> D1Survivor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1SurvivorBaseAnim> CachedAnimInstance;
