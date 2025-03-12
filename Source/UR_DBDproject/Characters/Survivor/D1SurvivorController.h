@@ -45,7 +45,7 @@ protected: // Run
 	UFUNCTION(Server, Reliable)
 	void Server_StartRun();
 	UFUNCTION(Server, Reliable)
-	void Server_StopRun(); 
+	void Server_StopRun();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
@@ -63,6 +63,14 @@ protected: // Repair
 	void Multi_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
+
+protected: //
+	void DropPallet_Local();
+
+	UFUNCTION(Server, Reliable)
+	void Server_DropPallet();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_DropPallet();
 
 public:
 	// 생존자 치료
@@ -83,9 +91,6 @@ public:
 
 	UFUNCTION()
 	void PerformVault(EVaultType VaultType);
-
-	UFUNCTION()
-	void DropPallet();
 
 	UFUNCTION()
 	void VaultPallet();
