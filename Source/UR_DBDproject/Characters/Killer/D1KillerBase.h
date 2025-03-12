@@ -83,6 +83,7 @@ protected:
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
 	bool bSurvivorHit = false;
+	bool bAttackSuccess = false;
 
 private:
 	UFUNCTION()
@@ -103,12 +104,24 @@ private:
 	void OnOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void OnWolfAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 	UBoxComponent* AttackCollision;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
+	UBoxComponent* WolfAttackCollision;
 
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
@@ -132,4 +145,5 @@ public:
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 
 	bool GetbSurvivorHit() { return bSurvivorHit; }
+	bool SetbAttackSuccess(bool bValue) { return bAttackSuccess = bValue; }
 };

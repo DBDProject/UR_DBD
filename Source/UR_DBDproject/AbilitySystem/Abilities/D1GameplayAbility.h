@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "Abilities/GameplayAbility.h"
+#include "Characters/Killer/D1KillerBase.h"
+#include "Characters/Killer/D1KillerController.h"
+#include "D1Define.h"
 #include "D1GameplayAbility.generated.h"
 
 /**
@@ -14,4 +17,7 @@ class UR_DBDPROJECT_API UD1GameplayAbility : public UGameplayAbility
 {
 	GENERATED_BODY()
 
+protected:
+	AD1KillerBase* Killer = nullptr;
+	AD1KillerController* KillerController = nullptr;
 };

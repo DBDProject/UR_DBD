@@ -4,7 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1Define.h"
 #include "D1GA_Dracula_Transform.generated.h"
 
 /**

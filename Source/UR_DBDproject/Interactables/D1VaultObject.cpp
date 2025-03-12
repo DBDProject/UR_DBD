@@ -65,12 +65,12 @@ void AD1VaultObject::MoveToVaultInteractionLocation(AD1CharacterBase* Character)
 	if (RightdDot > 0)
 	{
 		StartPos = VaultLocation - RightVector * 100.0f;
-		TargetPos = VaultLocation + RightVector * 100.0f;
+		TargetPos = VaultLocation + RightVector * 50.0f;
 	}
 	else
 	{
 		StartPos = VaultLocation + RightVector * 100.0f;
-		TargetPos = VaultLocation - RightVector * 100.0f;
+		TargetPos = VaultLocation - RightVector * 50.0f;
 	}
 
 	Character->SetActorLocation(StartPos);

@@ -19,8 +19,6 @@
 #include "Components/CapsuleComponent.h"
 #include "Interactables/D1Generator.h"
 #include "Interactables/D1VaultObject.h"
-#include "Interactables//D1Pallet.h"
-#include "Interactables//D1Hook.h"
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
 #include "AbilitySystemBlueprintLibrary.h"
 
@@ -102,26 +100,29 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactEnd"));
 			//D1Killer->AttackCollision->SetActive(false);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			D1Killer->SetbAttackSuccess(false);
 		}
 	}
 
-	if (EventTag.MatchesTag(D1GameplayTags::Killer_PalletEnd))
+	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactStart))
 	{
-		EndDestroyPallet();
+		if (D1Killer && D1Killer->WolfAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->WolfAttackCollision->SetActive(true);
+			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
 	}
 
-	if (EventTag.MatchesTag(D1GameplayTags::Killer_PickUpEnd))
+	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactEnd))
 	{
-		EndPickUpPlayer();
-	}
-
-	if (EventTag.MatchesTag(D1GameplayTags::Killer_HookEnd))
-	{
-		EndHookPlayer();
-	}
-	if (EventTag.MatchesTag(D1GameplayTags::Killer_VaultWindowEnd))
-	{
-		EndVault();
+		if (D1Killer && D1Killer->WolfAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->WolfAttackCollision->SetActive(false);
+			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			D1Killer->SetbAttackSuccess(false);
+		}
 	}
 }
 
@@ -151,7 +152,7 @@ void AD1KillerController::Input_Move(const FInputActionValue& InputValue)
 
 void AD1KillerController::Input_Look(const FInputActionValue& InputValue)
 {
-	if (!D1Killer) return;
+	if (!D1Killer || bIgnoreInputLook) return;
 
 	FVector2D LookAxisVector = InputValue.Get<FVector2D>();
 
@@ -176,6 +177,13 @@ void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
+		return;
+	}
+
+	if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("WolfAttack"));
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Attack);
 	}
 }
 
@@ -262,147 +270,6 @@ void AD1KillerController::RightClick_Transform()
 	D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
 }
 
-void AD1KillerController::StartDestroyPallet()
-{
-	AD1Pallet* Pallet = D1Killer->GetCurrentPallet();
-	if (!Pallet)
-		return;
-
-	if (Pallet->GetCurrentState() == EPalletState::Up)
-		return;
-
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Killer);
-
-	if (PalletLocation == EPalletLocation::None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
-		return;
-	}
-
-	Pallet->SetCurrentState(EPalletState::Destroyed);
-	TPVAnimInstance->Montage_Play(TPV_DestroyPallet, 1.0f);
-	FPVAnimInstance->Montage_Play(FPV_DestroyPallet, 1.0f);
-
-	UE_LOG(LogTemp, Warning, TEXT("Destroy Pallet"));
-}
-
-void AD1KillerController::EndDestroyPallet()
-{
-	AD1Pallet* Pallet = D1Killer->GetCurrentPallet();
-	if (!D1Killer || !Pallet)
-		return;
-
-	if (Pallet->GetCurrentState() != EPalletState::Destroyed)
-		return;
-
-	Pallet->OnDestroy();
-}
-
-void AD1KillerController::StartPickUpPlayer()
-{
-	AD1SurvivorBase* Survivor = D1Killer->GetDetectedCrawlSurvivor();
-	if (!Survivor)
-		return;
-	
-	Survivor->TakePickUpFromKiller(D1Killer);
-
-	//FVector TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("jaw"));
-	//UE_LOG(LogTemp, Warning, TEXT("TargetLocation: X = %.2f, Y = %.2f, Z = %.2f"),
-	//	TargetLocation.X, TargetLocation.Y, TargetLocation.Z);
-	//if (TargetLocation.IsZero())
-	//{
-	//	TargetLocation = Survivor->GetMesh()->GetSocketLocation(FName("nose"));
-	//}
-	//FRotator LookAtRotation = (TargetLocation - D1Killer->GetActorLocation()).Rotation();
-	//LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	//LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
-
-	//D1Killer->SetActorRotation(LookAtRotation);
-	//SetControlRotation(LookAtRotation);
-	
-	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor, 1.0f);
-	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor, 1.0f);
-
-	CarriedSurvivor = Survivor;
-
-	UE_LOG(LogTemp, Warning, TEXT("생존자 픽업"));
-}
-
-void AD1KillerController::EndPickUpPlayer()
-{
-	if (!D1Killer)
-		return;
-
-	TPVAnimInstance->SetIsCarryingSurvivor(true);
-	FPVAnimInstance->SetIsCarryingSurvivor(true);
-
-	UE_LOG(LogTemp, Warning, TEXT("생존자 픽업 끝"));
-}
-
-void AD1KillerController::StartHookPlayer()
-{
-	AD1Hook* Hook = D1Killer->GetCurrentHook();
-	if (!Hook)
-		return;
-
-	if (!CarriedSurvivor)
-		return;
-
-	CarriedSurvivor->OnHooked(Hook);
-
-	TPVAnimInstance->Montage_Play(TPV_HookSurvivor, 1.0f);
-	FPVAnimInstance->Montage_Play(FPV_HookSurvivor, 1.0f);
-
-	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 시작"));
-}
-
-void AD1KillerController::EndHookPlayer()
-{
-	if (!D1Killer)
-		return;
-
-	CarriedSurvivor = nullptr;
-
-	TPVAnimInstance->SetIsCarryingSurvivor(false);
-	FPVAnimInstance->SetIsCarryingSurvivor(false);
-
-	UE_LOG(LogTemp, Warning, TEXT("생존자 훅 끝"));
-}
-
-void AD1KillerController::StartVault()
-{
-	AD1VaultObject* VaultObj = D1Killer->GetVaultTarget();
-	if (!VaultObj)
-		return;
-
-	VaultObj->MoveToVaultInteractionLocation(D1Killer);
-
-	D1Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-	FPVAnimInstance->Montage_Play(FPV_VaultWindow, 1.0f);
-	TPVAnimInstance->Montage_Play(TPV_VaultWindow, 1.0f);
-
-}
-
-void AD1KillerController::EndVault()
-{
-	AD1VaultObject* VaultObj = D1Killer->GetVaultTarget();
-	if (!VaultObj)
-		return;
-	FVector StartLocation = VaultObj->GetStartPos();
-	FVector TargetLocation = VaultObj->GetTargetPos();
-
-	D1Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
-	
-	D1Killer->SetActorLocation(TargetLocation);
-
-
-}
-
-void AD1KillerController::VaultUpdate()
-{
-
-}
-
 void AD1KillerController::HandleInteraction()
 {
 	if (!D1Killer) return;
@@ -410,17 +277,19 @@ void AD1KillerController::HandleInteraction()
 	AActor* DetectedObject = D1Killer->GetDetectedObject();
 	if (!DetectedObject) return;
 
+	UE_LOG(LogTemp, Log, TEXT("✅ DetectedObject: %s, Class: %s"),
+		*DetectedObject->GetName(), *DetectedObject->GetClass()->GetName());
 	if (D1Killer->GetCurrentHook() && CarriedSurvivor != nullptr)
 	{
-		StartHookPlayer();
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_HookSurvivor);
 	}
-	else if (D1Killer->GetDetectedCrawlSurvivor())
+	else if (D1Killer->GetDetectedCrawlSurvivor() && CarriedSurvivor == nullptr)
 	{
-		StartPickUpPlayer();
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PickUpSurvivor);
 	}
 	else if (D1Killer->GetCurrentPallet())
 	{
-		StartDestroyPallet();
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_DestroyPallet);
 	}
 	else if (D1Killer->GetCurrentGenerator())
 	{
@@ -428,26 +297,13 @@ void AD1KillerController::HandleInteraction()
 	}
 	else if (D1Killer->GetVaultTarget())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Vault"));
-		StartVault();
-	}
-}
-
-void AD1KillerController::SetIgnoreInput(bool bEnable)
-{
-	if (D1Killer)
-	{
-		if (bEnable)
+		if (CurrentTransformState == EDraculaTransformationState::Dracula)
 		{
-			SetIgnoreMoveInput(true);  // 이동 차단
-			SetIgnoreLookInput(true);  // 시점 이동 차단
-			UE_LOG(LogTemp, Log, TEXT("🔴 변신 모드 ON (이동 및 공격 입력 차단)"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_VaultWindow);
 		}
-		else
+		if (CurrentTransformState == EDraculaTransformationState::Wolf)
 		{
-			SetIgnoreMoveInput(false);
-			SetIgnoreLookInput(false);
-			UE_LOG(LogTemp, Log, TEXT("🟢 변신 모드 OFF (입력 복구)"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_VaultWindow);
 		}
 	}
 }

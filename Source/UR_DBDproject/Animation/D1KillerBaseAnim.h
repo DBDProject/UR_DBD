@@ -28,25 +28,13 @@ protected:
 	UPROPERTY()
 	float PreviousYaw = 0.0f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsBreakingGenerator = false;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bCarryingSurvivor = false; // 들고 있는 중인지
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EVaultType VaultType = EVaultType::Medium;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void SetIsBreakingGenerator(bool bBreaking) { bIsBreakingGenerator = bBreaking; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
-
 	UFUNCTION(BlueprintCallable)
 	void SetIsCarryingSurvivor(bool bCarry) { bCarryingSurvivor = bCarry; }	
 

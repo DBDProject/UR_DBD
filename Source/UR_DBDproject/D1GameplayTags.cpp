@@ -17,16 +17,24 @@ namespace D1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_Begin, "Event.Transform.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_End, "Event.Transform.End");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Drop, "Input.Action.Drop");
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactStart, "Killer.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactEnd, "Killer.Attack.DetactEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_PalletEnd, "Killer.PalletEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_PickUpEnd, "Killer.PickUpEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_HookEnd, "Killer.HookEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_VaultWindowEnd, "Killer.VaultWindowEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactStart, "Killer.Wolf.Attack.DetactStart");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactEnd, "Killer.Wolf.Attack.DetactEnd");
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Attack, "Killer.Ability.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Transform, "Killer.Ability.Transform");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_DamageGenerator, "Killer.Ability.DamageGenerator");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_DestroyPallet, "Killer.Ability.DestroyPallet");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_PickUpSurvivor, "Killer.Ability.PickUpSurvivor");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_HookSurvivor, "Killer.Ability.HookSurvivor");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_VaultWindow, "Killer.Ability.VaultWindow");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_DropSurvivor, "Killer.Ability.DropSurvivor");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_PowerAttack, "Killer.Ability.PowerAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Attack, "Killer.Ability.Wolf.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_PowerAttack, "Killer.Ability.Wolf.PowerAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_VaultWindow, "Killer.Ability.Wolf.VaultWindow");
 
 }

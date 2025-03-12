@@ -3,7 +3,6 @@
 
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Attack.h"
 #include "Abilities/Tasks/AbilityTask_PlayMontageAndWait.h"
-#include "Characters/Killer/D1KillerBase.h"
 
 UD1GA_Dracula_Attack::UD1GA_Dracula_Attack(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -33,13 +32,15 @@ void UD1GA_Dracula_Attack::ActivateAbility(
     if (!HasAuthority(&ActivationInfo))
         return;
 
-    AD1KillerBase* Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
-    if (!Killer)
+    Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
+    KillerController = Cast<AD1KillerController>(Killer->GetController());
+    if (!Killer || !KillerController)
     {
         UE_LOG(LogTemp, Error, TEXT("🚨 Killer is NULL!"));
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
+    KillerController->SetIgnoreLookInput(true);
 
     if (!TPV_Attack || !FPV_Attack)
     {
@@ -69,7 +70,6 @@ void UD1GA_Dracula_Attack::ActivateAbility(
     FOnMontageEnded EndDelegate;
     EndDelegate.BindUObject(this, &UD1GA_Dracula_Attack::OnInMontageEnded);
     TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, TPV_Attack.Get());
-
 }
 
 void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -79,7 +79,6 @@ void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterru
 
     //UE_LOG(LogTemp, Log, TEXT("✅ 'In' Section Completed - Jumping to Hit or Miss"));
 
-    AD1KillerBase* Killer = Cast<AD1KillerBase>(GetCurrentActorInfo()->AvatarActor.Get());
     if (!Killer) return;
 
     UAnimInstance* TPVAnimInstance = Killer->GetCharacterMesh()->GetAnimInstance();
@@ -125,5 +124,6 @@ void UD1GA_Dracula_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, c
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled); 
     
     bAttackHit = false;
+    KillerController->SetIgnoreLookInput(false);
     UE_LOG(LogTemp, Log, TEXT("✅ Attack GAS END "));
 }

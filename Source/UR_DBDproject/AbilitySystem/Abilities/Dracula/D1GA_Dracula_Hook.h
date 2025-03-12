@@ -4,17 +4,19 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1GA_Dracula_DamageGenerator.generated.h"
+#include "Interactables/D1Hook.h"
+#include "D1GA_Dracula_Hook.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GA_Dracula_DamageGenerator : public UD1GameplayAbility
+class UR_DBDPROJECT_API UD1GA_Dracula_Hook : public UD1GameplayAbility
 {
 	GENERATED_BODY()
+	
 public:
-	UD1GA_Dracula_DamageGenerator(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UD1GA_Dracula_Hook(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	virtual bool CanActivateAbility(
@@ -38,12 +40,14 @@ protected:
 		bool bWasCancelled) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> TPV_DamageGenerator;
+	TObjectPtr<class UAnimMontage> TPV_HookSurvivor;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> FPV_DamageGenerator;
+	TObjectPtr<class UAnimMontage> FPV_HookSurvivor;
 
 private:
-	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
-	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
+	void MoveToHookLocation();
+	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+	AD1Hook* Hook = nullptr;
 };

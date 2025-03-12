@@ -19,15 +19,23 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Skill1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_RightClick);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SpaceBar);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Drop);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PalletEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PickUpEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_HookEnd);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_VaultWindowEnd);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_Attack_DetactStart);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_Attack_DetactEnd);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Transform);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_DamageGenerator);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_DestroyPallet);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_PickUpSurvivor);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_HookSurvivor);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_VaultWindow);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_DropSurvivor);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_PowerAttack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Attack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_PowerAttack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_VaultWindow);
 }
