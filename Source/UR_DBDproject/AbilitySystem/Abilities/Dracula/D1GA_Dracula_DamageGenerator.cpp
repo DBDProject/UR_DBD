@@ -3,6 +3,7 @@
 
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_DamageGenerator.h"
 #include "Interactables/D1Generator.h"
+#include "Kismet/KismetMathLibrary.h"
 
 UD1GA_Dracula_DamageGenerator::UD1GA_Dracula_DamageGenerator(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -30,12 +31,16 @@ void UD1GA_Dracula_DamageGenerator::ActivateAbility(
 		return;
 
 	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
-	if (!Killer)
+	KillerController = Cast<AD1KillerController>(Killer->GetController());
+	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
+	KillerController = Cast<AD1KillerController>(Killer->GetController());
+	if (!Killer || !KillerController)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 Killer is NULL!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
+	KillerController->SetIgnoreLookInput(true);
 
 	if (!TPV_DamageGenerator || !FPV_DamageGenerator)
 	{
@@ -117,18 +122,18 @@ void UD1GA_Dracula_DamageGenerator::MoveToGeneratorPosition(EGeneratorInteractio
 	}
 	TargetLocation.Z += 120.0f;  // Z 값 증가
 
-	Killer->SetActorLocation(TargetLocation);
-
 	// 플레이어 방향을 발전기로 조정 (자동 회전)
 	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
-	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
-	Killer->SetActorRotation(LookAtRotation);
-}
+	LookAtRotation.Pitch = -15.0f;
+	KillerController->SetControlRotation(LookAtRotation);
+
+	Killer->GetController()->GetPawn()->SetActorLocation(TargetLocation);
+} 
 
 void UD1GA_Dracula_DamageGenerator::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
+	KillerController->SetIgnoreLookInput(false);
 	UE_LOG(LogTemp, Log, TEXT("✅ DamageGenerator GAS END "));
 }

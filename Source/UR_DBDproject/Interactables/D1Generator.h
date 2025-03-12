@@ -27,6 +27,7 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:	
 	// Called every frame
@@ -44,24 +45,29 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void StopRepair(class AD1SurvivorBase* Player);
 
+    UFUNCTION(Server, Reliable)
+    void Server_StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position);
+    UFUNCTION(Server, Reliable)
+    void Server_StopRepair(AD1SurvivorBase* Player);
+
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_SetRepairState(bool bRepairing, EGeneratorInteractionPosition Position);
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_UpdateRepairProgress(float NewProgress);
+    UFUNCTION(NetMulticast, Reliable)
+    void Multicast_StopRepairAll();
     // 데미지
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void OnDamage();
 
 protected:
-    // 오버랩 이벤트 처리 함수
-    UFUNCTION()
-    void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
-    UFUNCTION()
-    void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
     // 스킬 체크 대성공
     UFUNCTION(BlueprintCallable)
     void OnSkillCheckSuccess();
 
     // 스킬 체크 실패
     UFUNCTION(BlueprintCallable)
-    void OnSkillCheckFail();
+    void OnSkillCheckFail(class AD1SurvivorBase* Player);
 
     // 모든 플레이어의 수리를 중단
     UFUNCTION()
@@ -100,15 +106,15 @@ protected:
     TWeakObjectPtr<class UD1GeneratorAnim> CachedAnimInstance;
 
     // 발전기 수리중인지
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairing = false;
 
     // 발전기 수리완료인지
-    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
     bool bIsCompleteRepair = false;
 
     // 스킬 체크 실패 시 3초간 수리 불가
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairBlocked = false;
 
     // 스킬 체크 실패 시 
@@ -116,14 +122,20 @@ protected:
     bool bIsFail = false;
 
     // 수리 진행도
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Generator")
     float RepairProgress = 0.f;
 
     // 수리 하고 있는 플레이어
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     TArray<TObjectPtr<class AD1SurvivorBase>> RepairingPlayers;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
+    UPROPERTY()
+    TMap<EGeneratorInteractionPosition, TObjectPtr<AD1SurvivorBase>> RepairingPositions;
+
+    UPROPERTY(Replicated, BlueprintReadOnly)
+    EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
+
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
     EGeneratorState CurrentState;
 
     // 수리 차단 해제 타이머
@@ -143,4 +155,6 @@ public:
 
     EGeneratorState GetCurrentState() { return CurrentState; }
     void SetCurrentState(EGeneratorState State) { CurrentState = State; }
+
+    TMap<EGeneratorInteractionPosition, TObjectPtr<AD1SurvivorBase>> GetReparingPositions() { return RepairingPositions; }
 };

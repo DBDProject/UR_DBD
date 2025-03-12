@@ -20,9 +20,12 @@
 #include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
+#include "Net/UnrealNetwork.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
+	UE_LOG(LogTemp, Warning, TEXT("생존자 생성됨! %s"), *GetName());
+	auto a = this;
 	GetCharacterMovement()->bOrientRotationToMovement = false;			// 이동 방향을 자동으로 바라보지 않음
 	bUseControllerRotationYaw = false;									// 컨트롤러의 방향을 따라 캐릭터가 회전
 	GetCharacterMovement()->RotationRate = FRotator(0.f, 650.f, 0.f);	// 회전 속도
@@ -54,6 +57,7 @@ void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	auto a = this;
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
@@ -66,26 +70,28 @@ void AD1SurvivorBase::BeginPlay()
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
 	}
-
 	// Temp
 	//EquipItem(BP_ToolboxClass);
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
 {
-	if (AD1SurvivorState* PS = GetPlayerState<AD1SurvivorState>())
+	if (HasAuthority())
 	{
-		AbilitySystemComponent = Cast<UD1AbilitySystemComponent>(PS->GetAbilitySystemComponent());
-		if (!AbilitySystemComponent) return;
-
-		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
-
-		AttributeSet = PS->GetD1SurvivorSet();
-		SurvivorSet = Cast<UD1SurvivorSet>(AttributeSet);
-		if (SurvivorSet)
+		if (AD1SurvivorState* PS = GetPlayerState<AD1SurvivorState>())
 		{
-			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
-			GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
+			AbilitySystemComponent = Cast<UD1AbilitySystemComponent>(PS->GetAbilitySystemComponent());
+			if (!AbilitySystemComponent) return;
+
+			AbilitySystemComponent->InitAbilityActorInfo(PS, this);
+
+			AttributeSet = PS->GetD1SurvivorSet();
+			SurvivorSet = Cast<UD1SurvivorSet>(AttributeSet);
+			if (SurvivorSet)
+			{
+				GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
+				GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
+			}
 		}
 	}
 }
@@ -95,6 +101,16 @@ void AD1SurvivorBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+}
+
+void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(AD1SurvivorBase, SurvivorSet);
+	DOREPLIFETIME(AD1SurvivorBase, bIsRepairing);
+	DOREPLIFETIME(AD1SurvivorBase, InteractionPosition);
+	DOREPLIFETIME(AD1SurvivorBase, bIsFail);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -202,6 +218,11 @@ void AD1SurvivorBase::MoveToPalletStartPosition()
 	FRotator LookAtRotation = PalletNormal.Rotation();
 	//LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
 	SetActorRotation(LookAtRotation);
+}
+
+void AD1SurvivorBase::StartRunning()
+{
+	GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetRunSpeed();
 }
 
 
@@ -415,6 +436,15 @@ void AD1SurvivorBase::ResetHealingCooldown()
 {
 	bCanBeHealed = true;
 	UE_LOG(LogTemp, Warning, TEXT("치료 가능 상태로 변경됨"));
+}
+
+void AD1SurvivorBase::OnRep_SurvivorSet()
+{
+	if (SurvivorSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
+		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
+	}
 }
 
 

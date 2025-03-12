@@ -33,9 +33,11 @@ void UD1GA_Dracula_Transform::ActivateAbility(
 	if (!HasAuthority(&ActivationInfo))
 		return;
 
-	AD1KillerBase* Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
-	if (!Killer)
+	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
+	KillerController = Cast<AD1KillerController>(Killer->GetController());
+	if (!Killer || !KillerController)
 	{
+		UE_LOG(LogTemp, Error, TEXT("🚨 Killer is NULL!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
@@ -50,7 +52,7 @@ void UD1GA_Dracula_Transform::ActivateAbility(
 	UAnimInstance* FPVAnimInstance = Killer->GetFPVMesh()->GetAnimInstance();
 	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
 	UAnimInstance* BatAnimInstance = Killer->GetBatMesh()->GetAnimInstance();
-	AD1KillerController* KillerController = Cast<AD1KillerController>(Killer->GetController());
+	KillerController = Cast<AD1KillerController>(Killer->GetController());
 	PrevTransformState = KillerController->GetPrevTransformState();
 	CurrentTransformState = KillerController->GetCurrentTransformState();
 
@@ -107,14 +109,14 @@ void UD1GA_Dracula_Transform::ActivateAbility(
 	}
 
 
-	FOnMontageBlendingOutStarted FinalBlendOutDelegate;
-	FinalBlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnOutMontageEnded);
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnOutMontageEnded);
 	if (PrevTransformState == EDraculaTransformationState::Dracula)
-		TPVAnimInstance->Montage_SetBlendingOutDelegate(FinalBlendOutDelegate, Dracula_Transform.Get());
+		TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, Dracula_Transform.Get());
 	else if (PrevTransformState == EDraculaTransformationState::Wolf)
-		WolfAnimInstance->Montage_SetBlendingOutDelegate(FinalBlendOutDelegate, Wolf_Transform.Get());
+		WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_Transform.Get());
 	else if (PrevTransformState == EDraculaTransformationState::Bat)
-		BatAnimInstance->Montage_SetBlendingOutDelegate(FinalBlendOutDelegate, Bat_Transform.Get());
+		BatAnimInstance->Montage_SetEndDelegate(EndDelegate, Bat_Transform.Get());
 }
 
 void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -122,7 +124,7 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 	if (!Montage)
 		return;
 	UE_LOG(LogTemp, Log, TEXT("✅ Transform Montage Out Section Completed"));
-	AD1KillerBase* Killer = Cast<AD1KillerBase>(GetCurrentActorInfo()->AvatarActor.Get());
+
 	if (!Killer)
 	{
 		EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
@@ -133,7 +135,7 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 	UAnimInstance* FPVAnimInstance = Killer->GetFPVMesh()->GetAnimInstance();
 	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
 	UAnimInstance* BatAnimInstance = Killer->GetBatMesh()->GetAnimInstance();
-	AD1KillerController* KillerController = Cast<AD1KillerController>(Killer->GetController());
+	KillerController = Cast<AD1KillerController>(Killer->GetController());
 	PrevTransformState = KillerController->GetPrevTransformState();
 	CurrentTransformState = KillerController->GetCurrentTransformState();
 
@@ -158,9 +160,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			WolfAnimInstance->Montage_Play(Wolf_Transform.Get());
 			WolfAnimInstance->Montage_JumpToSection(FName("InDracula"), Wolf_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			WolfAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Wolf_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_Transform.Get());
 		}
 		else if (CurrentTransformState == EDraculaTransformationState::Bat)
 		{
@@ -175,9 +177,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			BatAnimInstance->Montage_Play(Bat_Transform.Get());
 			BatAnimInstance->Montage_JumpToSection(FName("InDracula"), Bat_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			BatAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Bat_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			BatAnimInstance->Montage_SetEndDelegate(EndDelegate, Bat_Transform.Get());
 		}
 	}
 	else if (PrevTransformState == EDraculaTransformationState::Wolf)
@@ -199,9 +201,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			TPVAnimInstance->Montage_Play(Dracula_Transform.Get());
 			TPVAnimInstance->Montage_JumpToSection(FName("InWolf"), Dracula_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			TPVAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Dracula_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, Dracula_Transform.Get());
 		}
 		else if (CurrentTransformState == EDraculaTransformationState::Bat)
 		{
@@ -216,9 +218,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			BatAnimInstance->Montage_Play(Bat_Transform.Get());
 			BatAnimInstance->Montage_JumpToSection(FName("InWolf"), Bat_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			BatAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Bat_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			BatAnimInstance->Montage_SetEndDelegate(EndDelegate, Bat_Transform.Get());
 		}
 	}
 	else if (PrevTransformState == EDraculaTransformationState::Bat)
@@ -240,9 +242,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			TPVAnimInstance->Montage_Play(Dracula_Transform.Get());
 			TPVAnimInstance->Montage_JumpToSection(FName("InBat"), Dracula_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			TPVAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Dracula_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, Dracula_Transform.Get());
 		}
 		else if (CurrentTransformState == EDraculaTransformationState::Wolf)
 		{
@@ -257,9 +259,9 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			WolfAnimInstance->Montage_Play(Wolf_Transform.Get());
 			WolfAnimInstance->Montage_JumpToSection(FName("InBat"), Wolf_Transform.Get());
 
-			FOnMontageBlendingOutStarted BlendOutDelegate;
-			BlendOutDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
-			WolfAnimInstance->Montage_SetBlendingOutDelegate(BlendOutDelegate, Wolf_Transform.Get());
+			FOnMontageEnded EndDelegate;
+			EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnFinalMontageEnded);
+			WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_Transform.Get());
 		}
 	}
 

@@ -4,8 +4,6 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "Characters/Killer/D1KillerBase.h"
-#include "D1Define.h"
 #include "D1GA_Dracula_DamageGenerator.generated.h"
 
 /**
@@ -48,6 +46,4 @@ protected:
 private:
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
-
-	AD1KillerBase* Killer = nullptr;
 };

@@ -21,30 +21,50 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
+	virtual void OnPossess(APawn* InPawn) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void SetupInputComponent() override;
 
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
-	void Input_RunStart();
-	void Input_RunStop();
+	void Input_StartRun();
+	void Input_StopRun();
 	void Input_StartCrouch();
 	void Input_StopCrouch();
 	void Input_StartInteract_LeftClick();
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
 	void Input_StopInteract_Space();
-
 	void Input_StartTestInput_1();
 
+
+protected: // Run
+	void StartRun_Local();
+	void StopRun_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_StartRun();
+	UFUNCTION(Server, Reliable)
+	void Server_StopRun(); 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StartRun();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StopRun();
+
+
+protected: // Repair
+	void StartRepair_Local();
+	void StopRepair_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_StartRepair();
+	UFUNCTION(Server, Reliable)
+	void Server_StopRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StartRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StopRepair();
+
 public:
-	// 발전기 수리 관련 함수
-	UFUNCTION()
-	void StartRepair();
-
-	UFUNCTION()
-	void StopRepair();
-
 	// 생존자 치료
 	UFUNCTION()
 	void StartHealing(AD1SurvivorBase* TargetSurvivor);
@@ -78,7 +98,7 @@ protected:
 
 protected:
 	UPROPERTY(BlueprintReadOnly)
-	TObjectPtr<class AD1SurvivorBase> D1Survivor;
+	TWeakObjectPtr<class AD1SurvivorBase> D1Survivor;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1SurvivorBaseAnim> CachedAnimInstance;
@@ -93,4 +113,5 @@ private:
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
+
 };

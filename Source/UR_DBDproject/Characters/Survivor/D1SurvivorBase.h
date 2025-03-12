@@ -27,6 +27,8 @@ protected:
 	virtual void InitAbilitySystem() override;
 	virtual void PossessedBy(AController* NewController) override;
 
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
@@ -36,6 +38,7 @@ public:
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
 
+	void StartRunning();
 	// 콜리전 이벤트 함수
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -78,6 +81,10 @@ public:
 
 	void ResetHealingCooldown();
 
+	// 레플리케이션
+	UFUNCTION()
+	void OnRep_SurvivorSet();
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
@@ -106,11 +113,18 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Pallet> CurrentPallet;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UPROPERTY(ReplicatedUsing = OnRep_SurvivorSet)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
+	// 발전기 수리 중인지 여부
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	bool bIsRepairing = false;
+
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
+
 	// 스킬 체크 실패 시 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
@@ -162,5 +176,10 @@ public:
 	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
+	void SetIsReparing(bool state) { bIsRepairing = state; }
 	bool GetCanBeHealed() { return bCanBeHealed; }
+
+	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
+	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
+
 };
