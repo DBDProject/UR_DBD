@@ -57,7 +57,7 @@ void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	auto a = this;
+	CurrentState = ESurvivorState::Injured;
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
@@ -116,6 +116,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, HealingProgress);
 	DOREPLIFETIME(AD1SurvivorBase, bIsBeingHealed);
 	DOREPLIFETIME(AD1SurvivorBase, bCanBeHealed);
+	DOREPLIFETIME(AD1SurvivorBase, CurrentState);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -372,7 +373,6 @@ void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
 	}
 
 	BeingHealing_Local(Healer);
-	Multicast_BeingHealing(Healer);
 }
 
 void AD1SurvivorBase::StopBeingHealing()
@@ -384,7 +384,6 @@ void AD1SurvivorBase::StopBeingHealing()
 	}
 
 	StopBeingHealing_Local();
-	Multicast_StopBeingHealing();
 }
 
 void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
@@ -395,8 +394,7 @@ void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
 
 	GetCharacterMovement()->DisableMovement();
 	Healer->SetIsHealing(true);
-	bIsBeingHealed = true;
-	
+	bIsBeingHealed = true;	
 }
 
 void AD1SurvivorBase::StopBeingHealing_Local()
@@ -408,13 +406,11 @@ void AD1SurvivorBase::StopBeingHealing_Local()
 
 void AD1SurvivorBase::Server_BeingHealing_Implementation(AD1SurvivorBase* Healer)
 {
-	BeingHealing_Local(Healer);
 	Multicast_BeingHealing(Healer);
 }
 
 void AD1SurvivorBase::Server_StopBeingHealing_Implementation()
 {
-	StopBeingHealing_Local();
 	Multicast_StopBeingHealing();
 }
 

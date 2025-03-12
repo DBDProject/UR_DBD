@@ -141,7 +141,7 @@ protected:
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESurvivorState CurrentState;
 
 protected: // 치료 기능
