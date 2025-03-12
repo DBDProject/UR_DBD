@@ -103,6 +103,27 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->SetbAttackSuccess(false);
 		}
 	}
+
+	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactStart))
+	{
+		if (D1Killer && D1Killer->WolfAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->WolfAttackCollision->SetActive(true);
+			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+	}
+
+	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactEnd))
+	{
+		if (D1Killer && D1Killer->WolfAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->WolfAttackCollision->SetActive(false);
+			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			D1Killer->SetbAttackSuccess(false);
+		}
+	}
 }
 
 void AD1KillerController::Input_Move(const FInputActionValue& InputValue)
@@ -156,6 +177,13 @@ void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
+		return;
+	}
+
+	if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("WolfAttack"));
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Attack);
 	}
 }
 
@@ -269,6 +297,13 @@ void AD1KillerController::HandleInteraction()
 	}
 	else if (D1Killer->GetVaultTarget())
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_VaultWindow);
+		if (CurrentTransformState == EDraculaTransformationState::Dracula)
+		{
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_VaultWindow);
+		}
+		if (CurrentTransformState == EDraculaTransformationState::Wolf)
+		{
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_VaultWindow);
+		}
 	}
 }

@@ -5,18 +5,18 @@
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
 #include "Interactables/D1VaultObject.h"
-#include "D1GA_Dracula_VaultWindow.generated.h"
+#include "D1GA_Wolf_VaultWindow.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GA_Dracula_VaultWindow : public UD1GameplayAbility
+class UR_DBDPROJECT_API UD1GA_Wolf_VaultWindow : public UD1GameplayAbility
 {
 	GENERATED_BODY()
-	
+
 public:
-	UD1GA_Dracula_VaultWindow(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+	UD1GA_Wolf_VaultWindow(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	virtual bool CanActivateAbility(
@@ -40,13 +40,9 @@ protected:
 		bool bWasCancelled) override;
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> TPV_VaultWindow;
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
-	TObjectPtr<class UAnimMontage> FPV_VaultWindow;
+	TObjectPtr<class UAnimMontage> Wolf_VaultWindow;
 
 private:
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
-
 	AD1VaultObject* VaultObj = nullptr;
 };

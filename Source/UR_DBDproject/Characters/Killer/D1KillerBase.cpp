@@ -139,6 +139,13 @@ AD1KillerBase::AD1KillerBase()
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
+	WolfAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfAttackCollision"));
+	WolfAttackCollision->SetupAttachment(WolfMesh, TEXT("AttackCollision")); // 메쉬에 부착
+	WolfAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
+	WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	WolfAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	WolfAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
@@ -162,6 +169,12 @@ void AD1KillerBase::BeginPlay()
 	{
 		AttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapPlayerBegin);
 		AttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapPlayerEnd);
+	}
+
+	if (WolfAttackCollision)
+	{
+		WolfAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerBegin);
+		WolfAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerEnd);
 	}
 }
 
@@ -337,7 +350,44 @@ void AD1KillerBase::OnOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent,
 		DetectedSurvivor = nullptr;
 		DetectedObject = nullptr;
 	}
+}
 
+void AD1KillerBase::OnWolfAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+	bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!WolfAttackCollision->IsActive())
+		return;
+
+	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Wolf Attack 적중: %s"), *OtherActor->GetName());
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
+			Survivor->TakeDamageFromKiller();
+			DetectedSurvivor = Survivor;
+			bSurvivorHit = true;
+			bAttackSuccess = true;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("캐스팅 실패! OtherActor 클래스: %s"), *OtherActor->GetClass()->GetName());
+		}
+	}
+	else
+	{
+		bSurvivorHit = false;
+	}
+}
+
+void AD1KillerBase::OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (DetectedObject == OtherActor)
+	{
+		DetectedSurvivor = nullptr;
+		DetectedObject = nullptr;
+	}
 }
 
 void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
