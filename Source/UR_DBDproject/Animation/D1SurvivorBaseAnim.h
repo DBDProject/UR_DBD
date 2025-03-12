@@ -30,9 +30,6 @@ protected:
 	bool bIsCrouching = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsRepairing = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsHealing = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
@@ -42,15 +39,9 @@ protected:
 	ESurvivorState HealingTargetState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EVaultType VaultType = EVaultType::Medium;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void SetIsRepairing(bool bNewState) { bIsRepairing = bNewState; }
-
 	UFUNCTION(BlueprintCallable)
 	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
 
@@ -59,9 +50,6 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
-
-	UFUNCTION(BlueprintCallable)
-	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
 
 	UFUNCTION(BlueprintCallable)
 	void SetVaultType(EVaultType NewVaultType) { VaultType = NewVaultType; };

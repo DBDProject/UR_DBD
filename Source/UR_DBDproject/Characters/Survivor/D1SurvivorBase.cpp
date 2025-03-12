@@ -108,6 +108,9 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AD1SurvivorBase, SurvivorSet);
+	DOREPLIFETIME(AD1SurvivorBase, bIsRepairing);
+	DOREPLIFETIME(AD1SurvivorBase, InteractionPosition);
+	DOREPLIFETIME(AD1SurvivorBase, bIsFail);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)

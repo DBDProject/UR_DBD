@@ -116,8 +116,15 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_SurvivorSet)
 	TObjectPtr<UD1SurvivorSet> SurvivorSet;
 
+	// 발전기 수리 중인지 여부
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	bool bIsRepairing = false;
+
+	UPROPERTY(Replicated, BlueprintReadWrite)
+	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
+
 	// 스킬 체크 실패 시 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
@@ -169,5 +176,10 @@ public:
 	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
+	void SetIsReparing(bool state) { bIsRepairing = state; }
 	bool GetCanBeHealed() { return bCanBeHealed; }
+
+	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
+	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
+
 };

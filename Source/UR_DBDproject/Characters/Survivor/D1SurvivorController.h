@@ -28,8 +28,8 @@ protected:
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
-	void Input_RunStart();
-	void Input_RunStop();
+	void Input_StartRun();
+	void Input_StopRun();
 	void Input_StartCrouch();
 	void Input_StopCrouch();
 	void Input_StartInteract_LeftClick();
@@ -60,9 +60,9 @@ protected: // Repair
 	UFUNCTION(Server, Reliable)
 	void Server_StopRepair();
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_RunStart();
+	void Multi_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_RunStop();
+	void Multi_StopRepair();
 
 public:
 	// 생존자 치료

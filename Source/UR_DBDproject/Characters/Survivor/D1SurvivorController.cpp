@@ -72,8 +72,8 @@ void AD1SurvivorController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
 		auto RunAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Run);
-		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ThisClass::Input_RunStart);
-		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ThisClass::Input_RunStop);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Started, this, &ThisClass::Input_StartRun);
+		EnhancedInputComponent->BindAction(RunAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopRun);
 
 		auto CrouchAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Crouch);
 		EnhancedInputComponent->BindAction(CrouchAction, ETriggerEvent::Started, this, &ThisClass::Input_StartCrouch);
@@ -128,22 +128,31 @@ void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 	AddPitchInput(LookVector.Y);
 }
 
-void AD1SurvivorController::Input_RunStart()
+void AD1SurvivorController::Input_StartRun()
 {
 	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
 	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
+
+	if (IsLocalController()) // 로컬에서 즉시 실행
+	{
+		StartRun_Local();
+	}
 
 	Server_StartRun();
 
 }
 
-void AD1SurvivorController::Input_RunStop()
+void AD1SurvivorController::Input_StopRun()
 {
 	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
 	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Crawl) return;
 
+	if (IsLocalController()) // 로컬에서 즉시 실행
+	{
+		StopRun_Local();
+	}
 
-	Server_RunStop();
+	Server_StopRun();
 
 }
 
@@ -188,22 +197,17 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		//StartRepair_Local();
+		if (IsLocalController()) // 로컬에서 즉시 실행
+		{
+			StartRepair_Local();
+		}
 
-		//// 서버에도 동기화 요청
-		//if (HasAuthority())
-		//{
-		//	StartRepair_Server();
-		//}
-		//else
-		//{
-		//	Server_StartRepair();
-		//}
+		Server_StartRepair();
 	}
 
 	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StartHealing(TargetSurvivor);
+		//StartHealing(TargetSurvivor);
 	}
 }
 
@@ -213,12 +217,17 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
+		if (IsLocalController()) // 로컬에서 즉시 실행
+		{
+			StopRepair_Local();
+		}
 
+		Server_StopRepair();
 	}
-	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
-	{
-		StopHealing(TargetSurvivor);
-	}
+	//if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
+	//{
+	//	StopHealing(TargetSurvivor);
+	//}
 }
 
 void AD1SurvivorController::Input_StartInteract_Space()
@@ -317,27 +326,36 @@ void AD1SurvivorController::StopRun_Local()
 	}
 }
 
+void AD1SurvivorController::Server_StartRun_Implementation()
+{
+	if (HasAuthority())
+	{
+		Multi_StartRun();
+	}
+}
 
+void AD1SurvivorController::Server_StopRun_Implementation()
+{
+	if (HasAuthority())
+	{
+		Multi_StopRun();
+	}
+}
 
 void AD1SurvivorController::Multi_StartRun_Implementation()
 {
+	if (IsLocalController()) return;
+
 	StartRun_Local();
 }
 
 void AD1SurvivorController::Multi_StopRun_Implementation()
 {
+	if (IsLocalController()) return;
+
 	StopRun_Local();
 }
 
-void AD1SurvivorController::Server_StartRun_Implementation()
-{
-	Multi_StartRun();
-}
-
-void AD1SurvivorController::Server_StopRun_Implementation()
-{
-	Multi_StopRun();
-}
 
 void AD1SurvivorController::StartRepair_Local()
 {
@@ -347,30 +365,21 @@ void AD1SurvivorController::StartRepair_Local()
 		D1Survivor.Get()->GetCurrentGenerator()->GetRepairProgress() >= 100.f)
 		return;
 
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		D1Survivor.Get()->SetIsFail(false);
+	D1Survivor.Get()->SetIsFail(false);
 
-		// 플레이어 위치 판별
-		EGeneratorInteractionPosition Position =
-			D1Survivor.Get()->GetCurrentGenerator()->FindInteractionPosition(D1Survivor.Get());
+	// 플레이어 위치 판별
+	EGeneratorInteractionPosition Position =
+		D1Survivor.Get()->GetCurrentGenerator()->FindInteractionPosition(D1Survivor.Get());
 
-		// 플레이어 위치 이동
-		MoveToGeneratorPosition(Position);
+	// 플레이어 위치 이동
+	MoveToGeneratorPosition(Position);
 
-		CachedAnimInstance.Get()->SetInteractionPosition(Position);
-		CachedAnimInstance.Get()->SetIsRepairing(true);
+	// 이동 입력 차단
+	D1Survivor.Get()->GetCharacterMovement()->DisableMovement();
+	D1Survivor.Get()->GetCharacterMovement()->StopMovementImmediately();
 
-		// 이동 입력 차단
-		D1Survivor.Get()->GetCharacterMovement()->DisableMovement();
-		D1Survivor.Get()->GetCharacterMovement()->StopMovementImmediately();
-
-		D1Survivor.Get()->GetCurrentGenerator()->StartRepair(D1Survivor.Get(), Position);
-	}
+	D1Survivor->SetInteractionPosition(Position);
+	D1Survivor.Get()->GetCurrentGenerator()->StartRepair(D1Survivor.Get(), Position);
 }
 
 void AD1SurvivorController::StopRepair_Local()
@@ -379,88 +388,39 @@ void AD1SurvivorController::StopRepair_Local()
 
 	if (D1Survivor->GetCurrentGenerator()->GetIsFail()) return;
 
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		CachedAnimInstance.Get()->SetIsRepairing(false);
+	D1Survivor->SetIsReparing(false);
 
-		// 이동 가능하게 변경
-		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor.Get());
-	}
+	// 이동 가능하게 변경
+	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor.Get());
 }
 
-void AD1SurvivorController::StartRepair_Server()
-{
-	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetCurrentGenerator()) return;
-
-	StartRepair_Local();
-}
-
-void AD1SurvivorController::StopRepair_Server()
-{
-	if (!D1Survivor.IsValid() || !D1Survivor->GetCurrentGenerator()) return;
-
-	StopRepair_Local();
-}
 
 void AD1SurvivorController::Server_StartRepair_Implementation()
 {
-	StartRepair_Server();
+	if (HasAuthority())
+	{
+		Multi_StartRepair();
+	}
 }
 
 void AD1SurvivorController::Server_StopRepair_Implementation()
 {
-	StopRepair_Server();
+	if (HasAuthority())
+	{
+		Multi_StopRepair();
+	}
 }
 
-//void AD1SurvivorController::StartRepair()
-//{
-//	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetCurrentGenerator()) return;
-//
-//	if (D1Survivor.Get()->GetCurrentGenerator()->GetIsRepairBlocked() == true ||
-//		D1Survivor.Get()->GetCurrentGenerator()->GetRepairProgress() >= 100.f) return;
-//
-//	if (CachedAnimInstance.IsValid())
-//	{
-//		D1Survivor.Get()->SetIsFail(false);
-//
-//		// 플레이어 위치 판별
-//		EGeneratorInteractionPosition Position = 
-//			D1Survivor.Get()->GetCurrentGenerator()->FindInteractionPosition(D1Survivor.Get());
-//
-//		// 플레이어 위치 이동
-//		MoveToGeneratorPosition(Position);
-//
-//		CachedAnimInstance.Get()->SetInteractionPosition(Position);
-//		CachedAnimInstance.Get()->SetIsRepairing(true);
-//
-//		// 이동 입력 차단
-//		D1Survivor.Get()->GetCharacterMovement()->DisableMovement();
-//		D1Survivor.Get()->GetCharacterMovement()->StopMovementImmediately();
-//
-//		D1Survivor.Get()->GetCurrentGenerator()->StartRepair(D1Survivor.Get(), Position);
-//	}
-//}
-//
-//void AD1SurvivorController::StopRepair()
-//{
-//	if (!D1Survivor.IsValid() || !D1Survivor->GetCurrentGenerator()) return;
-//	
-//	if (D1Survivor->GetCurrentGenerator()->GetIsFail() == true) return;
-//
-//	if (CachedAnimInstance.IsValid())
-//	{
-//		CachedAnimInstance.Get()->SetIsRepairing(false);
-//
-//		// 이동 가능하게 변경
-//		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-//		D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor.Get());
-//	}
-//}
+void AD1SurvivorController::Multi_StartRepair_Implementation()
+{
+	StartRepair_Local();
+}
+
+void AD1SurvivorController::Multi_StopRepair_Implementation()
+{
+	StopRepair_Local();
+}
 
 void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
 {
@@ -601,16 +561,16 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 	switch (Position)
 	{
 	case EGeneratorInteractionPosition::Front:
-		TargetLocation = GeneratorLocation + ForwardVector * 94.f;
+		TargetLocation = GeneratorLocation + ForwardVector * 100.f;
 		break;
 	case EGeneratorInteractionPosition::Back:
-		TargetLocation = GeneratorLocation - ForwardVector * 110.f;
+		TargetLocation = GeneratorLocation - ForwardVector * 105.f;
 		break;
 	case EGeneratorInteractionPosition::Left:
 		TargetLocation = GeneratorLocation - RightVector * 80.f;
 		break;
 	case EGeneratorInteractionPosition::Right:
-		TargetLocation = GeneratorLocation + RightVector * 85.f;
+		TargetLocation = GeneratorLocation + RightVector * 82.5f;
 		break;
 	default:
 		return;
