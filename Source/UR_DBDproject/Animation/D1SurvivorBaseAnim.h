@@ -30,26 +30,14 @@ protected:
 	bool bIsCrouching = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsHealing = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	bool bIsOpening = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	ESurvivorState HealingTargetState;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EVaultType VaultType = EVaultType::Medium;
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
-
-	UFUNCTION(BlueprintCallable)
 	void SetIsOpening(bool bNewState) { bIsOpening = bNewState; }
-
-	UFUNCTION(BlueprintCallable)
-	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 
 	UFUNCTION(BlueprintCallable)
 	void SetVaultType(EVaultType NewVaultType) { VaultType = NewVaultType; };

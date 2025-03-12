@@ -111,12 +111,19 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bIsRepairing);
 	DOREPLIFETIME(AD1SurvivorBase, InteractionPosition);
 	DOREPLIFETIME(AD1SurvivorBase, bIsFail);
+	DOREPLIFETIME(AD1SurvivorBase, bIsHealing);
+	DOREPLIFETIME(AD1SurvivorBase, HealingTargetState);
+	DOREPLIFETIME(AD1SurvivorBase, HealingProgress);
+	DOREPLIFETIME(AD1SurvivorBase, bIsBeingHealed);
+	DOREPLIFETIME(AD1SurvivorBase, bCanBeHealed);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	SmoothCameraTransition(DeltaTime);
+
+	if (!HasAuthority()) return; // 서버에서만 실행
 
 	if (bIsBeingHealed)
 	{
@@ -150,6 +157,7 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	HealingProgress += HealingRate * DeltaTime;
 	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, 100.0f);
 
+	Multicast_UpdateHealingProgress(HealingProgress);
 	UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
 
 	// 치료가 완료되었는지 확인
@@ -357,32 +365,78 @@ void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
 
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
 {
-	if (!Healer) return;
-
-	HealingSource = Healer;
-
-	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
+	if (!HasAuthority())
 	{
-		// 입력 차단
-		GetCharacterMovement()->DisableMovement();
-
-		bIsBeingHealed = true;
+		Server_BeingHealing(Healer);
+		return;
 	}
+
+	BeingHealing_Local(Healer);
+	Multicast_BeingHealing(Healer);
 }
 
 void AD1SurvivorBase::StopBeingHealing()
 {
-	if (UD1SurvivorBaseAnim* AnimInstance = Cast<UD1SurvivorBaseAnim>(GetMesh()->GetAnimInstance()))
+	if (!HasAuthority())
 	{
-		HealingSource = nullptr;
+		Server_StopBeingHealing();
+		return;
+	}
 
-		// 입력 차단 해제
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	StopBeingHealing_Local();
+	Multicast_StopBeingHealing();
+}
 
-		bIsBeingHealed = false;
+void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
+{
+	if (!Healer) return;
+
+	HealingSource = Healer;
+
+	GetCharacterMovement()->DisableMovement();
+	Healer->SetIsHealing(true);
+	bIsBeingHealed = true;
+	
+}
+
+void AD1SurvivorBase::StopBeingHealing_Local()
+{
+	HealingSource = nullptr;
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	bIsBeingHealed = false;
+}
+
+void AD1SurvivorBase::Server_BeingHealing_Implementation(AD1SurvivorBase* Healer)
+{
+	BeingHealing_Local(Healer);
+	Multicast_BeingHealing(Healer);
+}
+
+void AD1SurvivorBase::Server_StopBeingHealing_Implementation()
+{
+	StopBeingHealing_Local();
+	Multicast_StopBeingHealing();
+}
+
+void AD1SurvivorBase::Multicast_BeingHealing_Implementation(AD1SurvivorBase* Healer)
+{
+	if (!HasAuthority())
+	{
+		BeingHealing_Local(Healer);
+	}
+}
+void AD1SurvivorBase::Multicast_StopBeingHealing_Implementation()
+{
+	if (!HasAuthority())
+	{
+		StopBeingHealing_Local();
 	}
 }
 
+void AD1SurvivorBase::Multicast_UpdateHealingProgress_Implementation(float NewProgress)
+{
+	HealingProgress = NewProgress;
+}
 void AD1SurvivorBase::FinishHealing()
 {
 	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));

@@ -8,6 +8,7 @@
 #include "D1SurvivorController.generated.h"
 
 struct FInputActionValue;
+class AD1SurvivorBase;
 /**
  *
  */
@@ -64,13 +65,18 @@ protected: // Repair
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
 
+protected: // Heal
+	void StartHeal_Local(AD1SurvivorBase* TargetSurvivor);
+	void StopHeal_Local(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(Server, Reliable)
+	void Server_StartHeal(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(Server, Reliable)
+	void Server_StopHeal(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartHeal(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopHeal(AD1SurvivorBase* TargetSurvivor);
 public:
-	// 생존자 치료
-	UFUNCTION()
-	void StartHealing(AD1SurvivorBase* TargetSurvivor);
-
-	UFUNCTION()
-	void StopHealing(AD1SurvivorBase* TargetSurvivor);
 
 	UFUNCTION()
 	void StartOpening();

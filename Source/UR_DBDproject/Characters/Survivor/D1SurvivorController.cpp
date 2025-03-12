@@ -197,7 +197,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		if (IsLocalController()) // 로컬에서 즉시 실행
+		if (IsLocalController())
 		{
 			StartRepair_Local();
 		}
@@ -207,7 +207,11 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		//StartHealing(TargetSurvivor);
+		if (IsLocalController())
+		{
+			StartHeal_Local(TargetSurvivor);
+		}
+		Server_StartHeal(TargetSurvivor);
 	}
 }
 
@@ -224,10 +228,14 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 		Server_StopRepair();
 	}
-	//if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
-	//{
-	//	StopHealing(TargetSurvivor);
-	//}
+	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
+	{
+		if (IsLocalController())
+		{
+			StopHeal_Local(TargetSurvivor);
+		}
+		Server_StopHeal(TargetSurvivor);
+	}
 }
 
 void AD1SurvivorController::Input_StartInteract_Space()
@@ -422,65 +430,64 @@ void AD1SurvivorController::Multi_StopRepair_Implementation()
 	StopRepair_Local();
 }
 
-void AD1SurvivorController::StartHealing(AD1SurvivorBase* TargetSurvivor)
+void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
 {
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
-	if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Healthy)
+	if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Healthy || !TargetSurvivor->GetCanBeHealed())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("대상 생존자는 치료가 필요하지 않습니다!"));
-		StopHealing(TargetSurvivor);
+		StopHeal_Local(TargetSurvivor);
 		return;
 	}
 
-	if (!TargetSurvivor->GetCanBeHealed())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("대상 생존자는 현재 치료 불가 상태입니다!"));
-		StopHealing(TargetSurvivor);
-		return;
-	}
-
-	// 플레이어 방향 조정 (자동 회전)
-	FRotator LookAtRotation = 
-		(TargetSurvivor->GetActorLocation() - D1Survivor->GetActorLocation()).Rotation();
-	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	// 플레이어 방향 조정
+	FRotator LookAtRotation = (TargetSurvivor->GetActorLocation() - D1Survivor->GetActorLocation()).Rotation();
+	LookAtRotation.Pitch = 0.0f;
+	LookAtRotation.Roll = 0.0f;
 	D1Survivor->SetActorRotation(LookAtRotation);
 
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		CachedAnimInstance->SetIsHealing(true);
-		CachedAnimInstance->SetHealingTargetState(TargetSurvivor->GetSurvivorState());
+	D1Survivor->SetHealingTargetState(TargetSurvivor->GetSurvivorState());
+	D1Survivor->GetCharacterMovement()->DisableMovement();
 
-		// 입력 차단
-		D1Survivor->GetCharacterMovement()->DisableMovement();
+	TargetSurvivor->BeingHealing(D1Survivor.Get());
 
-		TargetSurvivor->BeingHealing(D1Survivor.Get());
-	}
 }
 
-void AD1SurvivorController::StopHealing(AD1SurvivorBase* TargetSurvivor)
+void AD1SurvivorController::StopHeal_Local(AD1SurvivorBase* TargetSurvivor)
 {
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		CachedAnimInstance->SetIsHealing(false);
+	D1Survivor->SetIsHealing(false);
+	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	D1Survivor->SetHealingTargetState(ESurvivorState::None);
 
-		// 입력 차단 해제
-		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		CachedAnimInstance->SetHealingTargetState(ESurvivorState::None);
+	TargetSurvivor->StopBeingHealing();
+	
+}
 
-		TargetSurvivor->StopBeingHealing();
-	}
+void AD1SurvivorController::Server_StartHeal_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
+
+	Multicast_StartHeal(TargetSurvivor);
+}
+
+void AD1SurvivorController::Server_StopHeal_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
+
+	Multicast_StopHeal(TargetSurvivor);
+}
+
+
+void AD1SurvivorController::Multicast_StartHeal_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	StartHeal_Local(TargetSurvivor);
+}
+
+void AD1SurvivorController::Multicast_StopHeal_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	StopHeal_Local(TargetSurvivor);
 }
 
 void AD1SurvivorController::StartOpening()

@@ -65,9 +65,22 @@ public:
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void BeingHealing(AD1SurvivorBase* Healer);
-
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void StopBeingHealing();
+	UFUNCTION()
+	void BeingHealing_Local(AD1SurvivorBase* Healer);
+	UFUNCTION()
+	void StopBeingHealing_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_BeingHealing(AD1SurvivorBase* Healer);
+	UFUNCTION(Server, Reliable)
+	void Server_StopBeingHealing();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_BeingHealing(AD1SurvivorBase* Healer);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopBeingHealing();    
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateHealingProgress(float NewProgress);
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
@@ -136,19 +149,26 @@ protected: // 치료 기능
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<AD1SurvivorBase> HealingSource = nullptr;
 
+	// 치료 해주고 있는지
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	bool bIsHealing = false;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	ESurvivorState HealingTargetState;
+
 	// 현재 치료 진행도 (0~100%)
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HealingProgress = 0.f;
 
 	// 초당 치료 속도 (16초 동안 100% 완치)
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HealingRate = 100.f / 16.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bIsBeingHealed = false;
 
 	// 치료가 가능한 상태인지 여부
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bCanBeHealed = true;
 
 	// 치료 불가 타이머 핸들
@@ -177,6 +197,8 @@ public:
 
 	void SetIsFail(bool state) { bIsFail = state; }
 	void SetIsReparing(bool state) { bIsRepairing = state; }
+	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
+	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 	bool GetCanBeHealed() { return bCanBeHealed; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
