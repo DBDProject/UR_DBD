@@ -98,7 +98,7 @@ void UD1GA_Dracula_Hook::OnFinalMontageEnded(UAnimMontage* Montage, bool bInterr
 	FPVAnimInstance->SetIsCarryingSurvivor(false);
 
 	KillerController->SetCarriedSurvivor(nullptr);
-
+	Cast<AD1KillerBase>(KillerController->GetPawn())->SetDetectedCrawlSurvivor(nullptr);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 

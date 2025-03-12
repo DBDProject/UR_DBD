@@ -140,7 +140,7 @@ public:
 	AD1Hook* GetCurrentHook() const { return CurrentHook.IsValid() ? CurrentHook.Get() : nullptr; }
 	AD1SurvivorBase* GetDetectedSurvivor() const { return DetectedSurvivor.IsValid() ? DetectedSurvivor.Get() : nullptr; }
 	AD1SurvivorBase* GetDetectedCrawlSurvivor() const { return DetectedCrawlSurvivor.IsValid() ? DetectedCrawlSurvivor.Get() : nullptr; }
-
+	void SetDetectedCrawlSurvivor(AD1SurvivorBase* Player) { DetectedCrawlSurvivor = nullptr; }
 	void ActivateAbility(FGameplayTag AbilityTag);
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 
