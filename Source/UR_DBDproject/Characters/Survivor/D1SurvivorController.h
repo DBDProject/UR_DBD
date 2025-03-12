@@ -46,7 +46,7 @@ protected: // Run
 	UFUNCTION(Server, Reliable)
 	void Server_StartRun();
 	UFUNCTION(Server, Reliable)
-	void Server_StopRun(); 
+	void Server_StopRun();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
@@ -76,6 +76,14 @@ protected: // Heal
 	void Multicast_StartHeal(AD1SurvivorBase* TargetSurvivor);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopHeal(AD1SurvivorBase* TargetSurvivor);
+protected: //
+	void DropPallet_Local();
+
+	UFUNCTION(Server, Reliable)
+	void Server_DropPallet();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_DropPallet();
+
 public:
 
 	UFUNCTION()
@@ -89,9 +97,6 @@ public:
 
 	UFUNCTION()
 	void PerformVault(EVaultType VaultType);
-
-	UFUNCTION()
-	void DropPallet();
 
 	UFUNCTION()
 	void VaultPallet();

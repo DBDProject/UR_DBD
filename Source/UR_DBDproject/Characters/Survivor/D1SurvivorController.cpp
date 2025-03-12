@@ -265,7 +265,10 @@ void AD1SurvivorController::Input_StartInteract_Space()
 	{
 		if (Pallet->GetCurrentState() == EPalletState::Up)
 		{
-			DropPallet();
+			if (IsLocalController())
+				DropPallet_Local();
+
+			Server_DropPallet();
 		}
 		else
 		{
@@ -428,6 +431,22 @@ void AD1SurvivorController::Multi_StartRepair_Implementation()
 void AD1SurvivorController::Multi_StopRepair_Implementation()
 {
 	StopRepair_Local();
+}
+
+void AD1SurvivorController::Server_DropPallet_Implementation()
+{
+	if (HasAuthority())
+	{
+		Multi_DropPallet();
+	}
+}
+
+void AD1SurvivorController::Multi_DropPallet_Implementation()
+{
+	if (IsLocalController())
+		return;
+
+	DropPallet_Local();
 }
 
 void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
@@ -631,7 +650,7 @@ void AD1SurvivorController::PerformVault(EVaultType VaultType)
 	}
 }
 
-void AD1SurvivorController::DropPallet()
+void AD1SurvivorController::DropPallet_Local()
 {
 	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
 	if (!D1Survivor.IsValid() || !Pallet) return;
@@ -653,9 +672,9 @@ void AD1SurvivorController::DropPallet()
 	FName SectionName;
 	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
 	{
-		
+
 		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
-		
+
 	}
 	else
 	{
@@ -674,9 +693,8 @@ void AD1SurvivorController::DropPallet()
 	else
 	{
 		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
+		Pallet->SetCurrentState(EPalletState::Down);
 
-		Pallet->SetCurrentState(EPalletState::Down); 
-		
 		bCanVaultAfterDrop = false;
 		GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
 	}

@@ -171,6 +171,7 @@ APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRol
 		return nullptr;
 	}
 
+	// 캐릭터 타입 결정
 	ECharacterType CharType;
 	ULocalPlayer* LocalPlayer = Cast<ULocalPlayer>(NewPlayer);
 
@@ -183,7 +184,7 @@ APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRol
 	if (!NewPlayerController)
 	{
 		ErrorMessage = TEXT("컨트롤러 생성에 실패했습니다.");
-		return nullptr;
+		NewPlayerController = Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
 	}
 	else
 	{

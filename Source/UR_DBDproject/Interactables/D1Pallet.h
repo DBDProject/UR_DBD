@@ -28,16 +28,17 @@ UCLASS()
 class UR_DBDPROJECT_API AD1Pallet : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AD1Pallet();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	EPalletLocation FindClosestInteractionPoint(class AD1CharacterBase* Player);
@@ -58,7 +59,7 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
 	TObjectPtr<class USkeletalMeshComponent> PalletMesh;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletState CurrentState;
 
 	// 팔레트가 왼쪽에 있을 때 상호작용 지점

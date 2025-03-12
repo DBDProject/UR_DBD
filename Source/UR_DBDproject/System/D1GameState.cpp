@@ -8,13 +8,16 @@
 
 AD1GameState::AD1GameState()
 {
+	bReplicates = true;
+	bAlwaysRelevant = true;
 }
 
 void AD1GameState::BeginPlay()
 {
-    Super::BeginPlay();
+	Super::BeginPlay();
 
-    FindExitGates();
+	//RepairedGenerators = PlayerArray.Num();
+	FindExitGates();
 }
 
 void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -27,36 +30,58 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 void AD1GameState::FindExitGates()
 {
-    ExitGates.Empty();
+	ExitGates.Empty();
 
-    TArray<AActor*> FoundGates;
-    UGameplayStatics::GetAllActorsOfClass(GetWorld(), AD1ExitGate::StaticClass(), FoundGates);
+	TArray<AActor*> FoundGates;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AD1ExitGate::StaticClass(), FoundGates);
 
-    for (AActor* GateActor : FoundGates)
-    {
-        if (AD1ExitGate* ExitGate = Cast<AD1ExitGate>(GateActor))
-        {
-            ExitGates.Add(ExitGate);
-        }
-    }
-    UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출구를 찾음!"), ExitGates.Num());
+	for (AActor* GateActor : FoundGates)
+	{
+		if (AD1ExitGate* ExitGate = Cast<AD1ExitGate>(GateActor))
+		{
+			ExitGates.Add(ExitGate);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출구를 찾음!"), ExitGates.Num());
+}
+
+void AD1GameState::OnRep_RepairedGenerators()
+{
+	OnGeneratorRepaired.Broadcast(RepairedGenerators);
+}
+
+void AD1GameState::OnRep_GeneratorCompleted()
+{
+	OnGeneratorCompleted.Broadcast();
 }
 
 void AD1GameState::UpdateGeneratorState()
 {
-    ++RepairedGenerators;
-    UE_LOG(LogTemp, Warning, TEXT("현재 수리된 발전기 개수: %d"), RepairedGenerators);
+	if (!HasAuthority())
+		return;
 
-    if (RepairedGenerators >= 5) // DBD는 발전기 5개 수리 필요
-    {
-        bAllGeneratorsRepaired = true;
+	if (RepairedGenerators > 0)
+		RepairedGenerators--;
 
-        for (AD1ExitGate* ExitGate : ExitGates)
-        {
-            if (ExitGate)
-            {
-                ExitGate->ActivateExitGate();
-            }
-        }
-    }
+	// 리슨 서버의 경우 서버장이라 RepNotify가 호출되지 않음	
+	if (GetNetMode() == NM_ListenServer)
+		OnGeneratorRepaired.Broadcast(RepairedGenerators);
+
+	UE_LOG(LogTemp, Warning, TEXT("현재 수리된 발전기 개수: %d"), RepairedGenerators);
+
+	if (RepairedGenerators <= 0) // DBD는 발전기 5개 수리 필요
+	{
+		bAllGeneratorsRepaired = true;
+
+		if (GetNetMode() == NM_ListenServer)
+			OnGeneratorCompleted.Broadcast();
+
+		for (AD1ExitGate* ExitGate : ExitGates)
+		{
+			if (ExitGate)
+			{
+				ExitGate->ActivateExitGate();
+			}
+		}
+	}
 }
