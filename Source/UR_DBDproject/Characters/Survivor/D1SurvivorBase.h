@@ -46,9 +46,44 @@ public:
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+public:
+	// 생존자 데미지 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void TakeDamageFromKiller();
+
+	// 생존자 픽업 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void TakePickUpFromKiller(class AD1KillerBase* Killer);
+
+	// 생존자 훅 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHooked(class AD1Hook* Hook);
+
+	// 생존자 치유 받는 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void BeingHealing(AD1SurvivorBase* Healer);
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void StopBeingHealing();
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void FinishHealing();
+
+	// 아이템 장착 함수
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void EquipItem(TSubclassOf<AD1ItemBase> ItemClass);
+
+	UFUNCTION(BlueprintCallable)
+	void UseCurrentItem();
+
+	void ResetHealingCooldown();
+
 protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
 
 protected:
 	// 오버랩 감지용 박스 컴포넌트
@@ -105,22 +140,16 @@ protected: // 치료 기능
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 
-public:
-	// 생존자 데미지 처리 함수
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void TakeDamageFromKiller();
+	// 현재 장착 아이템
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	TWeakObjectPtr<class AD1ItemBase> EquippedItem;
 
-	// 생존자 치유 받는 함수
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void BeingHealing(AD1SurvivorBase* Healer);
+	// Temp (나중에 로비에서 선택하도록 바꿔야됨)
+	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	TSubclassOf<class AD1ItemBase> BP_MedkitClass;
 
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void StopBeingHealing();
-
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void FinishHealing();
-
-	void ResetHealingCooldown();
+	UPROPERTY(EditDefaultsOnly, Category = "Item")
+	TSubclassOf<class AD1ItemBase> BP_ToolboxClass;
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
@@ -129,6 +158,8 @@ public:
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
+
+	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
 	bool GetCanBeHealed() { return bCanBeHealed; }

@@ -18,9 +18,59 @@ public:
 	UD1KillerSet();
 
 public:
-	ATTRIBUTE_ACCESSORS(ThisClass, RunSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, HellFireChargingWalkSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, HellFireAfterShootingWalkSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfRunSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, BatRunSpeed);
+	ATTRIBUTE_ACCESSORS(ThisClass, HellFireCoolTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, HellFireChargingTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfScentGenTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfScentLivingTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfPounceChargingTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfPounceCoolTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, WolfPounceAttackRange);
+	ATTRIBUTE_ACCESSORS(ThisClass, BreakingTime);
+	ATTRIBUTE_ACCESSORS(ThisClass, FearRange);
 
 private:
 	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
-	FGameplayAttributeData RunSpeed;
+	FGameplayAttributeData HellFireChargingWalkSpeed; // 지옥불 충전시 이속
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData HellFireAfterShootingWalkSpeed; // 지옥불 발사 후 이속
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfRunSpeed; // 늑대 향기 구체 먹을시 이속
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData BatRunSpeed; // 박쥐 이속
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData HellFireCoolTime; // 지옥불 쿨타임
+	
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData HellFireChargingTime; // 지옥불 차징 시간
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfScentGenTime; // 늑대 구체 젠 타임
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfScentLivingTime; // 늑대 구체 생명 시간
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfPounceChargingTime; // 늑대 덮치기 차징 시간
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfPounceCoolTime; // 늑대 덮치기 쿨타임
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData WolfPounceAttackRange; // 늑대 덮치기 공격 범위
+	
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData BreakingTime; // 파괴하는데 걸리는 시간
+
+	UPROPERTY(BlueprintReadOnly, meta = (AllowPrivateAccess = "true"))
+	FGameplayAttributeData FearRange; // 공포 범위
+
+
 };

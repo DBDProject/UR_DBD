@@ -14,6 +14,12 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Animation/D1SurvivorBaseAnim.h"
+#include "Characters/Killer/D1KillerBase.h"
+#include "Interactables/D1Hook.h"
+#include "Interactables/D1ExitGate.h"
+#include "Items/D1ItemBase.h"
+#include "Items/D1Medkit.h"
+#include "Items/D1Toolbox.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -60,6 +66,9 @@ void AD1SurvivorBase::BeginPlay()
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
 	}
+
+	// Temp
+	//EquipItem(BP_ToolboxClass);
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
@@ -221,6 +230,13 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 		DetectedObject = OtherActor;
 		VaultTarget = Cast<AD1VaultObject>(OtherActor);
 	}
+
+	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
+	{
+
+		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
+		DetectedObject = OtherActor;
+	}
 }
 
 void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -254,7 +270,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		case ESurvivorState::Healthy:
 		{
 
-			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
+			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
 			PlayAnimMontage(HitMontage, 1.0f, "Hit_BK");
 			CurrentState = ESurvivorState::Injured;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
@@ -264,7 +280,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 
 		case ESurvivorState::Injured:
 		{
-			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
+			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
 			PlayAnimMontage(HitMontage, 1.0f);
 			CurrentState = ESurvivorState::Crawl;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
@@ -278,6 +294,44 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		}
 
 	}
+}
+
+void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
+{
+	if (!Killer) return;
+
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+	// 물리 시뮬레이션 중지
+	GetMesh()->SetSimulatePhysics(false);
+
+	FName AttachSocketName = "joint_CarryLT_01"; // 살인자의 왼손 본
+
+	// 캐릭터를 본(소켓)에 부착
+	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -1.07f), FRotator(0.f, 0.f, 0.f));
+
+	SetSurvivorState(ESurvivorState::PickedUp);
+}
+
+void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
+{
+	if (!Hook) return;
+	if (CurrentState == ESurvivorState::Hooked) return;
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	FName HookSocket = "socket_SurvivorHook";
+
+	AttachToComponent(Hook->GetHookMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		HookSocket);
+
+	GetMesh()->SetRelativeLocationAndRotation(FVector(65.f, 0.f, 0.f), FRotator(0.f, -90.f, 0.f));
+
+	SetSurvivorState(ESurvivorState::Hooked);
 }
 
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
@@ -324,6 +378,37 @@ void AD1SurvivorBase::FinishHealing()
 	HealingProgress = 0.0f;
 	bIsBeingHealed = false;
 	HealingSource = nullptr;
+}
+
+// 아이템 장착 함수
+void AD1SurvivorBase::EquipItem(TSubclassOf<AD1ItemBase> ItemClass)
+{
+	if (!ItemClass) return;
+
+	// 기존 장착 아이템 제거
+	if (EquippedItem.IsValid())
+	{
+		EquippedItem->Destroy();
+		EquippedItem = nullptr;
+	}
+
+	// 새 아이템 생성 및 장착
+	EquippedItem = GetWorld()->SpawnActor<AD1ItemBase>(ItemClass);
+	if (EquippedItem.IsValid())
+	{
+		FName AttachSocketName = "RightHandItemSocket";  // 생존자의 오른손 소켓
+		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+
+		UE_LOG(LogTemp, Warning, TEXT("%s을(를) 장착했습니다."), *EquippedItem->GetName());
+	}
+}
+
+void AD1SurvivorBase::UseCurrentItem()
+{
+	if (EquippedItem.IsValid())
+	{
+		EquippedItem.Get()->UseItem(this);
+	}
 }
 
 void AD1SurvivorBase::ResetHealingCooldown()

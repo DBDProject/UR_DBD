@@ -33,6 +33,7 @@ private:
 	void Input_StartInteract_LeftClick();
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
+	void Input_StopInteract_Space();
 
 	void Input_StartTestInput_1();
 
@@ -50,6 +51,12 @@ public:
 
 	UFUNCTION()
 	void StopHealing(AD1SurvivorBase* TargetSurvivor);
+
+	UFUNCTION()
+	void StartOpening();
+
+	UFUNCTION()
+	void StopOpening();
 
 	UFUNCTION()
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);

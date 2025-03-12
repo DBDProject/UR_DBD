@@ -31,9 +31,40 @@ void UD1KillerBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 	if (MovementComponent == nullptr)
 		return;
 
+	UpdateYawDelta(DeltaSeconds);
 	Velocity = MovementComponent->Velocity;
+
+	FVector ForwardVector = Character->GetActorForwardVector();
+	FVector RightVector = Character->GetActorRightVector(); 
+	FVector NormalizedVelocity = Velocity.GetSafeNormal();
+
+	// ✅ 앞뒤 이동 (Blend Space의 Vertical 입력값)
+	float ForwardMovement = FVector::DotProduct(ForwardVector, NormalizedVelocity);
+
+	// ✅ 좌우 이동 (Blend Space의 Horizontal 입력값)
+	float RightMovement = FVector::DotProduct(RightVector, NormalizedVelocity);
+
+	MovementDirection = ForwardMovement;
+	MovementDirectionRight = RightMovement;
+
 	GroundSpeed = Velocity.Size2D();
 
 	bShouldMove = (GroundSpeed > 3.f && MovementComponent->GetCurrentAcceleration() != FVector::ZeroVector);
 	bIsFalling = MovementComponent->IsFalling();
+}
+
+void UD1KillerBaseAnim::UpdateYawDelta(float DeltaTime)
+{
+	if (!Character) return;
+
+	float CurrentYaw = Character->GetControlRotation().Yaw;
+
+	// Yaw 변화량 계산 (마우스 회전 속도)
+	YawDelta = (CurrentYaw - PreviousYaw) / DeltaTime;
+
+	// 이전 Yaw 값 업데이트
+	PreviousYaw = CurrentYaw;
+
+	// -1 ~ 1 사이 값으로 정규화
+	YawDelta = FMath::Clamp(YawDelta / 180.0f, -1.0f, 1.0f);
 }

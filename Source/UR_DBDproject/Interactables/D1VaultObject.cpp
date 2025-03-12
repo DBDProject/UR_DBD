@@ -7,7 +7,7 @@
 // Sets default values
 AD1VaultObject::AD1VaultObject()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
 	RootScene = CreateDefaultSubobject<USceneComponent>(TEXT("RootScene"));
@@ -36,7 +36,7 @@ AD1VaultObject::AD1VaultObject()
 void AD1VaultObject::BeginPlay()
 {
 	Super::BeginPlay();
-	
+
 }
 
 // Called every frame
@@ -44,5 +44,35 @@ void AD1VaultObject::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void AD1VaultObject::MoveToVaultInteractionLocation(AD1CharacterBase* Character)
+{
+	if (!Character || !VaultTrigger) return;
+	FVector VaultLocation = VaultTrigger->GetComponentLocation();
+	FVector RightVector = VaultTrigger->GetRightVector();
+	FVector ForwardVector = VaultTrigger->GetForwardVector();
+
+	//상호작용 위치 계산
+	FVector CharacterLocation = Character->GetActorLocation();
+
+	StartPos = VaultLocation + (CharacterLocation - VaultLocation).GetSafeNormal() * 100.f;
+
+	// 플레이어가 장애물의 앞쪽에 있는지 판단
+	FVector ToObstacle = (VaultLocation - CharacterLocation).GetSafeNormal();
+	float RightdDot = FVector::DotProduct(RightVector, ToObstacle);
+
+	if (RightdDot > 0)
+	{
+		StartPos = VaultLocation - RightVector * 100.0f;
+		TargetPos = VaultLocation + RightVector * 100.0f;
+	}
+	else
+	{
+		StartPos = VaultLocation + RightVector * 100.0f;
+		TargetPos = VaultLocation - RightVector * 100.0f;
+	}
+
+	Character->SetActorLocation(StartPos);
 }
 

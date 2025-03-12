@@ -22,7 +22,7 @@ UD1AbilitySystemComponent* AD1KillerState::GetD1AbilitySystemComponent() const
 	return AbilitySystemComponent;
 }
 
-UD1KillerSet* AD1KillerState::GetD1SurvivorSet() const
+UD1KillerSet* AD1KillerState::GetD1KillerSet() const
 {
 	return KillerSet;
 }

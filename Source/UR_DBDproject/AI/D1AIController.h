@@ -7,11 +7,11 @@
 #include "D1AIController.generated.h"
 
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1AIController : public AAIController
 {
 	GENERATED_BODY()
-	
+
 };

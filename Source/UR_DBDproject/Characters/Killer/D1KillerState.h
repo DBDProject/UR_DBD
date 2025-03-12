@@ -30,5 +30,5 @@ protected:
 public:
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const;
 	UD1AbilitySystemComponent* GetD1AbilitySystemComponent() const;
-	UD1KillerSet* GetD1SurvivorSet() const;
+	UD1KillerSet* GetD1KillerSet() const;
 };

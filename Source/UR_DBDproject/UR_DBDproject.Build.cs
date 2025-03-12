@@ -1,12 +1,13 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 using UnrealBuildTool;
+using System.IO;
 
 public class UR_DBDproject : ModuleRules
 {
-	public UR_DBDproject(ReadOnlyTargetRules Target) : base(Target)
-	{
-		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
+    public UR_DBDproject(ReadOnlyTargetRules Target) : base(Target)
+    {
+        PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
         PublicIncludePaths.AddRange(new string[]
         {
@@ -29,7 +30,6 @@ public class UR_DBDproject : ModuleRules
             "UMG"
     });
 
-        PublicDependencyModuleNames.AddRange(new string[] { "DBDUI" });
-
+        PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
     }
 }

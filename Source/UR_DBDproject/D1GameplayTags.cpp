@@ -13,13 +13,20 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Interact, "Input.Action.Interact");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Parkour, "Input.Action.Parkour");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_TestInput, "Input.Action.TestInput");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_ItemUsage, "Input.Action.ItemUsage");
 
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_Begin, "Event.Transform.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_End, "Event.Transform.End");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_Begin, "Event.Attack.Begin");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_End, "Event.Attack.End");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactStart, "Event.Attack.DetactStart");
-	UE_DEFINE_GAMEPLAY_TAG(Event_Attack_DetactEnd, "Event.Attack.DetactEnd");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_GeneratorEnd, "Killer.GeneratorEnd");
+
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactStart, "Killer.Attack.DetactStart");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactEnd, "Killer.Attack.DetactEnd");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_PalletEnd, "Killer.PalletEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_PickUpEnd, "Killer.PickUpEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_HookEnd, "Killer.HookEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_VaultWindowEnd, "Killer.VaultWindowEnd");
+
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Attack, "Killer.Ability.Attack");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Transform, "Killer.Ability.Transform");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_DamageGenerator, "Killer.Ability.DamageGenerator");
+
 }
