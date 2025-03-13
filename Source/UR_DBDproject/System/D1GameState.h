@@ -54,9 +54,15 @@ public:
 	void UpdateGeneratorState();
 
 	// 플레이어 로딩 완료 시 호출
-
 	UFUNCTION(Server, Reliable)
 	void ReadyPlayer();
+
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	FString InGameMap;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	bool bIsAsnycLoadMap = false;
 
 protected:
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
@@ -93,6 +99,7 @@ protected:
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	float EndGameTimer;
+
 
 private:
 	UPROPERTY(ReplicatedUsing = OnRep_ReadyPlayer)
