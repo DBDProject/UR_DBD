@@ -2,6 +2,7 @@
 
 
 #include "GameMode/D1InGameMode.h"
+#include "System/D1GameState.h"
 
 FCharacterDataSet* AD1InGameMode::GetCharacterData(ECharacterType CharacaterType)
 {
@@ -62,18 +63,7 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	}
 
 
-	AActor* StartSpot = FindRoleBasedPlayerStart();
-	FVector SpawnLocation = StartSpot ? StartSpot->GetActorLocation() : FVector(0, 0, 100);
-	FRotator SpawnRotation = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
-
-	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
-
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
-		PawnClass,
-		SpawnLocation,
-		SpawnRotation,
-		SpawnParams);
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(PawnClass);
 
 	if (NewPawn)
 	{
@@ -87,55 +77,8 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 		}
 
 		Controller->Possess(NewPawn);
-		UE_LOG(LogTemp, Warning, TEXT("플레이어 '%s'를 위치 %s에 스폰했습니다."),
-			*Controller->GetName(), *SpawnLocation.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("컨트롤러 '%s'가 '%s'로 설정됨."), *Controller->GetName(), *NewPawn->GetName());
 	}
-}
-
-AActor* AD1InGameMode::FindRoleBasedPlayerStart()
-{
-	// 찾을 태그 결정
-	FName StartTag;
-
-	//// 캐릭터 타입에 따라 적절한 태그 선택
-	//if (CharType == ECharacterType::Killer)
-	//{
-	//	StartTag = FName("KillerStart");
-	//}
-	//else if (CharType >= ECharacterType::Survivor_Default && CharType <= ECharacterType::Survivor_4)
-	//{
-	//	// 생존자 수에 따라 다른 시작 위치 사용 가능
-	//	int32 SurvivorIndex = static_cast<int32>(CharType) - static_cast<int32>(ECharacterType::Survivor_Default);
-	//	StartTag = FName(*FString::Printf(TEXT("SurvivorStart_%d"), SurvivorIndex));
-	//}
-	//else
-	//{
-	//	StartTag = NAME_None; // 기본 PlayerStart 사용
-	//}
-	StartTag = NAME_None;
-
-	// 맵에서 모든 PlayerStart 찾기
-	TArray<AActor*> PlayerStarts;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
-
-	// 적절한 태그를 가진 PlayerStart 찾기
-	for (AActor* Start : PlayerStarts)
-	{
-		// 태그가 지정되지 않았을 경우 기본 PlayerStart 검색
-		if (StartTag == NAME_None)
-		{
-			return Start;
-		}
-
-		// 태그 확인
-		APlayerStart* PlayerStart = Cast<APlayerStart>(Start);
-		if (PlayerStart && PlayerStart->ActorHasTag(StartTag))
-		{
-			return PlayerStart;
-		}
-	}
-
-	return nullptr;
 }
 
 FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
@@ -149,6 +92,14 @@ FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
 	return FName(*EnumPtr->GetDisplayNameTextByValue((int64)CharacterType).ToString());
 }
 
+void AD1InGameMode::GameStart()
+{
+	if (HasAuthority())
+	{
+		StartMatch();
+	}
+}
+
 void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
 	Super::InitGame(MapName, Options, ErrorMessage);
@@ -160,6 +111,17 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 			m_dataTable = LoadObject<UDataTable>(nullptr, TEXT("DataTable'/Game/DBD/Data/CharacterDataTable.CharacterDataTable'"));
 		}
 	}
+}
+
+void AD1InGameMode::StartPlay()
+{
+	// 게임 스테이트에서 시작을 관리하기 위해 빈칸
+}
+
+void AD1InGameMode::PreLogin(const FString& Options, const FString& Address,
+	const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
 }
 
 APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal,

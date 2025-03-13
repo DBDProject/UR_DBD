@@ -95,7 +95,7 @@ struct FPlayerInfo
 	UPROPERTY(BlueprintReadWrite)
 	ECharacterType characterType;
 
-	// Default constructor
+	FPlayerInfo() : userIP("127.0.0.1"), characterType(ECharacterType::NONE) {}
 };
 
 USTRUCT(BlueprintType)
