@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 // Sets default values
 AD1ExitGate::AD1ExitGate()
@@ -69,6 +70,8 @@ void AD1ExitGate::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifet
     DOREPLIFETIME(AD1ExitGate, CurrentState);
     DOREPLIFETIME(AD1ExitGate, OpeningProgress);
     DOREPLIFETIME(AD1ExitGate, bActivateExitGate);
+    DOREPLIFETIME(AD1ExitGate, bIsDoorOpened);
+
 }
 
 void AD1ExitGate::ActivateExitGate()
@@ -93,14 +96,38 @@ void AD1ExitGate::StartOpening(AD1SurvivorBase* Player)
         UE_LOG(LogTemp, Warning, TEXT("이미 탈출구 레버 당기는 중!"));
         return;
     }
+
+    if (HasAuthority())
+    {
+        StartOpening_Local(Player);
+        return;
+    }
+
     Server_StartExitOpening(Player);
 }
 
 void AD1ExitGate::StopOpening()
 {
+    if (HasAuthority())
+    {
+        StopOpening_Local();
+        return;
+    }
+
     Server_StopExitOpening();
 }
 
+void AD1ExitGate::StartOpening_Local(AD1SurvivorBase* Player)
+{
+    InteractingPlayer = Player;
+    Player->SetIsExitGateOpening(true);
+    CurrentState = EGateState::SwitchActivation;
+}
+void AD1ExitGate::StopOpening_Local()
+{
+    InteractingPlayer = nullptr;
+    CurrentState = EGateState::Closed;
+}
 void AD1ExitGate::Server_StartExitOpening_Implementation(AD1SurvivorBase* Player)
 {
     Multicast_StartExitOpening(Player);
@@ -113,37 +140,18 @@ void AD1ExitGate::Server_StopExitOpening_Implementation()
 
 void AD1ExitGate::Multicast_StartExitOpening_Implementation(AD1SurvivorBase* Player)
 {
-    if (HasAuthority())	return;
-
-    InteractingPlayer = Player;
-    // 플레이어 위치 이동
-    MovePlayerToInteractionPoint(Player);
-    Player->SetIsExitGateOpening(true);
-    CurrentState = EGateState::SwitchActivation;
+    if (!HasAuthority())
+    {
+        StartOpening_Local(Player);
+    }
 }
 
 void AD1ExitGate::Multicast_StopExitOpening_Implementation()
 {
-    if (HasAuthority())	return;
-
-    InteractingPlayer->SetIsExitGateOpening(true);
-    InteractingPlayer = nullptr;
-    CurrentState = EGateState::Closed;
-}
-
-void AD1ExitGate::MovePlayerToInteractionPoint(AD1SurvivorBase* Player)
-{
-    if (!Player) return;
-
-    FVector TargetLocation = InteractionPoint->GetComponentLocation();
-    TargetLocation.Z += 88.f;
-    Player->SetActorLocation(TargetLocation);
-
-    FRotator LookAtRotation;
-    LookAtRotation = (SwitchCollisionBox->GetComponentLocation() - TargetLocation).Rotation();
-    LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-    LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
-    Player->SetActorRotation(LookAtRotation);
+    if (!HasAuthority())
+    {
+        StopOpening_Local();
+    }
 }
 
 void AD1ExitGate::OpenDoor()
@@ -153,20 +161,35 @@ void AD1ExitGate::OpenDoor()
         UE_LOG(LogTemp, Warning, TEXT("이미 탈출구가 열렸음!"));
         return;
     }
-
+    if (InteractingPlayer.IsValid())
+    {
+        InteractingPlayer->SetIsExitGateOpening(false);
+        InteractingPlayer->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+    }
     InteractingPlayer = nullptr;
     CurrentState = EGateState::Opened;
-    DoorCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+
+    if (HasAuthority())
+    {
+        bIsDoorOpened = true;
+        OnRep_DoorOpened();
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("탈출구 문이 열렸습니다!"));
+}
+
+void AD1ExitGate::OnRep_DoorOpened()
+{
+    if (bIsDoorOpened)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("클라이언트에서 문 열림 처리됨"));
+        DoorCollisionBox->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    }
 }
 
 void AD1ExitGate::UpdateOpeningProgress(float DeltaTime)
 {
-    if (!InteractingPlayer.IsValid())
-    {
-        UE_LOG(LogTemp, Warning, TEXT("상호 작용중인 플레이어 없음"));
-        return;
-    }
+    if (!InteractingPlayer.IsValid())   return;
 
     OpeningProgress += DeltaTime / OpeningDuration;
     OpeningProgress = FMath::Clamp(OpeningProgress, 0.0f, 1.0f);
@@ -179,4 +202,8 @@ void AD1ExitGate::UpdateOpeningProgress(float DeltaTime)
     }
 }
 
-
+void AD1ExitGate::Multicast_ActivateExitGate_Implementation()
+{
+    UE_LOG(LogTemp, Warning, TEXT("Multicast_ActivateExitGate called on %s"), HasAuthority() ? TEXT("Server") : TEXT("Client"));
+    ActivateExitGate();
+}

@@ -38,6 +38,7 @@ public:
 	void UpdateHealingProgress(float DeltaTime);
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
+	void MoveToExitGateStartPosition(class AD1ExitGate* Gate);
 	void StartRunning();
 
 	// 콜리전 이벤트 함수

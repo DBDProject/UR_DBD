@@ -79,9 +79,17 @@ protected: // Heal
 
 protected: // ExitGateOpen
 	UFUNCTION()
-	void StartExitOpening();
+	void StartExitOpening_Local();
 	UFUNCTION()
-	void StopExitOpening();
+	void StopExitOpening_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_StartExitOpening(AD1ExitGate* Gate);
+	UFUNCTION(Server, Reliable)
+	void Server_StopExitOpening(AD1ExitGate* Gate);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartExitOpening(class AD1ExitGate* Gate);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopExitOpening(AD1ExitGate* Gate);
 
 protected: // VaultObject
 	UFUNCTION()

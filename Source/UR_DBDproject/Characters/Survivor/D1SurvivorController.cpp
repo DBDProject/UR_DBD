@@ -281,7 +281,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StartExitOpening();
+		StartExitOpening_Local();
 
 		return;
 	}
@@ -291,7 +291,7 @@ void AD1SurvivorController::Input_StopInteract_Space()
 {
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StopExitOpening();
+		StopExitOpening_Local();
 
 		return;
 	}
@@ -489,47 +489,99 @@ void AD1SurvivorController::Multicast_StopHeal_Implementation(AD1SurvivorBase* T
 	StopHeal_Local(TargetSurvivor);
 }
 
-void AD1SurvivorController::StartExitOpening()
+void AD1SurvivorController::StartExitOpening_Local()
 {
 	if (!D1Survivor.IsValid()) return;
 
+	// 감지된 오브젝트를 ExitGate로 캐스팅
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
 	{
-		if (!(Gate->GetCrrentState() == EGateState::Closed))
-			return;
-		if (Gate->GetActivateExitGate() == false)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("아직 탈출구가 활성화되지 않음!"));
-			return;
-		}
+		// (로컬)플레이어 위치 이동
+		if (IsLocalPlayerController())
+			D1Survivor->MoveToExitGateStartPosition(Gate);
 
-		// 이동 입력 차단
-		D1Survivor->GetCharacterMovement()->DisableMovement();
-		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
-
-		Gate->StartOpening(D1Survivor.Get());
+		// 서버에 검증 요청
+		Server_StartExitOpening(Gate);
 	}
 }
 
-void AD1SurvivorController::StopExitOpening()
+void AD1SurvivorController::StopExitOpening_Local()
 {
 	if (!D1Survivor.IsValid()) return;
 
+	// 감지된 오브젝트를 ExitGate로 캐스팅
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor->GetDetectedObject()))
 	{
-		if (Gate->GetActivateExitGate() == false)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("아직 탈출구가 활성화되지 않음!"));
-			return;
-		}
-
-		UE_LOG(LogTemp, Warning, TEXT("StopOpening"));
-
-		// 이동 가능하게 변경
-		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
-		Gate->StopOpening();
+		// 서버에 검증 요청
+		Server_StopExitOpening(Gate);
 	}
+}
+
+void AD1SurvivorController::Server_StartExitOpening_Implementation(AD1ExitGate* Gate)
+{
+	// 서버에서만 실행되도록 보장
+	if (!HasAuthority() || !Gate) return;
+
+	// 서버에서 검증
+	if (Gate->GetCrrentState() != EGateState::Closed)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server] 탈출구가 이미 열려 있음!"));
+		return;
+	}
+
+	if (!Gate->GetActivateExitGate())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server] 아직 탈출구가 활성화되지 않음!"));
+		return;
+	}
+
+	// 검증 통과 후 클라이언트에게 탈출구 열기 요청
+	Multicast_StartExitOpening(Gate);
+}
+
+void AD1SurvivorController::Server_StopExitOpening_Implementation(AD1ExitGate* Gate)
+{
+	// 서버에서만 실행되도록 보장
+	if (!HasAuthority() || !Gate) return;
+
+	// 서버에서 검증
+	if (!Gate->GetActivateExitGate())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("[Server] 아직 탈출구가 활성화되지 않음!"));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("[Server] StopOpening 호출됨"));
+
+	// 검증 통과 후 클라이언트에게 탈출구 닫기 요청
+	Multicast_StopExitOpening(Gate);
+}
+
+void AD1SurvivorController::Multicast_StartExitOpening_Implementation(AD1ExitGate* Gate)
+{
+	if (!Gate || !D1Survivor.IsValid()) return;
+
+	// 이동 입력 차단
+	D1Survivor->GetCharacterMovement()->DisableMovement();
+	D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+
+	// 플레이어 위치 이동
+	D1Survivor->MoveToExitGateStartPosition(Gate);
+	// 탈출구 열기 시작
+	Gate->StartOpening(D1Survivor.Get());
+}
+
+
+void AD1SurvivorController::Multicast_StopExitOpening_Implementation(AD1ExitGate* Gate)
+{
+	if (!Gate || !D1Survivor.IsValid()) return;
+
+	// 이동 가능하게 변경
+	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	D1Survivor->SetIsExitGateOpening(false);
+	// 탈출구 닫기 실행
+	Gate->StopOpening();
 }
 
 void AD1SurvivorController::PerformVault(EVaultType VaultType)

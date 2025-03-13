@@ -37,6 +37,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StopOpening();
 
+	void StartOpening_Local(AD1SurvivorBase* Player);
+	void StopOpening_Local();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ActivateExitGate();
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_StartExitOpening(AD1SurvivorBase* Player);
@@ -47,7 +52,8 @@ protected:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopExitOpening();
 
-	void MovePlayerToInteractionPoint(class AD1SurvivorBase* Player);
+	UFUNCTION()
+	void OnRep_DoorOpened();
 private:
 	void UpdateOpeningProgress(float DeltaTime);
 
@@ -61,14 +67,17 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
-protected:
-	// 상호작용 범위 (Collision)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
-	TObjectPtr<class UBoxComponent> InteractionBox;
+	// 상호작용 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Door")
+	TObjectPtr<class USceneComponent> InteractionPoint;
 
 	// 스위치 물리 충돌 박스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
 	TObjectPtr<class UBoxComponent> SwitchCollisionBox;
+protected:
+	// 상호작용 범위 (Collision)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+	TObjectPtr<class UBoxComponent> InteractionBox;
 
 	// 문 물리 충돌 박스
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
@@ -78,9 +87,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
 	TObjectPtr<class USkeletalMeshComponent> DoorMesh;
 
-	// 상호작용 지점
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Door")
-	TObjectPtr<class USceneComponent> InteractionPoint;
+	// 문이 열렸는지 여부 (ReplicatedUsing)
+	UPROPERTY(ReplicatedUsing = OnRep_DoorOpened)
+	bool bIsDoorOpened;
 
 	// 문 상태
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Door")

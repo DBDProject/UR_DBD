@@ -138,6 +138,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bIsBeingHealed);
 	DOREPLIFETIME(AD1SurvivorBase, bCanBeHealed);
 	DOREPLIFETIME(AD1SurvivorBase, CurrentState);
+	DOREPLIFETIME(AD1SurvivorBase, bIsExitGateOpening);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -306,6 +307,20 @@ void AD1SurvivorBase::MoveToPalletStartPosition()
 	// 장애물 방향으로 회전
 	FRotator LookAtRotation = PalletNormal.Rotation();
 	//LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
+	SetActorRotation(LookAtRotation);
+}
+
+void AD1SurvivorBase::MoveToExitGateStartPosition(AD1ExitGate* Gate)
+{
+	FVector TargetLocation = Gate->InteractionPoint->GetComponentLocation();
+	TargetLocation.Z += 88.f;
+	SetActorLocation(TargetLocation);
+
+	FRotator LookAtRotation;
+	LookAtRotation = (Gate->SwitchCollisionBox->GetComponentLocation() - TargetLocation).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+
 	SetActorRotation(LookAtRotation);
 }
 

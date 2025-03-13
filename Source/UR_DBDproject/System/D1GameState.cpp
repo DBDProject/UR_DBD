@@ -80,8 +80,10 @@ void AD1GameState::UpdateGeneratorState()
 		{
 			if (ExitGate)
 			{
-				ExitGate->ActivateExitGate();
+				ExitGate->Multicast_ActivateExitGate();
 			}
 		}
 	}
 }
+
+
