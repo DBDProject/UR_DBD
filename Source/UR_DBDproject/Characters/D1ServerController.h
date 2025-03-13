@@ -17,6 +17,9 @@ class UR_DBDPROJECT_API AD1ServerController : public APlayerController
 {
 	GENERATED_BODY()
 
+private:
+	class ULevelStreamingDynamic* LoadedLevel = nullptr;
+
 protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnAsyncLoadMapStart OnAsyncLoadMapStart;
@@ -24,7 +27,14 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnAsyncLoadMapEnd OnAsyncLoadMapEnd;
 
+private:
+	UFUNCTION()
+	void LoadAsyncGameMap();
+
 protected:
 	virtual void BeginPlay() override;
+	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION()
+	void OnInGameMapLoaded();
 };

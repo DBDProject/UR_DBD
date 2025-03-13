@@ -25,17 +25,19 @@ protected:
 
 private:
 	APlayerController* CreateControllerForCharacterType(UPlayer* NewPlayer, ECharacterType CharType);
-	void ConfigureController(APlayerController* Controller,
-		TSubclassOf<APlayerState> PSClass, TSubclassOf<APawn> PawnClass);
+
+	void ConfigureController(APlayerController* Controller, TSubclassOf<APlayerState> PSClass,
+		TSubclassOf<APawn> PawnClass);
 
 public:
+	AD1InGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
+
 	FCharacterDataSet* GetCharacterData(ECharacterType CharacaterType);
 	FName GetEnumRowName(ECharacterType CharacterType);
 
 	void GameStart();
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
-	virtual void StartPlay() override;
 
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
 		FString& ErrorMessage) override;

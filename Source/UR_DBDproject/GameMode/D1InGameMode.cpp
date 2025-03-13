@@ -4,6 +4,12 @@
 #include "GameMode/D1InGameMode.h"
 #include "System/D1GameState.h"
 
+AD1InGameMode::AD1InGameMode(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bDelayedStart = true;
+}
+
 FCharacterDataSet* AD1InGameMode::GetCharacterData(ECharacterType CharacaterType)
 {
 	if (!m_dataTable)
@@ -40,6 +46,7 @@ APlayerController* AD1InGameMode::CreateControllerForCharacterType(UPlayer* NewP
 
 	NewController->SetPlayer(NewPlayer);
 	NewController->SetReplicates(true);
+	NewController->DisableInput(NewController);
 	ConfigureController(NewController, CharacterData->PlayerStateClass, CharacterData->PawnClass);
 
 	return NewController;
@@ -63,7 +70,16 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	}
 
 
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(PawnClass);
+	FVector SpawnLocation = FVector(0, 0, 200);
+	FRotator SpawnRotation = FRotator::ZeroRotator;
+
+	FActorSpawnParameters SpawnParams;
+
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
+		PawnClass,
+		SpawnLocation,
+		SpawnRotation,
+		SpawnParams);
 
 	if (NewPawn)
 	{
@@ -113,11 +129,6 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 	}
 }
 
-void AD1InGameMode::StartPlay()
-{
-	// 게임 스테이트에서 시작을 관리하기 위해 빈칸
-}
-
 void AD1InGameMode::PreLogin(const FString& Options, const FString& Address,
 	const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
@@ -147,11 +158,6 @@ APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRol
 	{
 		ErrorMessage = TEXT("컨트롤러 생성에 실패했습니다.");
 		NewPlayerController = Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("플레이어 '%s'가 '%s'로 로그인했습니다."),
-			*NewPlayer->GetName(), *NewPlayerController->GetName());
 	}
 
 	return NewPlayerController;

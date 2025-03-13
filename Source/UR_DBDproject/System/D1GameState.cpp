@@ -17,8 +17,7 @@ void AD1GameState::BeginPlay()
 {
 	Super::BeginPlay();
 
-	FindPlayerSpawners();
-	FindExitGates();
+	UE_LOG(LogTemp, Warning, TEXT("게임 상태 시작!"));
 }
 
 void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -41,6 +40,8 @@ void AD1GameState::HandleMatchHasStarted()
 		OnRep_RepairedGenerators();
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 시작! 발전기 수리해야할 개수: %d"), RepairedGenerators);
+	FindPlayerSpawners();
+	FindExitGates();
 	SetPlayerLocation();
 }
 
