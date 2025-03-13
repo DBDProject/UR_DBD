@@ -30,15 +30,9 @@ protected:
 	bool bIsCrouching = false;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	bool bIsOpening = false;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EVaultType VaultType = EVaultType::Medium;
 
 public:
-	UFUNCTION(BlueprintCallable)
-	void SetIsOpening(bool bNewState) { bIsOpening = bNewState; }
-
 	UFUNCTION(BlueprintCallable)
 	void SetVaultType(EVaultType NewVaultType) { VaultType = NewVaultType; };
 };

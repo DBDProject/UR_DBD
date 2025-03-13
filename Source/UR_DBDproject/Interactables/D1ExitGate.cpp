@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "Net/UnrealNetwork.h"
 
 // Sets default values
 AD1ExitGate::AD1ExitGate()
@@ -61,14 +62,23 @@ void AD1ExitGate::Tick(float DeltaTime)
     }
 }
 
+void AD1ExitGate::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AD1ExitGate, CurrentState);
+    DOREPLIFETIME(AD1ExitGate, OpeningProgress);
+    DOREPLIFETIME(AD1ExitGate, bActivateExitGate);
+}
+
 void AD1ExitGate::ActivateExitGate()
 {
     if (bActivateExitGate == false)
     {
         bActivateExitGate = true;
-        UE_LOG(LogTemp, Warning, TEXT("탈출구 레버가 활성화됨!"));
     }
 }
+
 
 void AD1ExitGate::StartOpening(AD1SurvivorBase* Player)
 {
@@ -83,22 +93,45 @@ void AD1ExitGate::StartOpening(AD1SurvivorBase* Player)
         UE_LOG(LogTemp, Warning, TEXT("이미 탈출구 레버 당기는 중!"));
         return;
     }
-
-    InteractingPlayer = Player;
-    if (!InteractingPlayer.IsValid()) return;
-
-    UE_LOG(LogTemp, Warning, TEXT("탈출구 문 열기 시작"));
-    CurrentState = EGateState::SwitchActivation;
+    Server_StartExitOpening(Player);
 }
 
 void AD1ExitGate::StopOpening()
 {
-    UE_LOG(LogTemp, Warning, TEXT("탈출구 문 열기 중지"));
+    Server_StopExitOpening();
+}
+
+void AD1ExitGate::Server_StartExitOpening_Implementation(AD1SurvivorBase* Player)
+{
+    Multicast_StartExitOpening(Player);
+}
+
+void AD1ExitGate::Server_StopExitOpening_Implementation()
+{
+    Multicast_StopExitOpening();
+}
+
+void AD1ExitGate::Multicast_StartExitOpening_Implementation(AD1SurvivorBase* Player)
+{
+    if (HasAuthority())	return;
+
+    InteractingPlayer = Player;
+    // 플레이어 위치 이동
+    MovePlayerToInteractionPoint(Player);
+    Player->SetIsExitGateOpening(true);
+    CurrentState = EGateState::SwitchActivation;
+}
+
+void AD1ExitGate::Multicast_StopExitOpening_Implementation()
+{
+    if (HasAuthority())	return;
+
+    InteractingPlayer->SetIsExitGateOpening(true);
     InteractingPlayer = nullptr;
     CurrentState = EGateState::Closed;
 }
 
-void AD1ExitGate::MovePlayerToInteractionPoint(AD1CharacterBase* Player)
+void AD1ExitGate::MovePlayerToInteractionPoint(AD1SurvivorBase* Player)
 {
     if (!Player) return;
 

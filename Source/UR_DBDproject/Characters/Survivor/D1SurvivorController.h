@@ -76,36 +76,25 @@ protected: // Heal
 	void Multicast_StartHeal(AD1SurvivorBase* TargetSurvivor);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopHeal(AD1SurvivorBase* TargetSurvivor);
-protected: //
-	void DropPallet_Local();
 
-	UFUNCTION(Server, Reliable)
-	void Server_DropPallet();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_DropPallet();
-
-public:
-
+protected: // ExitGateOpen
 	UFUNCTION()
-	void StartOpening();
-
+	void StartExitOpening();
 	UFUNCTION()
-	void StopOpening();
+	void StopExitOpening();
 
-	UFUNCTION()
-	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
-
+protected: // VaultObject
 	UFUNCTION()
 	void PerformVault(EVaultType VaultType);
 
+protected: // Pallet
+	void DropPallet();
 	UFUNCTION()
 	void VaultPallet();
-protected:
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
+public:
+	UFUNCTION()
+	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> PalletMontage; // 팔레트 몽타주
 
 protected:
 	UPROPERTY(BlueprintReadOnly)

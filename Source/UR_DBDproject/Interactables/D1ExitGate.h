@@ -6,6 +6,7 @@
 #include "GameFramework/Actor.h"
 #include "D1ExitGate.generated.h"
 
+class AD1SurvivorBase;
 UENUM(BlueprintType)
 enum class EGateState : uint8
 {
@@ -23,7 +24,9 @@ public:
 	// Sets default values for this actor's properties
 	AD1ExitGate();
 
-
+protected:
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+public:
 	UFUNCTION(BlueprintCallable)
 	void ActivateExitGate();
 
@@ -34,7 +37,17 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StopOpening();
 
-	void MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
+protected:
+	UFUNCTION(Server, Reliable)
+	void Server_StartExitOpening(AD1SurvivorBase* Player);
+	UFUNCTION(Server, Reliable)
+	void Server_StopExitOpening();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartExitOpening(AD1SurvivorBase* Player);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopExitOpening();
+
+	void MovePlayerToInteractionPoint(class AD1SurvivorBase* Player);
 private:
 	void UpdateOpeningProgress(float DeltaTime);
 
@@ -70,11 +83,11 @@ protected:
 	TObjectPtr<class USceneComponent> InteractionPoint;
 
 	// 문 상태
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Door")
 	EGateState CurrentState = EGateState::Closed;
 
 	// 문이 열리는 진행도
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Door")
 	float OpeningProgress = 0.0f;
 
 	// 문 열리는데 걸리는 시간 (기본 15초)
@@ -82,7 +95,7 @@ protected:
 	float OpeningDuration = 15.0f;
 
 	// 발전기 5개 완료 시 True (탈출구 활성화)
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Door")
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Door")
 	bool bActivateExitGate = false;
 
 	// 문을 여는 플레이어

@@ -62,6 +62,9 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletState CurrentState;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	EPalletLocation CurrentLocation;
+public:
 	// 팔레트가 왼쪽에 있을 때 상호작용 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	TObjectPtr<USceneComponent> InteractionPoint_Left;
@@ -77,4 +80,7 @@ protected:
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
 	void SetCurrentState(EPalletState State) { CurrentState = State; }
+
+	EPalletLocation GetCurrentLocation() { return CurrentLocation; }
+	void SetCurrentLocation(EPalletLocation State) { CurrentLocation = State; }
 };

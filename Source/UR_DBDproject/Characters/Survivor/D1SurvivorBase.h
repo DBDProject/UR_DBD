@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "Characters/D1CharacterBase.h"
 #include "AbilitySystem/Attributes/D1SurvivorSet.h"
+#include "Interactables/D1Pallet.h"
 #include "D1SurvivorBase.generated.h"
 
 /**
@@ -37,8 +38,8 @@ public:
 	void UpdateHealingProgress(float DeltaTime);
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
-
 	void StartRunning();
+
 	// 콜리전 이벤트 함수
 	UFUNCTION()
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -94,11 +95,32 @@ public:
 
 	void ResetHealingCooldown();
 
+	void MovePlayerToPalletPoint();
+
 	// 레플리케이션
 	UFUNCTION()
 	void OnRep_SurvivorSet();
 
-protected:
+public:  // 몽타주 실행
+	UFUNCTION()
+	void PlayMontage(UAnimMontage* Montage, FName SectionName);
+protected: 
+	void PlayMontage_Local(UAnimMontage* Montage, FName SectionName);
+	UFUNCTION(Server, Reliable)
+	void Server_PlayMontage(UAnimMontage* Montage, FName SectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayMontage(UAnimMontage* Montage, FName SectionName);
+
+	UFUNCTION(Server, Reliable)
+	void Server_UpdatePalletLocation(AD1Pallet* Pallet, EPalletLocation PalletLocation);
+	
+public:
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> PalletMontage; // 팔레트 몽타주
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
 
@@ -174,6 +196,11 @@ protected: // 치료 기능
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 
+protected: // 탈출구
+	// 탈출구 열고 있는지
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	bool bIsExitGateOpening = false;
+
 	// 현재 장착 아이템
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
 	TWeakObjectPtr<class AD1ItemBase> EquippedItem;
@@ -204,4 +231,6 @@ public:
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
 
+	UFUNCTION(BlueprintCallable)
+	void SetIsExitGateOpening(bool bNewState) { bIsExitGateOpening = bNewState; }
 };

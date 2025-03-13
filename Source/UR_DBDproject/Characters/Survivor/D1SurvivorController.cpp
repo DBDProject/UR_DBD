@@ -265,10 +265,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 	{
 		if (Pallet->GetCurrentState() == EPalletState::Up)
 		{
-			if (IsLocalController())
-				DropPallet_Local();
-
-			Server_DropPallet();
+			DropPallet();
 		}
 		else
 		{
@@ -277,7 +274,6 @@ void AD1SurvivorController::Input_StartInteract_Space()
 				UE_LOG(LogTemp, Warning, TEXT("VaultPallet 사용 불가 (쿨다운)"));
 				return;
 			}
-
 			VaultPallet();
 		}
 		return;
@@ -285,7 +281,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StartOpening();
+		StartExitOpening();
 
 		return;
 	}
@@ -295,7 +291,7 @@ void AD1SurvivorController::Input_StopInteract_Space()
 {
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		StopOpening();
+		StopExitOpening();
 
 		return;
 	}
@@ -433,22 +429,6 @@ void AD1SurvivorController::Multi_StopRepair_Implementation()
 	StopRepair_Local();
 }
 
-void AD1SurvivorController::Server_DropPallet_Implementation()
-{
-	if (HasAuthority())
-	{
-		Multi_DropPallet();
-	}
-}
-
-void AD1SurvivorController::Multi_DropPallet_Implementation()
-{
-	if (IsLocalController())
-		return;
-
-	DropPallet_Local();
-}
-
 void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
 {
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
@@ -509,7 +489,7 @@ void AD1SurvivorController::Multicast_StopHeal_Implementation(AD1SurvivorBase* T
 	StopHeal_Local(TargetSurvivor);
 }
 
-void AD1SurvivorController::StartOpening()
+void AD1SurvivorController::StartExitOpening()
 {
 	if (!D1Survivor.IsValid()) return;
 
@@ -523,28 +503,15 @@ void AD1SurvivorController::StartOpening()
 			return;
 		}
 
-		UE_LOG(LogTemp, Warning, TEXT("StartOpening"));
-		// 플레이어 위치 이동
-		Gate->MovePlayerToInteractionPoint(D1Survivor.Get());
+		// 이동 입력 차단
+		D1Survivor->GetCharacterMovement()->DisableMovement();
+		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
 
-		if (!CachedAnimInstance.IsValid())
-		{
-			CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-		}
-		else
-		{
-			CachedAnimInstance.Get()->SetIsOpening(true);
-
-			// 이동 입력 차단
-			D1Survivor->GetCharacterMovement()->DisableMovement();
-			D1Survivor->GetCharacterMovement()->StopMovementImmediately();
-
-			Gate->StartOpening(D1Survivor.Get());
-		}
+		Gate->StartOpening(D1Survivor.Get());
 	}
 }
 
-void AD1SurvivorController::StopOpening()
+void AD1SurvivorController::StopExitOpening()
 {
 	if (!D1Survivor.IsValid()) return;
 
@@ -557,20 +524,118 @@ void AD1SurvivorController::StopOpening()
 		}
 
 		UE_LOG(LogTemp, Warning, TEXT("StopOpening"));
-		if (!CachedAnimInstance.IsValid())
-		{
-			CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-		}
-		else
-		{
-			CachedAnimInstance.Get()->SetIsOpening(false);
 
-			// 이동 가능하게 변경
-			D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		// 이동 가능하게 변경
+		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
-			Gate->StopOpening();
-		}
+		Gate->StopOpening();
 	}
+}
+
+void AD1SurvivorController::PerformVault(EVaultType VaultType)
+{
+	if (!D1Survivor.IsValid() || !D1Survivor->GetVaultTarget()) return;
+	if (!D1Survivor->VaultMontage) return;
+
+	FName SectionName;
+	switch (VaultType)
+	{
+	case EVaultType::Slow:
+		SectionName = "Vault_Slow";
+		break;
+	case EVaultType::Medium:
+		SectionName = "Vault_Mid";
+		break;
+	case EVaultType::Fast:
+		SectionName = "Vault_Fast";
+		break;
+	default:
+		SectionName = "Vault_Mid";
+		break;
+	}
+
+	D1Survivor->PlayMontage(D1Survivor->VaultMontage, SectionName);
+}
+
+void AD1SurvivorController::DropPallet()
+{
+	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
+	if (!D1Survivor.IsValid() || !Pallet) return;
+
+	if (Pallet->GetCurrentState() == EPalletState::Down) return;
+
+	// 현재 속도 가져오기
+	float CurrentSpeed = D1Survivor->GetVelocity().Size();
+
+	// 플레이어 위치, 방향 이동
+	EPalletLocation PalletLocation = Pallet->FindClosestInteractionPoint(D1Survivor.Get());
+	D1Survivor->GetCurrentPallet()->SetCurrentLocation(PalletLocation);
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	FName SectionName;
+	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
+	{
+
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
+
+	}
+	else
+	{
+		// TEMP
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
+
+		//SectionName = (PalletLocation == EPalletLocation::LT) ? "WalkPullDownLT" : "WalkPullDownRT";
+	}
+	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
+
+	bCanVaultAfterDrop = false;
+	GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
+
+	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
+}
+
+void AD1SurvivorController::VaultPallet()
+{
+	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
+	if (!D1Survivor.IsValid() || !Pallet) return;
+
+	if (Pallet->GetCurrentState() == EPalletState::Up) return;
+
+
+	// 현재 속도 가져오기
+	float CurrentSpeed = D1Survivor->GetVelocity().Size();
+
+	// 플레이어 위치, 방향 이동
+	EPalletLocation PalletLocation = Pallet->FindClosestInteractionPoint(D1Survivor.Get());
+	D1Survivor->GetCurrentPallet()->SetCurrentLocation(PalletLocation);
+
+	if (PalletLocation == EPalletLocation::None)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
+		return;
+	}
+
+	FName SectionName;
+	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
+	{
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLT" : "VaultPalletRT";
+	}
+	else
+	{
+		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLTFast" : "VaultPalletRTFast";
+	}
+
+	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
+	
+}
+
+void AD1SurvivorController::EnableVaultAfterDrop()
+{
+	bCanVaultAfterDrop = true;
 }
 
 void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
@@ -612,153 +677,15 @@ void AD1SurvivorController::MoveToGeneratorPosition(EGeneratorInteractionPositio
 	D1Survivor->SetActorRotation(LookAtRotation);
 }
 
-void AD1SurvivorController::PerformVault(EVaultType VaultType)
-{
-	if (!D1Survivor.IsValid() || !D1Survivor->GetVaultTarget()) return;
-
-	if (!VaultMontage) return;
-
-	FName SectionName;
-	switch (VaultType)
-	{
-	case EVaultType::Slow:
-		SectionName = "Vault_Slow";
-		break;
-	case EVaultType::Medium:
-		SectionName = "Vault_Mid";
-		break;
-	case EVaultType::Fast:
-		SectionName = "Vault_Fast";
-		break;
-	default:
-		SectionName = "Vault_Mid";
-		break;
-	}
-
-	// 애니메이션 실행
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		SetCreatureState(ECreatureState::Parkour);
-
-		D1Survivor->MoveToVaultStartPosition();
-		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-		D1Survivor->PlayAnimMontage(VaultMontage, 1.0f, SectionName);
-	}
-}
-
-void AD1SurvivorController::DropPallet_Local()
-{
-	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
-	if (!D1Survivor.IsValid() || !Pallet) return;
-
-	if (Pallet->GetCurrentState() == EPalletState::Down) return;
-
-	// 현재 속도 가져오기
-	float CurrentSpeed = D1Survivor->GetVelocity().Size();
-
-	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
-
-	if (PalletLocation == EPalletLocation::None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
-		return;
-	}
-
-	FName SectionName;
-	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
-	{
-
-		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
-
-	}
-	else
-	{
-		// TEMP
-		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
-
-		//SectionName = (PalletLocation == EPalletLocation::LT) ? "WalkPullDownLT" : "WalkPullDownRT";
-	}
-
-
-	// 애니메이션 실행
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
-		Pallet->SetCurrentState(EPalletState::Down);
-
-		bCanVaultAfterDrop = false;
-		GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
-	}
-
-	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
-}
-
-void AD1SurvivorController::VaultPallet()
-{
-	AD1Pallet* Pallet = D1Survivor->GetCurrentPallet();
-	if (!D1Survivor.IsValid() || !Pallet) return;
-
-	if (Pallet->GetCurrentState() == EPalletState::Up) return;
-
-
-	// 현재 속도 가져오기
-	float CurrentSpeed = D1Survivor->GetVelocity().Size();
-
-	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
-
-	if (PalletLocation == EPalletLocation::None)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("PalletLocation None"));
-		return;
-	}
-
-	FName SectionName;
-	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
-	{
-		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLT" : "VaultPalletRT";
-	}
-	else
-	{
-		SectionName = (PalletLocation == EPalletLocation::LT) ? "VaultPalletLTFast" : "VaultPalletRTFast";
-	}
-
-	// 애니메이션 실행
-	if (!CachedAnimInstance.IsValid())
-	{
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
-	}
-	else
-	{
-		SetCreatureState(ECreatureState::Parkour);
-
-		D1Survivor->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
-	}
-}
-void AD1SurvivorController::EnableVaultAfterDrop()
-{
-	bCanVaultAfterDrop = true;
-}
-
-ECreatureState AD1SurvivorController::GetCreatureState()
-{
-	return D1Survivor.IsValid() ? D1Survivor->CreatureState : ECreatureState::None;
-}
-
 void AD1SurvivorController::SetCreatureState(ECreatureState InState)
 {
 	if (D1Survivor.IsValid())
 	{
 		D1Survivor->CreatureState = InState;
 	}
+}
+
+ECreatureState AD1SurvivorController::GetCreatureState()
+{
+	return D1Survivor.IsValid() ? D1Survivor->CreatureState : ECreatureState::None;
 }

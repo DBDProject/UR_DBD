@@ -50,6 +50,27 @@ AD1SurvivorBase::AD1SurvivorBase()
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> VaultMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Vault.AM_Meg_Vault"));
+	if (VaultMontageAsset.Succeeded())
+	{
+		VaultMontage = VaultMontageAsset.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PalletMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Pallet.AM_Meg_Pallet"));
+	if (PalletMontageAsset.Succeeded())
+	{
+		PalletMontage = PalletMontageAsset.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> HitMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Hit.AM_Meg_Hit"));
+	if (HitMontageAsset.Succeeded())
+	{
+		HitMontage = HitMontageAsset.Object;
+	}
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PickUpMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_PickUp.AM_Meg_PickUp"));
+	if (PickUpMontageAsset.Succeeded())
+	{
+		PickUpMontage = PickUpMontageAsset.Object;
+	}
+
 	CurrentState = ESurvivorState::Healthy;
 }
 
@@ -197,6 +218,65 @@ void AD1SurvivorBase::MoveToVaultStartPosition()
 	FRotator LookAtRotation = ObstacleNormal.Rotation();
 	LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
 	SetActorRotation(LookAtRotation);
+}
+
+void AD1SurvivorBase::PlayMontage(UAnimMontage* Montage, FName SectionName)
+{
+	if (!Montage) return;
+
+	if (GetController()->IsLocalController())
+	{
+		PlayMontage_Local(Montage, SectionName);
+	}
+	Server_PlayMontage(Montage, SectionName);
+}
+
+
+void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName)
+{
+	if (Montage == VaultMontage)
+	{
+		CreatureState = ECreatureState::Parkour;
+
+		MoveToVaultStartPosition();
+		GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
+
+		PlayAnimMontage(Montage, 1.0f, SectionName);
+	}
+	else if (Montage == PalletMontage)
+	{
+		if (CurrentPallet->GetCurrentState() == EPalletState::Up)
+		{
+			MovePlayerToPalletPoint();
+			PlayAnimMontage(Montage, 1.0f, SectionName);
+			CurrentPallet->SetCurrentState(EPalletState::Down);
+		}
+		else
+		{
+			MovePlayerToPalletPoint();
+			CreatureState = ECreatureState::Parkour;
+			GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
+
+			PlayAnimMontage(Montage, 1.0f, SectionName);
+		}
+		
+	}
+	else if (Montage == HitMontage)
+	{
+
+	}
+	else if (Montage == PickUpMontage)
+	{
+
+	}
+}
+void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
+{
+	Multicast_PlayMontage(Montage, SectionName);
+}
+void AD1SurvivorBase::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
+{
+	PlayMontage_Local(Montage, SectionName);
 }
 
 void AD1SurvivorBase::MoveToPalletStartPosition()
@@ -486,6 +566,46 @@ void AD1SurvivorBase::ResetHealingCooldown()
 {
 	bCanBeHealed = true;
 	UE_LOG(LogTemp, Warning, TEXT("치료 가능 상태로 변경됨"));
+}
+
+void AD1SurvivorBase::MovePlayerToPalletPoint()
+{
+	AD1Pallet* Pallet = CurrentPallet.Get();
+	EPalletLocation PalletLocation = Pallet->GetCurrentLocation();
+
+	if (!HasAuthority())
+	{
+		Server_UpdatePalletLocation(Pallet, PalletLocation);
+	}
+	FVector TargetLocation;
+	if (PalletLocation == EPalletLocation::LT)
+	{
+		TargetLocation = Pallet->InteractionPoint_Left->GetComponentLocation();
+	}
+	else
+	{
+		TargetLocation = Pallet->InteractionPoint_Right->GetComponentLocation();
+	}
+
+	// 플레이어 Z값 보정
+	TargetLocation.Z += 88.f;
+
+	SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
+
+	FRotator LookAtRotation;
+
+	LookAtRotation = (Pallet->InteractionPoint_Center->GetComponentLocation() - TargetLocation).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+
+	// 플레이어 회전
+	SetActorRotation(LookAtRotation);
+}
+
+void AD1SurvivorBase::Server_UpdatePalletLocation_Implementation(AD1Pallet* Pallet, EPalletLocation PalletLocation)
+{
+	//Multicast_UpdatePalletLocation(Pallet, PalletLocation);
+	Pallet->SetCurrentLocation(PalletLocation);
 }
 
 void AD1SurvivorBase::OnRep_SurvivorSet()

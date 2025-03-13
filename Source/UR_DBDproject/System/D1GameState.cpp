@@ -67,7 +67,7 @@ void AD1GameState::UpdateGeneratorState()
 	if (GetNetMode() == NM_ListenServer)
 		OnGeneratorRepaired.Broadcast(RepairedGenerators);
 
-	UE_LOG(LogTemp, Warning, TEXT("현재 수리된 발전기 개수: %d"), RepairedGenerators);
+	UE_LOG(LogTemp, Warning, TEXT("현재 남은 발전기 개수: %d"), RepairedGenerators);
 
 	if (RepairedGenerators <= 0) // DBD는 발전기 5개 수리 필요
 	{
