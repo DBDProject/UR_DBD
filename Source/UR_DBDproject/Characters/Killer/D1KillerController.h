@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "Characters/D1ServerController.h"
 #include "D1Define.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
@@ -13,10 +13,10 @@
 struct FInputActionValue;
 class UInputMappingContext;
 /**
- * 
+ *
  */
 UCLASS()
-class UR_DBDPROJECT_API AD1KillerController : public APlayerController
+class UR_DBDPROJECT_API AD1KillerController : public AD1ServerController
 {
 	GENERATED_BODY()
 
@@ -77,7 +77,7 @@ public:
 	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
 
-	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) {	CarriedSurvivor = survivor;	}
+	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) { CarriedSurvivor = survivor; }
 	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

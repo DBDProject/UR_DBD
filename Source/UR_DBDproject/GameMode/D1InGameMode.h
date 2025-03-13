@@ -20,22 +20,28 @@ class UR_DBDPROJECT_API AD1InGameMode : public AGameMode
 	GENERATED_BODY()
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Data", Meta = (Displayername = "CharacterTable"))
-	UDataTable* m_dataTable;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "CharacterTable"))
+	TObjectPtr<UDataTable> m_dataTable;
 
 private:
 	APlayerController* CreateControllerForCharacterType(UPlayer* NewPlayer, ECharacterType CharType);
 	void ConfigureController(APlayerController* Controller,
 		TSubclassOf<APlayerState> PSClass, TSubclassOf<APawn> PawnClass);
-	AActor* FindRoleBasedPlayerStart();
 
 public:
 	FCharacterDataSet* GetCharacterData(ECharacterType CharacaterType);
 	FName GetEnumRowName(ECharacterType CharacterType);
 
+	void GameStart();
+
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
+	virtual void StartPlay() override;
+
+	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
+		FString& ErrorMessage) override;
 	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal,
 		const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
+
 	virtual void Logout(AController* Exiting) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

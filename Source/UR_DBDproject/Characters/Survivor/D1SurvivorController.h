@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameFramework/PlayerController.h"
+#include "Characters/D1ServerController.h"
 #include "D1Define.h"
 #include "D1SurvivorController.generated.h"
 
@@ -15,7 +15,7 @@ class AD1SurvivorBase;
  *
  */
 UCLASS()
-class UR_DBDPROJECT_API AD1SurvivorController : public APlayerController
+class UR_DBDPROJECT_API AD1SurvivorController : public AD1ServerController
 {
 	GENERATED_BODY()
 private:
