@@ -11,8 +11,7 @@
  *
  */
 
-#define GAMESTART_PLAYER_COUNT 2
-
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
 
@@ -39,9 +38,6 @@ private:
 	UFUNCTION()
 	void OnRep_GeneratorCompleted();
 
-	UFUNCTION()
-	void OnRep_ReadyPlayer();
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -53,16 +49,6 @@ public:
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
 
-	// 플레이어 로딩 완료 시 호출
-	UFUNCTION(Server, Reliable)
-	void ReadyPlayer();
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
-	FString InGameMap;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
-	bool bIsAsnycLoadMap = false;
 
 protected:
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
@@ -71,6 +57,9 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnGeneratorCompleted OnGeneratorCompleted;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGameStart OnGameStart;
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, Category = "DBDListen")
@@ -99,10 +88,4 @@ protected:
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	float EndGameTimer;
-
-
-private:
-	UPROPERTY(ReplicatedUsing = OnRep_ReadyPlayer)
-	uint8 nReadyPlayerCount = 0;
-
 };

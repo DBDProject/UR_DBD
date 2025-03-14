@@ -3,7 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "Characters/D1ServerController.h"
+#include "GameFramework/PlayerController.h"
 #include "D1Define.h"
 #include "GameplayTagContainer.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
@@ -16,7 +16,7 @@ class UInputMappingContext;
  *
  */
 UCLASS()
-class UR_DBDPROJECT_API AD1KillerController : public AD1ServerController
+class UR_DBDPROJECT_API AD1KillerController : public APlayerController
 {
 	GENERATED_BODY()
 

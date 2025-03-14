@@ -108,6 +108,9 @@ struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 
 
 	UPROPERTY(BlueprintReadWrite)
 	FPlayerInfo killerInfo;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsServer = false; // 서버장 체크
 };
 
 USTRUCT(BlueprintType)
