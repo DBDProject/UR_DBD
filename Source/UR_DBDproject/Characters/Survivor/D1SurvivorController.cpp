@@ -81,7 +81,7 @@ void AD1SurvivorController::SetupInputComponent()
 
 		// 좌클릭
 		auto InteractAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Interact);
-		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Triggered, this, &ThisClass::Input_StartInteract_LeftClick);
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_LeftClick);
 		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_LeftClick);
 
 		// 스페이스
@@ -197,10 +197,10 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		if (IsLocalController())
-		{
-			StartRepair_Local();
-		}
+		//if (IsLocalController())
+		//{
+		//	StartRepair_Local();
+		//}
 
 		Server_StartRepair();
 	}
@@ -373,6 +373,8 @@ void AD1SurvivorController::StartRepair_Local()
 		return;
 
 	D1Survivor.Get()->SetIsFail(false);
+
+	RepaireStartDelegate.Broadcast();
 
 	// 플레이어 위치 판별
 	EGeneratorInteractionPosition Position =
