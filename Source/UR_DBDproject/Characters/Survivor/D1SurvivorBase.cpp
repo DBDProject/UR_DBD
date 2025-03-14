@@ -139,6 +139,10 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bCanBeHealed);
 	DOREPLIFETIME(AD1SurvivorBase, CurrentState);
 	DOREPLIFETIME(AD1SurvivorBase, bIsExitGateOpening);
+	DOREPLIFETIME(AD1SurvivorBase, CrawlHealth);
+	DOREPLIFETIME(AD1SurvivorBase, bIsCrawlSelfRecovering);
+	DOREPLIFETIME(AD1SurvivorBase, HookedCount);
+	DOREPLIFETIME(AD1SurvivorBase, HookHealth);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -151,6 +155,11 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	if (bIsBeingHealed)
 	{
 		UpdateHealingProgress(DeltaTime);
+	}
+
+	if (CurrentState == ESurvivorState::Crawl)
+	{
+		UpdateCrawlBleedOut(DeltaTime);
 	}
 }
 
@@ -174,11 +183,13 @@ void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 
 void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 {
-	if (!bIsBeingHealed) return;
+	if (!bIsBeingHealed && !bIsCrawlSelfRecovering) return;
+
+	float CurrentHealingRate = bIsBeingHealed ? HealingRate : SelfRecoveryRate;
 
 	// 치료 진행도 증가
-	HealingProgress += HealingRate * DeltaTime;
-	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, 100.0f);
+	HealingProgress += CurrentHealingRate * DeltaTime;
+	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, bIsCrawlSelfRecovering ? 95.0f : 100.0f);
 
 	Multicast_UpdateHealingProgress(HealingProgress);
 	UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
@@ -188,6 +199,23 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	{
 		StopBeingHealing();
 		FinishHealing();
+	}
+}
+
+void AD1SurvivorBase::UpdateCrawlBleedOut(float DeltaTime)
+{
+	if (CurrentState != ESurvivorState::Crawl) return;
+
+	CrawlHealth -= BleedOutRate * DeltaTime;
+	CrawlHealth = FMath::Clamp(CrawlHealth, 0.0f, 100.0f);
+
+	Multicast_UpdateCrawlBleedOut(CrawlHealth);
+	UE_LOG(LogTemp, Warning, TEXT("[출혈] HP: %.2f%%"), CrawlHealth);
+
+	if (CrawlHealth <= 0.f)
+	{
+		// TEMP
+		DieFromBleedOut();
 	}
 }
 
@@ -278,6 +306,87 @@ void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, F
 void AD1SurvivorBase::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
 {
 	PlayMontage_Local(Montage, SectionName);
+}
+void AD1SurvivorBase::OnHooked()
+{
+	HookedCount++;
+
+	// 3번째 갈고리
+	if (HookedCount >= 3 || HookHealth <= 50.f)
+	{
+		Die();
+		return;
+	}
+	CurrentState = ESurvivorState::Hooked;
+
+	if (HookedCount == 1)
+	{
+		GetWorld()->GetTimerManager().SetTimer(HookDamageTimer, this, &AD1SurvivorBase::ApplyHookDamage, 2.0f, true);
+	}
+	else if (HookedCount == 2)
+	{
+		GetWorld()->GetTimerManager().SetTimer(HookDamageTimer, this, &AD1SurvivorBase::ApplyHookDamage, 2.0f, true);
+
+		if (HookHealth >= 50.f)
+			HookHealth = 50.0f;
+	}
+}
+
+void AD1SurvivorBase::OnRescued()
+{
+	if (CurrentState == ESurvivorState::Hooked)
+	{
+		CurrentState = ESurvivorState::Injured;
+
+		GetWorld()->GetTimerManager().ClearTimer(HookDamageTimer);		
+	}
+}
+
+void AD1SurvivorBase::ApplyHookDamage()
+{
+	if (CurrentState == ESurvivorState::Hooked && HookedCount == 1)
+	{
+		HookHealth -= (100.0f / 60.0f);  // 120초 동안 100% 감소 (2초마다 감소)
+
+		UE_LOG(LogTemp, Warning, TEXT("Survivor's health is decreasing: %f"), HookHealth);
+
+		if (HookHealth <= 0)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Survivor has died due to Hook damage!"));
+			Die();
+		}
+	}
+}
+
+void AD1SurvivorBase::Die()
+{
+	if (CurrentState == ESurvivorState::Dying)
+	{
+		return; // 이미 사망한 경우 중복 실행 방지
+	}
+
+	// 생존자 상태 변경
+	CurrentState = ESurvivorState::Dying;
+	
+	// 갈고리에 걸려있다면 타이머 제거
+	GetWorld()->GetTimerManager().ClearTimer(HookDamageTimer);
+
+	// 사망 애니메이션 (TODO)
+	
+	// 5초 후 사망 처리 (게임에서 제거)
+	GetWorld()->GetTimerManager().SetTimer(DeathRemoveTimer, this, &AD1SurvivorBase::RemoveFromGame, 5.0f, false);
+}
+void AD1SurvivorBase::DieFromBleedOut()
+{
+	if (!HasAuthority()) return;
+
+	UE_LOG(LogTemp, Log, TEXT("과다출혈로 사망!"));
+
+	// TODO
+}
+void AD1SurvivorBase::RemoveFromGame()
+{
+	Destroy();
 }
 
 void AD1SurvivorBase::MoveToPalletStartPosition()
@@ -441,7 +550,7 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 	SetSurvivorState(ESurvivorState::PickedUp);
 }
 
-void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
+void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 {
 	if (!Hook) return;
 	if (CurrentState == ESurvivorState::Hooked) return;
@@ -456,7 +565,7 @@ void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(65.f, 0.f, 0.f), FRotator(0.f, -90.f, 0.f));
 
-	SetSurvivorState(ESurvivorState::Hooked);
+	OnHooked();
 }
 
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
@@ -544,6 +653,15 @@ void AD1SurvivorBase::FinishHealing()
 	HealingProgress = 0.0f;
 	bIsBeingHealed = false;
 	HealingSource = nullptr;
+}
+void AD1SurvivorBase::Multicast_UpdateCrawlBleedOut_Implementation(float NewProgress)
+{
+	CrawlHealth = NewProgress;
+}
+
+void AD1SurvivorBase::Server_SetSelfRecovering_Implementation(bool bNewState)
+{
+	bIsCrawlSelfRecovering = bNewState;
 }
 
 // 아이템 장착 함수
