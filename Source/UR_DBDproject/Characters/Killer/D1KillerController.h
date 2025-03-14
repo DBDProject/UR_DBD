@@ -13,7 +13,7 @@
 struct FInputActionValue;
 class UInputMappingContext;
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1KillerController : public APlayerController
@@ -77,7 +77,7 @@ public:
 	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
 
-	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) {	CarriedSurvivor = survivor;	}
+	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) { CarriedSurvivor = survivor; }
 	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

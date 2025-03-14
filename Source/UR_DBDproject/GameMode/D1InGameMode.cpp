@@ -2,6 +2,13 @@
 
 
 #include "GameMode/D1InGameMode.h"
+#include "System/D1GameState.h"
+
+AD1InGameMode::AD1InGameMode(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer)
+{
+	bDelayedStart = true;
+}
 
 FCharacterDataSet* AD1InGameMode::GetCharacterData(ECharacterType CharacaterType)
 {
@@ -39,6 +46,7 @@ APlayerController* AD1InGameMode::CreateControllerForCharacterType(UPlayer* NewP
 
 	NewController->SetPlayer(NewPlayer);
 	NewController->SetReplicates(true);
+	//NewController->DisableInput(NewController);
 	ConfigureController(NewController, CharacterData->PlayerStateClass, CharacterData->PawnClass);
 
 	return NewController;
@@ -62,12 +70,10 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	}
 
 
-	AActor* StartSpot = FindRoleBasedPlayerStart();
-	FVector SpawnLocation = StartSpot ? StartSpot->GetActorLocation() : FVector(0, 0, 100);
-	FRotator SpawnRotation = StartSpot ? StartSpot->GetActorRotation() : FRotator::ZeroRotator;
+	FVector SpawnLocation = FVector(0, 0, 5000);
+	FRotator SpawnRotation = FRotator::ZeroRotator;
 
 	FActorSpawnParameters SpawnParams;
-	SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
 
 	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
 		PawnClass,
@@ -87,55 +93,18 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 		}
 
 		Controller->Possess(NewPawn);
-		UE_LOG(LogTemp, Warning, TEXT("플레이어 '%s'를 위치 %s에 스폰했습니다."),
-			*Controller->GetName(), *SpawnLocation.ToString());
+		UE_LOG(LogTemp, Warning, TEXT("컨트롤러 '%s'가 '%s'로 설정됨."), *Controller->GetName(), *NewPawn->GetName());
 	}
 }
 
-AActor* AD1InGameMode::FindRoleBasedPlayerStart()
+void AD1InGameMode::ReadyPlayer()
 {
-	// 찾을 태그 결정
-	FName StartTag;
-
-	//// 캐릭터 타입에 따라 적절한 태그 선택
-	//if (CharType == ECharacterType::Killer)
-	//{
-	//	StartTag = FName("KillerStart");
-	//}
-	//else if (CharType >= ECharacterType::Survivor_Default && CharType <= ECharacterType::Survivor_4)
-	//{
-	//	// 생존자 수에 따라 다른 시작 위치 사용 가능
-	//	int32 SurvivorIndex = static_cast<int32>(CharType) - static_cast<int32>(ECharacterType::Survivor_Default);
-	//	StartTag = FName(*FString::Printf(TEXT("SurvivorStart_%d"), SurvivorIndex));
-	//}
-	//else
-	//{
-	//	StartTag = NAME_None; // 기본 PlayerStart 사용
-	//}
-	StartTag = NAME_None;
-
-	// 맵에서 모든 PlayerStart 찾기
-	TArray<AActor*> PlayerStarts;
-	UGameplayStatics::GetAllActorsOfClass(GetWorld(), APlayerStart::StaticClass(), PlayerStarts);
-
-	// 적절한 태그를 가진 PlayerStart 찾기
-	for (AActor* Start : PlayerStarts)
+	nReadyPlayerCount++;
+	if (nReadyPlayerCount >= READY_PLAYER_COUNT)
 	{
-		// 태그가 지정되지 않았을 경우 기본 PlayerStart 검색
-		if (StartTag == NAME_None)
-		{
-			return Start;
-		}
-
-		// 태그 확인
-		APlayerStart* PlayerStart = Cast<APlayerStart>(Start);
-		if (PlayerStart && PlayerStart->ActorHasTag(StartTag))
-		{
-			return PlayerStart;
-		}
+		StartMatch();
 	}
 
-	return nullptr;
 }
 
 FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
@@ -162,6 +131,12 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 	}
 }
 
+void AD1InGameMode::PreLogin(const FString& Options, const FString& Address,
+	const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
+{
+	Super::PreLogin(Options, Address, UniqueId, ErrorMessage);
+}
+
 APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal,
 	const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage)
 {
@@ -186,13 +161,15 @@ APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRol
 		ErrorMessage = TEXT("컨트롤러 생성에 실패했습니다.");
 		NewPlayerController = Super::Login(NewPlayer, InRemoteRole, Portal, Options, UniqueId, ErrorMessage);
 	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("플레이어 '%s'가 '%s'로 로그인했습니다."),
-			*NewPlayer->GetName(), *NewPlayerController->GetName());
-	}
 
 	return NewPlayerController;
+}
+
+void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	ReadyPlayer();
 }
 
 void AD1InGameMode::Logout(AController* Exiting)
