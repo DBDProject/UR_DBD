@@ -22,6 +22,9 @@
 
 AD1KillerBase::AD1KillerBase()
 {
+	bReplicates = true;
+	bAlwaysRelevant = true;
+
 	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshAsset(
 		TEXT("/Script/Engine.SkeletalMesh'/Game/Art/Characters/Killer/Dracula/Meshes/Dracula/SKM_Dracula.SKM_Dracula'")
@@ -176,6 +179,8 @@ void AD1KillerBase::BeginPlay()
 		WolfAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerBegin);
 		WolfAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerEnd);
 	}
+
+	CurrentTransformState = EDraculaTransformationState::Dracula;
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -321,7 +326,7 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
 		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
-
+		
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());

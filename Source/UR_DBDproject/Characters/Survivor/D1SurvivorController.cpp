@@ -661,7 +661,7 @@ void AD1SurvivorController::DropPallet_Local()
 	float CurrentSpeed = D1Survivor->GetVelocity().Size();
 
 	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get(), ECharacterType::MEG);
 
 	if (PalletLocation == EPalletLocation::None)
 	{
@@ -714,7 +714,7 @@ void AD1SurvivorController::VaultPallet()
 	float CurrentSpeed = D1Survivor->GetVelocity().Size();
 
 	// 플레이어 위치, 방향 이동
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get());
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(D1Survivor.Get(), ECharacterType::MEG);
 
 	if (PalletLocation == EPalletLocation::None)
 	{

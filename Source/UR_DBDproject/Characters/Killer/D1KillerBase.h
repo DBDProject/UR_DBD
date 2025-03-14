@@ -113,6 +113,9 @@ private:
 	void OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	EDraculaTransformationState PrevTransformState;
+	EDraculaTransformationState CurrentTransformState;
+
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
@@ -132,6 +135,10 @@ public:
 	TObjectPtr<UCameraComponent> GetWolfCameraComponent() const { return WolfCameraComponent; }
 	TObjectPtr<UCameraComponent> GetBatCameraComponent() const { return BatCameraComponent; }
 
+	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
+	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
+	void SetPrevTransformState(EDraculaTransformationState state) { PrevTransformState = state; }
+	void SetCurrentTransformState(EDraculaTransformationState state) { CurrentTransformState = state; }
 
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
@@ -146,4 +153,5 @@ public:
 
 	bool GetbSurvivorHit() { return bSurvivorHit; }
 	bool SetbAttackSuccess(bool bValue) { return bAttackSuccess = bValue; }
+
 };

@@ -4,6 +4,7 @@
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "D1Define.h"
 
 UD1GA_Dracula_Transform::UD1GA_Dracula_Transform(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -52,12 +53,16 @@ void UD1GA_Dracula_Transform::ActivateAbility(
 	UAnimInstance* FPVAnimInstance = Killer->GetFPVMesh()->GetAnimInstance();
 	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
 	UAnimInstance* BatAnimInstance = Killer->GetBatMesh()->GetAnimInstance();
-	KillerController = Cast<AD1KillerController>(Killer->GetController());
-	PrevTransformState = KillerController->GetPrevTransformState();
-	CurrentTransformState = KillerController->GetCurrentTransformState();
+	PrevTransformState = Killer->GetPrevTransformState();
+	CurrentTransformState = Killer->GetCurrentTransformState();
 
 	UE_LOG(LogTemp, Log, TEXT("✅ Transform Start - PrevState: %d, CurrentState: %d"),
 		static_cast<int32>(PrevTransformState), static_cast<int32>(CurrentTransformState));
+
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_OutTransform(Killer);
+	}
 
 	if (PrevTransformState == EDraculaTransformationState::Dracula)
 	{
@@ -108,7 +113,6 @@ void UD1GA_Dracula_Transform::ActivateAbility(
 		}
 	}
 
-
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &UD1GA_Dracula_Transform::OnOutMontageEnded);
 	if (PrevTransformState == EDraculaTransformationState::Dracula)
@@ -136,9 +140,13 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
 	UAnimInstance* BatAnimInstance = Killer->GetBatMesh()->GetAnimInstance();
 	KillerController = Cast<AD1KillerController>(Killer->GetController());
-	PrevTransformState = KillerController->GetPrevTransformState();
-	CurrentTransformState = KillerController->GetCurrentTransformState();
+	PrevTransformState = Killer->GetPrevTransformState();
+	CurrentTransformState = Killer->GetCurrentTransformState();
 
+	if (HasAuthority(&CurrentActivationInfo))
+	{
+		//Multicast_InTransform(Killer);
+	}
 
 	UE_LOG(LogTemp, Log, TEXT("✅ Transform Start - PrevState: %d, CurrentState: %d"),
 		static_cast<int32>(PrevTransformState), static_cast<int32>(CurrentTransformState));
@@ -271,6 +279,170 @@ void UD1GA_Dracula_Transform::OnFinalMontageEnded(UAnimMontage* Montage, bool bI
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
+
+void UD1GA_Dracula_Transform::Multicast_OutTransform_Implementation(AD1KillerBase* Player)
+{
+	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Player->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* BatAnimInstance = Player->GetBatMesh()->GetAnimInstance();
+
+	EDraculaTransformationState PrevTransform = Player->GetPrevTransformState();
+	EDraculaTransformationState CurrTransform = Player->GetCurrentTransformState();
+
+	if (PrevTransform == EDraculaTransformationState::Dracula)
+	{
+		UE_LOG(LogTemp, Log, TEXT("🎭 Playing Dracula_Transform Montage"));
+		TPVAnimInstance->Montage_Play(Dracula_Transform.Get());
+
+		if (CurrTransform == EDraculaTransformationState::Wolf)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutWolf Section"));
+			TPVAnimInstance->Montage_JumpToSection(FName("OutWolf"), Dracula_Transform.Get());
+		}
+		else if (CurrTransform == EDraculaTransformationState::Bat)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutBat Section"));
+			TPVAnimInstance->Montage_JumpToSection(FName("OutBat"), Dracula_Transform.Get());
+		}
+	}
+	else if (PrevTransform == EDraculaTransformationState::Wolf)
+	{
+		UE_LOG(LogTemp, Log, TEXT("🎭 Playing Wolf_Transform Montage"));
+		WolfAnimInstance->Montage_Play(Wolf_Transform.Get());
+
+		if (CurrTransform == EDraculaTransformationState::Dracula)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutDracula Section"));
+			WolfAnimInstance->Montage_JumpToSection(FName("OutDracula"), Wolf_Transform.Get());
+		}
+		else if (CurrTransform == EDraculaTransformationState::Bat)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutBat Section"));
+			WolfAnimInstance->Montage_JumpToSection(FName("OutBat"), Wolf_Transform.Get());
+		}
+	}
+	else if (PrevTransform == EDraculaTransformationState::Bat)
+	{
+		UE_LOG(LogTemp, Log, TEXT("🎭 Playing Bat_Transform Montage"));
+		BatAnimInstance->Montage_Play(Bat_Transform.Get());
+
+		if (CurrTransform == EDraculaTransformationState::Dracula)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutDracula Section"));
+			BatAnimInstance->Montage_JumpToSection(FName("OutDracula"), Bat_Transform.Get());
+		}
+		else if (CurrTransform == EDraculaTransformationState::Wolf)
+		{
+			UE_LOG(LogTemp, Log, TEXT("🎯 Jumping to OutWolf Section"));
+			BatAnimInstance->Montage_JumpToSection(FName("OutWolf"), Bat_Transform.Get());
+		}
+	}
+}
+
+//void UD1GA_Dracula_Transform::Multicast_InTransform_Implementation(AD1KillerBase* Player)
+//{
+//	UE_LOG(LogTemp, Log, TEXT("✅ Transform Montage Out Section Completed"));
+//	 
+//	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+//	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+//	UAnimInstance* WolfAnimInstance = Player->GetWolfMesh()->GetAnimInstance();
+//	UAnimInstance* BatAnimInstance = Player->GetBatMesh()->GetAnimInstance();
+//
+//	EDraculaTransformationState PrevTransform = Player->GetPrevTransformState();
+//	EDraculaTransformationState CurrTransform = Player->GetCurrentTransformState();
+//
+//	if (PrevTransform == EDraculaTransformationState::Dracula)
+//	{
+//		if (CurrTransform == EDraculaTransformationState::Wolf)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Wolf"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(false);
+//			Player->GetBatMesh()->SetHiddenInGame(true);
+//			Player->SwitchCamera(EDraculaTransformationState::Wolf);
+//
+//			WolfAnimInstance->Montage_Play(Wolf_Transform.Get());
+//			WolfAnimInstance->Montage_JumpToSection(FName("InDracula"), Wolf_Transform.Get());
+//		}
+//		else if (CurrTransform == EDraculaTransformationState::Bat)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Bat"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(true);
+//			Player->GetBatMesh()->SetHiddenInGame(false);
+//			Player->SwitchCamera(EDraculaTransformationState::Bat);
+//
+//			BatAnimInstance->Montage_Play(Bat_Transform.Get());
+//			BatAnimInstance->Montage_JumpToSection(FName("InDracula"), Bat_Transform.Get());
+//		}
+//	}
+//	else if (PrevTransform == EDraculaTransformationState::Wolf)
+//	{
+//		UE_LOG(LogTemp, Log, TEXT("🎭 Transforming from Wolf"));
+//
+//		if (CurrTransform == EDraculaTransformationState::Dracula)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Dracula"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(false);
+//			Player->GetCharacterMesh()->SetOwnerNoSee(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(false);
+//			Player->GetFPVMesh()->SetOnlyOwnerSee(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(true);
+//			Player->GetBatMesh()->SetHiddenInGame(true);
+//			Player->SwitchCamera(EDraculaTransformationState::Dracula);
+//
+//			TPVAnimInstance->Montage_Play(Dracula_Transform.Get());
+//			TPVAnimInstance->Montage_JumpToSection(FName("InWolf"), Dracula_Transform.Get());
+//		}
+//		else if (CurrTransform == EDraculaTransformationState::Bat)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Bat"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(true);
+//			Player->GetBatMesh()->SetHiddenInGame(false);
+//			Player->SwitchCamera(EDraculaTransformationState::Bat);
+//
+//			BatAnimInstance->Montage_Play(Bat_Transform.Get());
+//			BatAnimInstance->Montage_JumpToSection(FName("InWolf"), Bat_Transform.Get());
+//		}
+//	}
+//	else if (PrevTransform == EDraculaTransformationState::Bat)
+//	{
+//		UE_LOG(LogTemp, Log, TEXT("🎭 Transforming from Bat"));
+//
+//		if (CurrTransform == EDraculaTransformationState::Dracula)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Dracula"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(false);
+//			Player->GetCharacterMesh()->SetOwnerNoSee(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(false);
+//			Player->GetFPVMesh()->SetOnlyOwnerSee(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(true);
+//			Player->GetBatMesh()->SetHiddenInGame(true);
+//			Player->SwitchCamera(EDraculaTransformationState::Dracula);
+//
+//			TPVAnimInstance->Montage_Play(Dracula_Transform.Get());
+//			TPVAnimInstance->Montage_JumpToSection(FName("InBat"), Dracula_Transform.Get());
+//		}
+//		else if (CurrTransform == EDraculaTransformationState::Wolf)
+//		{
+//			UE_LOG(LogTemp, Log, TEXT("🎯 Changing to Wolf"));
+//			Player->GetCharacterMesh()->SetHiddenInGame(true);
+//			Player->GetFPVMesh()->SetHiddenInGame(true);
+//			Player->GetWolfMesh()->SetHiddenInGame(false);
+//			Player->GetBatMesh()->SetHiddenInGame(true);
+//			Player->SwitchCamera(EDraculaTransformationState::Wolf);
+//
+//			WolfAnimInstance->Montage_Play(Wolf_Transform.Get());
+//			WolfAnimInstance->Montage_JumpToSection(FName("InBat"), Wolf_Transform.Get());
+//		}
+//	}
+//
+//}
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {

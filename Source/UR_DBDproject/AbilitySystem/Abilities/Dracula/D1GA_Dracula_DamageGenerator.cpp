@@ -32,8 +32,6 @@ void UD1GA_Dracula_DamageGenerator::ActivateAbility(
 
 	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
 	KillerController = Cast<AD1KillerController>(Killer->GetController());
-	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
-	KillerController = Cast<AD1KillerController>(Killer->GetController());
 	if (!Killer || !KillerController)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 Killer is NULL!"));
@@ -68,8 +66,19 @@ void UD1GA_Dracula_DamageGenerator::ActivateAbility(
 
 	EGeneratorInteractionPosition Pos =
 		Generator->FindInteractionPosition(Killer);
+	
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_PlayDamageGenerator(Killer);
+	}
 
-	MoveToGeneratorPosition(Pos);
+	MoveToGeneratorPosition(Pos, Killer);
+
+	// 플레이어 방향을 발전기로 조정 (자동 회전)
+	FRotator LookAtRotation = (Generator->GetActorLocation() - Killer->GetActorLocation()).Rotation();
+	LookAtRotation.Pitch = -15.0f;
+	KillerController->SetControlRotation(LookAtRotation);
+
 	Generator->SetCurrentState(EGeneratorState::Breaking);
 
 	TPVAnimInstance->Montage_Play(TPV_DamageGenerator.Get());
@@ -94,9 +103,27 @@ void UD1GA_Dracula_DamageGenerator::OnEndMontage(UAnimMontage* Montage, bool bIn
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UD1GA_Dracula_DamageGenerator::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
+void UD1GA_Dracula_DamageGenerator::Multicast_PlayDamageGenerator_Implementation(AD1KillerBase* Player)
 {
-	AD1Generator* Generator = Killer->GetCurrentGenerator();
+	if (!Player) return;
+
+	EGeneratorInteractionPosition Pos = Player->GetCurrentGenerator()->FindInteractionPosition(Player);
+	MoveToGeneratorPosition(Pos, Player);
+
+	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+	if (!TPVAnimInstance || !FPVAnimInstance)
+	{
+		UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));
+		return;
+	}
+	TPVAnimInstance->Montage_Play(TPV_DamageGenerator.Get());
+	FPVAnimInstance->Montage_Play(FPV_DamageGenerator.Get());
+}
+
+void UD1GA_Dracula_DamageGenerator::MoveToGeneratorPosition(EGeneratorInteractionPosition Position, AD1KillerBase* Player)
+{
+	AD1Generator* Generator = Player->GetCurrentGenerator();
 	FVector GeneratorLocation = Generator->GetActorLocation();
 	FVector ForwardVector = Generator->GetActorForwardVector();
 	FVector RightVector = Generator->GetActorRightVector();
@@ -122,12 +149,7 @@ void UD1GA_Dracula_DamageGenerator::MoveToGeneratorPosition(EGeneratorInteractio
 	}
 	TargetLocation.Z += 120.0f;  // Z 값 증가
 
-	// 플레이어 방향을 발전기로 조정 (자동 회전)
-	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
-	LookAtRotation.Pitch = -15.0f;
-	KillerController->SetControlRotation(LookAtRotation);
-
-	Killer->GetController()->GetPawn()->SetActorLocation(TargetLocation);
+	Player->SetActorLocation(TargetLocation);
 } 
 
 void UD1GA_Dracula_DamageGenerator::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

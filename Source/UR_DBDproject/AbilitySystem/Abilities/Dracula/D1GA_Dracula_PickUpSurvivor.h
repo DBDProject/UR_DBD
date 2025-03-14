@@ -44,4 +44,8 @@ protected:
 
 private:
 	void OnPickUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PickUpSurvivor(AD1KillerBase* Player);
 };

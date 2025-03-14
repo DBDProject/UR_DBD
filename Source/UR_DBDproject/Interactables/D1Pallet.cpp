@@ -5,6 +5,7 @@
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/D1CharacterBase.h"
+#include "Characters/Killer/D1KillerController.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -82,7 +83,7 @@ EPalletLocation AD1Pallet::FindClosestInteractionPoint(AD1CharacterBase* Player)
 	}
 }
 
-EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player)
+EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player, ECharacterType type)
 {
 	if (!Player) return EPalletLocation::None;
 
@@ -106,12 +107,22 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 
 	FRotator LookAtRotation;
 
-	LookAtRotation = (InteractionPoint_Center->GetComponentLocation() - TargetLocation).Rotation();
-	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
-	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	if (type == ECharacterType::MEG)
+	{
+		LookAtRotation = (InteractionPoint_Center->GetComponentLocation() - TargetLocation).Rotation();
+		LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+		LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+		// 플레이어 회전
+		Player->SetActorRotation(LookAtRotation);
+	}
+	else if (type == ECharacterType::DRACULA)
+	{
+		LookAtRotation = (InteractionPoint_Center->GetComponentLocation() - TargetLocation).Rotation();
+		LookAtRotation.Pitch = -15.0f;
+		AD1KillerController* KillerController = Cast<AD1KillerController>(Player->GetController());
+		KillerController->SetControlRotation(LookAtRotation);
+	}
 
-	// 플레이어 회전
-	Player->SetActorRotation(LookAtRotation);
 
 	return PalletLocation;
 }

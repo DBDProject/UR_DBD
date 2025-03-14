@@ -50,4 +50,8 @@ protected:
 private:
 	void OnInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayAttack(AD1KillerBase* Player, FName SectionName);
 };

@@ -27,10 +27,6 @@ void UD1GA_Dracula_Attack::ActivateAbility(
 {
     Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
 
-    //UE_LOG(LogTemp, Log, TEXT("Dracula Attack Ability Activated!"));
-
-    if (!HasAuthority(&ActivationInfo))
-        return;
 
     Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
     KillerController = Cast<AD1KillerController>(Killer->GetController());
@@ -40,6 +36,7 @@ void UD1GA_Dracula_Attack::ActivateAbility(
         EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
         return;
     }
+
     KillerController->SetIgnoreLookInput(true);
 
     if (!TPV_Attack || !FPV_Attack)
@@ -59,7 +56,11 @@ void UD1GA_Dracula_Attack::ActivateAbility(
         return;
     }
 
-    // ✅ "In" 섹션 실행
+    if (HasAuthority(&ActivationInfo))
+    {
+        Multicast_PlayAttack(Killer, FName("In"));
+    }
+
     TPVAnimInstance->Montage_Play(TPV_Attack.Get(), 1.0f);
     FPVAnimInstance->Montage_Play(FPV_Attack.Get(), 1.0f);
 
@@ -95,15 +96,23 @@ void UD1GA_Dracula_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterru
     // ✅ 적중 여부에 따라 "Hit" 또는 "Miss"로 이동
     if (bAttackHit)
     {
-        UE_LOG(LogTemp, Log, TEXT("✅ bAttackHit = true"));
+        UE_LOG(LogTemp, Log, TEXT("✅ 공격 성공 (Hit)"));
         TPVAnimInstance->Montage_JumpToSection(FName("Hit"), TPV_Attack.Get());
         FPVAnimInstance->Montage_JumpToSection(FName("Hit"), FPV_Attack.Get());
+        if (HasAuthority(&CurrentActivationInfo))
+        {
+            Multicast_PlayAttack(Killer, FName("Hit"));
+        }
     }
     else
     {
-        UE_LOG(LogTemp, Log, TEXT("✅ bAttackHit = false"));
+        UE_LOG(LogTemp, Log, TEXT("❌ 공격 실패 (Miss)"));
         TPVAnimInstance->Montage_JumpToSection(FName("Miss"), TPV_Attack.Get());
         FPVAnimInstance->Montage_JumpToSection(FName("Miss"), FPV_Attack.Get());
+        if (HasAuthority(&CurrentActivationInfo))
+        {
+            Multicast_PlayAttack(Killer, FName("Miss"));
+        }
     }
 
     // ✅ "Hit" 또는 "Miss"가 끝나면 `OnFinalMontageEnded()` 실행
@@ -116,6 +125,18 @@ void UD1GA_Dracula_Attack::OnFinalMontageEnded(UAnimMontage* Montage, bool bInte
 {
     //UE_LOG(LogTemp, Log, TEXT("✅ Attack Montage Completed - Ending Ability"));
     EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UD1GA_Dracula_Attack::Multicast_PlayAttack_Implementation(AD1KillerBase* Player, FName SectionName)
+{
+    UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+    UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+
+    TPVAnimInstance->Montage_Play(TPV_Attack.Get(), 1.0f);
+    FPVAnimInstance->Montage_Play(FPV_Attack.Get(), 1.0f);
+
+    TPVAnimInstance->Montage_JumpToSection(SectionName, TPV_Attack.Get());
+    FPVAnimInstance->Montage_JumpToSection(SectionName, FPV_Attack.Get());
 }
 
 

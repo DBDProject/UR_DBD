@@ -65,17 +65,11 @@ private:
 
 	bool bIsCtrlPressed = false;
 	bool bIgnoreInputLook = false;
-
-	EDraculaTransformationState PrevTransformState;
-	EDraculaTransformationState CurrentTransformState;
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
 
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
-
-	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
-	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
 
 	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) {	CarriedSurvivor = survivor;	}
 	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }

@@ -46,8 +46,6 @@ void AD1KillerController::BeginPlay()
 		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh().Get()->GetAnimInstance());
 		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
-
-		CurrentTransformState = EDraculaTransformationState::Dracula;
 	}
 }
 
@@ -173,14 +171,14 @@ void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 		return;
 	}
 
-	if (CurrentTransformState == EDraculaTransformationState::Dracula)
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Attack"));
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
 		return;
 	}
 
-	if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("WolfAttack"));
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Attack);
@@ -231,20 +229,20 @@ void AD1KillerController::SetCreatureState(ECreatureState InState)
 
 void AD1KillerController::LeftClick_Transform()
 {
-	if (CurrentTransformState == EDraculaTransformationState::Dracula)
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
-		PrevTransformState = EDraculaTransformationState::Dracula;
-		CurrentTransformState = EDraculaTransformationState::Wolf;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Dracula);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Wolf);
 	}
-	else if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	else if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 	{
-		PrevTransformState = EDraculaTransformationState::Wolf;
-		CurrentTransformState = EDraculaTransformationState::Bat;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Wolf);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Bat);
 	}
-	else if (CurrentTransformState == EDraculaTransformationState::Bat)
+	else if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Bat)
 	{
-		PrevTransformState = EDraculaTransformationState::Bat;
-		CurrentTransformState = EDraculaTransformationState::Dracula;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Bat);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Dracula);
 	}
 
 	D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
@@ -252,20 +250,20 @@ void AD1KillerController::LeftClick_Transform()
 
 void AD1KillerController::RightClick_Transform()
 {
-	if (CurrentTransformState == EDraculaTransformationState::Dracula)
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
-		PrevTransformState = EDraculaTransformationState::Dracula;
-		CurrentTransformState = EDraculaTransformationState::Bat;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Dracula);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Bat);
 	}
-	else if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	else if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 	{
-		PrevTransformState = EDraculaTransformationState::Wolf;
-		CurrentTransformState = EDraculaTransformationState::Dracula;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Wolf);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Dracula);
 	}
-	else if (CurrentTransformState == EDraculaTransformationState::Bat)
+	else if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Bat)
 	{
-		PrevTransformState = EDraculaTransformationState::Bat;
-		CurrentTransformState = EDraculaTransformationState::Wolf;
+		D1Killer->SetPrevTransformState(EDraculaTransformationState::Bat);
+		D1Killer->SetCurrentTransformState(EDraculaTransformationState::Wolf);
 	}
 	D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
 }
@@ -297,13 +295,14 @@ void AD1KillerController::HandleInteraction()
 	}
 	else if (D1Killer->GetVaultTarget())
 	{
-		if (CurrentTransformState == EDraculaTransformationState::Dracula)
+		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 		{
 			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_VaultWindow);
 		}
-		if (CurrentTransformState == EDraculaTransformationState::Wolf)
+		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 		{
 			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_VaultWindow);
 		}
 	}
 }
+
