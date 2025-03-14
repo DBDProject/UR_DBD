@@ -46,7 +46,7 @@ APlayerController* AD1InGameMode::CreateControllerForCharacterType(UPlayer* NewP
 
 	NewController->SetPlayer(NewPlayer);
 	NewController->SetReplicates(true);
-	NewController->DisableInput(NewController);
+	//NewController->DisableInput(NewController);
 	ConfigureController(NewController, CharacterData->PlayerStateClass, CharacterData->PawnClass);
 
 	return NewController;
@@ -70,7 +70,7 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	}
 
 
-	FVector SpawnLocation = FVector(0, 0, 200);
+	FVector SpawnLocation = FVector(0, 0, 5000);
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 
 	FActorSpawnParameters SpawnParams;
@@ -97,6 +97,16 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	}
 }
 
+void AD1InGameMode::ReadyPlayer()
+{
+	nReadyPlayerCount++;
+	if (nReadyPlayerCount >= READY_PLAYER_COUNT)
+	{
+		StartMatch();
+	}
+
+}
+
 FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
 {
 	const UEnum* EnumPtr = StaticEnum<ECharacterType>();
@@ -106,14 +116,6 @@ FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
 	}
 
 	return FName(*EnumPtr->GetDisplayNameTextByValue((int64)CharacterType).ToString());
-}
-
-void AD1InGameMode::GameStart()
-{
-	if (HasAuthority())
-	{
-		StartMatch();
-	}
 }
 
 void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -161,6 +163,13 @@ APlayerController* AD1InGameMode::Login(UPlayer* NewPlayer, ENetRole InRemoteRol
 	}
 
 	return NewPlayerController;
+}
+
+void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
+{
+	Super::PostLogin(NewPlayer);
+
+	ReadyPlayer();
 }
 
 void AD1InGameMode::Logout(AController* Exiting)

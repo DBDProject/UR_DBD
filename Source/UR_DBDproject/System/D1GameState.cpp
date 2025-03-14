@@ -26,12 +26,14 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
-	DOREPLIFETIME(AD1GameState, nReadyPlayerCount);
 }
 
 void AD1GameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
+
+	if (!HasAuthority())
+		return;
 
 	// 게임 시작 시 발전기 수리해야할 개수 초기화
 	RepairedGenerators = PlayerArray.Num();
@@ -43,6 +45,9 @@ void AD1GameState::HandleMatchHasStarted()
 	FindPlayerSpawners();
 	FindExitGates();
 	SetPlayerLocation();
+
+	// 게임 시작 델리게이트 호출
+	OnGameStart.Broadcast();
 }
 
 void AD1GameState::FindExitGates()
@@ -121,17 +126,13 @@ void AD1GameState::SetPlayerLocation()
 
 void AD1GameState::OnRep_RepairedGenerators()
 {
+	UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 현재 수리된 발전기 개수: %d"), RepairedGenerators);
 	OnGeneratorRepaired.Broadcast(RepairedGenerators);
 }
 
 void AD1GameState::OnRep_GeneratorCompleted()
 {
 	OnGeneratorCompleted.Broadcast();
-}
-
-void AD1GameState::OnRep_ReadyPlayer()
-{
-	UE_LOG(LogTemp, Warning, TEXT("플레이어가 연결되었습니다!"));
 }
 
 void AD1GameState::UpdateGeneratorState()
@@ -165,19 +166,3 @@ void AD1GameState::UpdateGeneratorState()
 	}
 }
 
-void AD1GameState::ReadyPlayer_Implementation()
-{
-	if (!HasAuthority())
-		return;
-
-	UE_LOG(LogTemp, Warning, TEXT("ReadyPlayer_Implementation"));
-	nReadyPlayerCount++;
-	if (nReadyPlayerCount >= GAMESTART_PLAYER_COUNT)
-	{
-		AD1InGameMode* GM = Cast<AD1InGameMode>(GetWorld()->GetAuthGameMode());
-		UE_LOG(LogTemp, Warning, TEXT("Game Start"));
-
-		if (GM)
-			GM->GameStart();
-	}
-}
