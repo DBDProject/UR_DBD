@@ -252,7 +252,7 @@ void AD1Generator::OnSkillCheckSuccess()
 
 void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 {
-    /*bIsFail = true;
+    bIsFail = true;
     Player->SetIsFail(true);
 
     RepairProgress -= 5.0f;
@@ -261,9 +261,9 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
     bIsRepairBlocked = true;
     StopRepair(Player);
 
-    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 3초간 수리 불가"));
+    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 2초간 수리 불가"));
 
-    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 3.0f, false);*/
+    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 2.0f, false);
 }
 
 void AD1Generator::StopRepairAll()
