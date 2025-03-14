@@ -78,7 +78,7 @@ void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
 
-	//CurrentState = ESurvivorState::Injured;
+	CurrentState = ESurvivorState::Crawl;
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
