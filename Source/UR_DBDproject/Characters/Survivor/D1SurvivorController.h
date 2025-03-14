@@ -7,6 +7,8 @@
 #include "D1Define.h"
 #include "D1SurvivorController.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepaireStart);
+
 struct FInputActionValue;
 class AD1SurvivorBase;
 /**
@@ -16,6 +18,9 @@ UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorController : public APlayerController
 {
 	GENERATED_BODY()
+private:
+	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Generator")
+	FRepaireStart RepaireStartDelegate;
 
 public:
 	AD1SurvivorController(const FObjectInitializer& ObjectInitializer);
@@ -39,7 +44,7 @@ private:
 	void Input_StopInteract_Space();
 	void Input_StartTestInput_1();
 
-
+ 
 protected: // Run
 	void StartRun_Local();
 	void StopRun_Local();
