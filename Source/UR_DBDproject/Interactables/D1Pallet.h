@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "D1Define.h"
 #include "D1Pallet.generated.h"
 
 UENUM(BlueprintType)
@@ -42,7 +43,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 	EPalletLocation FindClosestInteractionPoint(class AD1CharacterBase* Player);
-	EPalletLocation MovePlayerToInteractionPoint(class AD1CharacterBase* Player);
+	EPalletLocation MovePlayerToInteractionPoint(class AD1CharacterBase* Player, ECharacterType type);
 
 	UFUNCTION(BlueprintCallable)
 	void OnDestroy();
@@ -83,4 +84,6 @@ public:
 
 	EPalletLocation GetCurrentLocation() { return CurrentLocation; }
 	void SetCurrentLocation(EPalletLocation State) { CurrentLocation = State; }
+	UFUNCTION(Server, Reliable)
+	void Server_SetControlRotation(class AD1CharacterBase* Player, FRotator LookAtRotation);
 };

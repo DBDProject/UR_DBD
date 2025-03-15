@@ -551,6 +551,17 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 }
 
 void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
+void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
+{
+	if (!Killer) return;
+
+	//TODO
+
+
+	SetSurvivorState(ESurvivorState::Crawl);
+}
+
+void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
 {
 	if (!Hook) return;
 	if (CurrentState == ESurvivorState::Hooked) return;

@@ -9,6 +9,7 @@ AD1KillerState::AD1KillerState(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
 {
 	AbilitySystemComponent = CreateDefaultSubobject<UD1AbilitySystemComponent>("AbilitySystemComponent");
+	AbilitySystemComponent->SetIsReplicated(true);
 	KillerSet = CreateDefaultSubobject<UD1KillerSet>("KillerSet");
 }
 

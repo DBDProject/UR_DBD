@@ -50,4 +50,8 @@ private:
 	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 	AD1Hook* Hook = nullptr;
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_HookSurvivor(AD1KillerBase* Player);
 };

@@ -44,6 +44,10 @@ protected:
 	TObjectPtr<class UAnimMontage> FPV_DamageGenerator;
 
 private:
-	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
+	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position, AD1KillerBase* Player);
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDamageGenerator(AD1KillerBase* Player);
 };

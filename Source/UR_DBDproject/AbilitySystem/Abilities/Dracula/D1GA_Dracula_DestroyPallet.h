@@ -48,4 +48,8 @@ protected:
 private:
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
 
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_PlayDestroyPallet(AD1KillerBase* Player);
+
 };

@@ -59,6 +59,11 @@ void UD1GA_Dracula_VaultWindow::ActivateAbility(
 		return;
 	}
 
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_VaultWindow(Killer);
+	}
+
 	TPVAnimInstance->Montage_Play(TPV_VaultWindow.Get());
 	FPVAnimInstance->Montage_Play(FPV_VaultWindow.Get());
 
@@ -83,6 +88,19 @@ void UD1GA_Dracula_VaultWindow::OnEndMontage(UAnimMontage* Montage, bool bInterr
 
 	Killer->SetActorLocation(TargetLocation);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UD1GA_Dracula_VaultWindow::Multicast_VaultWindow_Implementation(AD1KillerBase* Player)
+{
+	if (!Player)
+		return;
+
+	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+
+	TPVAnimInstance->Montage_Play(TPV_VaultWindow.Get());
+	FPVAnimInstance->Montage_Play(FPV_VaultWindow.Get());
+
 }
 
 void UD1GA_Dracula_VaultWindow::EndAbility(

@@ -62,6 +62,14 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakePickUpFromKiller(class AD1KillerBase* Killer);
 
+	// 생존자 드랍 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void TakeDropFromKiller(class AD1KillerBase* Killer);
+
+	// 생존자 훅 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHooked(class AD1Hook* Hook);
+
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void BeingHealing(AD1SurvivorBase* Healer);
