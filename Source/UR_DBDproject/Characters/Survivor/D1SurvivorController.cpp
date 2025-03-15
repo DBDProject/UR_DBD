@@ -126,8 +126,6 @@ void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 
 void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 {
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Dying) return;
-
 	FVector2D LookVector = InputValue.Get<FVector2D>();
 	// 좌우 회전
 	AddYawInput(LookVector.X);
