@@ -33,9 +33,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1KillerBase> D1Killer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UD1KillerSet> KillerSet;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
@@ -45,6 +42,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> BatAnimInstance;
 
+	bool bTransform = false;
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
@@ -68,6 +66,8 @@ public:
 	void SetCreatureState(ECreatureState InState);
 
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
+
+	void SetbTransform(bool state) { bTransform = state; }
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)

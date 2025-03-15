@@ -21,6 +21,13 @@ public:
 
 	virtual void HandleGameplayEvent(FGameplayTag EventTag) override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UD1KillerSet> KillerSet;
+
+	// 레플리케이션
+	UFUNCTION()
+	void OnRep_KillerSet();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;

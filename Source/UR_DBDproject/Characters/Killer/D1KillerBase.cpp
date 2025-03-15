@@ -200,9 +200,13 @@ void AD1KillerBase::InitAbilitySystem()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 
 		AttributeSet = PS->GetD1KillerSet();
+		KillerSet = Cast<UD1KillerSet>(AttributeSet);
+		if (KillerSet)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = KillerSet->GetWalkSpeed();
+		}
 	}
 }
-
 
 void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
 {
@@ -399,3 +403,12 @@ void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }
+
+void AD1KillerBase::OnRep_KillerSet()
+{
+	if (KillerSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = KillerSet->GetWalkSpeed();
+	}
+}
+

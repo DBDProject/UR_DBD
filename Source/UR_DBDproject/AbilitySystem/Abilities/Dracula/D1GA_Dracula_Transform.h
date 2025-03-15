@@ -66,4 +66,6 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_EndTransform(AD1KillerBase* Player);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetHiddenState(AD1KillerBase* Player, bool bDraculaVisible, bool bWolfVisible, bool bBatVisible);
 };
