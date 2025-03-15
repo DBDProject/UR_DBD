@@ -78,4 +78,7 @@ protected:
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
 	void SetCurrentState(EPalletState State) { CurrentState = State; }
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetControlRotation(class AD1CharacterBase* Player, FRotator LookAtRotation);
 };

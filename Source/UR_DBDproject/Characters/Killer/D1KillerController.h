@@ -36,9 +36,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class UD1KillerSet> KillerSet;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class AD1SurvivorBase* CarriedSurvivor;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
@@ -55,6 +52,7 @@ private:
 	void Input_RightClick(const FInputActionValue& InputValue);
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_OnCtrlReleased(const FInputActionValue& InputValue);
+	void Input_Drop(const FInputActionValue& InputValue);
 
 	void HandleInteraction();
 
@@ -71,8 +69,6 @@ public:
 
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
 
-	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) {	CarriedSurvivor = survivor;	}
-	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* ASC;

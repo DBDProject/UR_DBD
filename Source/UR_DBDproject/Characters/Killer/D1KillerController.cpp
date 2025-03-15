@@ -25,11 +25,13 @@
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
 {
+	bReplicates = true;
 }
 
 void AD1KillerController::BeginPlay()
 {
 	Super::BeginPlay();
+	SetReplicates(true);
 
 	if (const UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("KillerInputData"))
 	{
@@ -75,6 +77,9 @@ void AD1KillerController::SetupInputComponent()
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar);
 		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
+
+		auto DropAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Drop);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ThisClass::Input_Drop);
 
 	}
 }
@@ -209,6 +214,16 @@ void AD1KillerController::Input_OnCtrlReleased(const FInputActionValue& InputVal
 	bIsCtrlPressed = false;
 }
 
+void AD1KillerController::Input_Drop(const FInputActionValue& InputValue)
+{
+	UE_LOG(LogTemp, Log, TEXT("⛔ Drop Key Released!"));
+	
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula && D1Killer->GetCarriedSurvivor() != nullptr)
+	{
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_DropSurvivor);
+	}
+}
+
 ECreatureState AD1KillerController::GetCreatureState()
 {
 	if (D1Killer)
@@ -277,11 +292,11 @@ void AD1KillerController::HandleInteraction()
 
 	UE_LOG(LogTemp, Log, TEXT("✅ DetectedObject: %s, Class: %s"),
 		*DetectedObject->GetName(), *DetectedObject->GetClass()->GetName());
-	if (D1Killer->GetCurrentHook() && CarriedSurvivor != nullptr)
+	if (D1Killer->GetCurrentHook() && D1Killer->GetCarriedSurvivor() != nullptr)
 	{
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_HookSurvivor);
 	}
-	else if (D1Killer->GetDetectedCrawlSurvivor() && CarriedSurvivor == nullptr)
+	else if (D1Killer->GetDetectedCrawlSurvivor() && D1Killer->GetCarriedSurvivor() == nullptr)
 	{
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PickUpSurvivor);
 	}

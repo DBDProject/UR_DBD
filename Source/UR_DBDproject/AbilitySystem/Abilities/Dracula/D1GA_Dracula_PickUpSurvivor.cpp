@@ -2,7 +2,6 @@
 
 
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_PickUpSurvivor.h"
-#include "Animation/D1KillerBaseAnim.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 
 UD1GA_Dracula_PickUpSurvivor::UD1GA_Dracula_PickUpSurvivor(const FObjectInitializer& ObjectInitializer)
@@ -26,9 +25,6 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if (!HasAuthority(&ActivationInfo))
-		return;
 
 	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
 	KillerController = Cast<AD1KillerController>(Killer->GetController());
@@ -68,8 +64,8 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 		Multicast_PickUpSurvivor(Killer);
 	}
 
-	Survivor->TakePickUpFromKiller(Killer);
-	KillerController->SetCarriedSurvivor(Survivor);
+	//Survivor->TakePickUpFromKiller(Killer);
+	Killer->SetCarriedSurvivor(Survivor);
 
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);

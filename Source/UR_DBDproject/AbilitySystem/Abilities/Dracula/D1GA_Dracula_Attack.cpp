@@ -139,7 +139,6 @@ void UD1GA_Dracula_Attack::Multicast_PlayAttack_Implementation(AD1KillerBase* Pl
     FPVAnimInstance->Montage_JumpToSection(SectionName, FPV_Attack.Get());
 }
 
-
 void UD1GA_Dracula_Attack::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled); 

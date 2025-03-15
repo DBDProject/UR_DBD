@@ -4,7 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1Define.h"
+
 #include "D1GA_Dracula_Transform.generated.h"
 
 /**
@@ -63,6 +63,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_OutTransform(AD1KillerBase* Player);
 
-	/*UFUNCTION(NetMulticast, Reliable)
-	void Multicast_InTransform(AD1KillerBase* Player);*/
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_EndTransform(AD1KillerBase* Player);
+
 };

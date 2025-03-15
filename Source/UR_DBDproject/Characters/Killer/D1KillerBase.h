@@ -82,6 +82,14 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AD1SurvivorBase* CarriedSurvivor;
+
+	UPROPERTY()
+	EDraculaTransformationState PrevTransformState;
+	UPROPERTY()
+	EDraculaTransformationState CurrentTransformState;
+
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
 
@@ -112,10 +120,6 @@ private:
 	UFUNCTION()
 	void OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	EDraculaTransformationState PrevTransformState;
-	EDraculaTransformationState CurrentTransformState;
-
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
@@ -139,6 +143,9 @@ public:
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
 	void SetPrevTransformState(EDraculaTransformationState state) { PrevTransformState = state; }
 	void SetCurrentTransformState(EDraculaTransformationState state) { CurrentTransformState = state; }
+
+	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) { CarriedSurvivor = survivor; }
+	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }

@@ -49,4 +49,8 @@ private:
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
 
 	AD1VaultObject* VaultObj = nullptr;
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_VaultWindow(AD1KillerBase* Player);
 };
