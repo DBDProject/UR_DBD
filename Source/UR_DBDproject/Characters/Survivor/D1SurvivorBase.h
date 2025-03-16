@@ -157,6 +157,9 @@ protected:
 	bool bIsRepairing = false;
 
 	UPROPERTY(Replicated, BlueprintReadWrite)
+	bool bPrevRepairing = false;
+
+	UPROPERTY(Replicated, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
 	// 스킬 체크 실패 시 
@@ -228,6 +231,8 @@ public:
 	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
 	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 	bool GetCanBeHealed() { return bCanBeHealed; }
+
+	void SetPrevReparing(bool state) { bPrevRepairing = state; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
