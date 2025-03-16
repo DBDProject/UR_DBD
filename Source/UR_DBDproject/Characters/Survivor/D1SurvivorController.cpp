@@ -450,6 +450,9 @@ void AD1SurvivorController::StopRepair_Local()
 
 	if (D1Survivor->GetCurrentGenerator()->GetIsFail()) return;
 
+	RepaireEndDelegate.Broadcast();
+	D1Survivor.Get()->SetPrevReparing(false);
+
 	D1Survivor->SetIsReparing(false);
 
 	// 이동 가능하게 변경

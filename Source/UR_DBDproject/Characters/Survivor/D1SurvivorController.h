@@ -9,6 +9,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepaireStart);
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepaireEnd);
+
 struct FInputActionValue;
 class AD1SurvivorBase;
 /**
@@ -19,8 +21,12 @@ class UR_DBDPROJECT_API AD1SurvivorController : public APlayerController
 {
 	GENERATED_BODY()
 private:
-	UPROPERTY(BlueprintAssignable, BlueprintCallable, Category = "Generator")
+	UPROPERTY(BlueprintAssignable, Category = "Generator")
 	FRepaireStart RepaireStartDelegate;
+
+
+	UPROPERTY(BlueprintAssignable, Category = "Generator")
+	FRepaireEnd RepaireEndDelegate;
 
 public:
 	AD1SurvivorController(const FObjectInitializer& ObjectInitializer);

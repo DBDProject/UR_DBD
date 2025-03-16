@@ -261,6 +261,7 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
     bIsRepairBlocked = true;
     StopRepair(Player);
 
+
     UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 2초간 수리 불가"));
 
     GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 2.0f, false);

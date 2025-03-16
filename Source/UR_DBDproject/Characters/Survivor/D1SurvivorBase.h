@@ -205,6 +205,9 @@ protected:
 	bool bIsRepairing = false;
 
 	UPROPERTY(Replicated, BlueprintReadWrite)
+	bool bPrevRepairing = false;
+
+	UPROPERTY(Replicated, BlueprintReadWrite)
 	EGeneratorInteractionPosition InteractionPosition = EGeneratorInteractionPosition::None;
 
 	// 스킬 체크 실패 시 
@@ -303,6 +306,7 @@ public:
 
 	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
 	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
+	void SetPrevReparing(bool state) { bPrevRepairing = state; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };

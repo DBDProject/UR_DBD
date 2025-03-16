@@ -7,6 +7,11 @@
 #include "D1Define.h"
 #include "D1Generator.generated.h"
 
+
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepairSkillFail);
+
+
+
 UENUM(BlueprintType)
 enum class EGeneratorState : uint8
 {
@@ -19,7 +24,9 @@ UCLASS(Blueprintable)
 class UR_DBDPROJECT_API AD1Generator : public AActor
 {
 	GENERATED_BODY()
-	
+public:
+
+
 public:	
 	// Sets default values for this actor's properties
 	AD1Generator();
