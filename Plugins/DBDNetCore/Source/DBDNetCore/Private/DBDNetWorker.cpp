@@ -2,7 +2,7 @@
 
 /*
 	Author : 변한빛
-	Last Update : 2025-03-03
+	Last Update : 2025-03-16
 	Description : DBD 수신 받는 쓰레드 정의
 */
 
@@ -57,15 +57,12 @@ void DBDNetWorker::ReceivePacket()
 		{
 			if (m_packet->ph.len <= m_readPos)
 			{
-				TSharedPtr<HPACKET> AddPacket = MakeShared<HPACKET>();
-				FMemory::Memzero(AddPacket.Get(), sizeof(HPACKET));
-				FMemory::Memcpy(AddPacket.Get(), m_recvBuffer, static_cast<SIZE_T>(m_packet->ph.len));
+				TSharedPtr<HPACKET> packetData = MakeShared<HPACKET>();
+				FMemory::Memzero(packetData.Get(), sizeof(HPACKET));
+				FMemory::Memcpy(packetData.Get(), m_recvBuffer, static_cast<SIZE_T>(m_packet->ph.len));
 
-				// 리스트에 추가
-				m_pNetManager->m_packetQueueLock.Lock();
-				m_pNetManager->m_packetQueue.Enqueue(AddPacket);
-				m_pNetManager->m_packetQueueLock.Unlock();
 				m_readPos = 0;
+				m_pNetManager->AddPacket(packetData);
 			}
 		}
 	}

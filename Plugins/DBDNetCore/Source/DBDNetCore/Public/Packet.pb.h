@@ -48,9 +48,17 @@ namespace HProtocol {
 class Chat;
 struct ChatDefaultTypeInternal;
 extern ChatDefaultTypeInternal _Chat_default_instance_;
+class JoinServer;
+struct JoinServerDefaultTypeInternal;
+extern JoinServerDefaultTypeInternal _JoinServer_default_instance_;
+class MatchPlayer;
+struct MatchPlayerDefaultTypeInternal;
+extern MatchPlayerDefaultTypeInternal _MatchPlayer_default_instance_;
 }  // namespace HProtocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::HProtocol::Chat* Arena::CreateMaybeMessage<::HProtocol::Chat>(Arena*);
+template<> ::HProtocol::JoinServer* Arena::CreateMaybeMessage<::HProtocol::JoinServer>(Arena*);
+template<> ::HProtocol::MatchPlayer* Arena::CreateMaybeMessage<::HProtocol::MatchPlayer>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace HProtocol {
 
@@ -207,6 +215,358 @@ class Chat final :
   union { Impl_ _impl_; };
   friend struct ::TableStruct_Packet_2eproto;
 };
+// -------------------------------------------------------------------
+
+class MatchPlayer final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:HProtocol.MatchPlayer) */ {
+ public:
+  inline MatchPlayer() : MatchPlayer(nullptr) {}
+  ~MatchPlayer() override;
+  explicit PROTOBUF_CONSTEXPR MatchPlayer(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  MatchPlayer(const MatchPlayer& from);
+  MatchPlayer(MatchPlayer&& from) noexcept
+    : MatchPlayer() {
+    *this = ::std::move(from);
+  }
+
+  inline MatchPlayer& operator=(const MatchPlayer& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline MatchPlayer& operator=(MatchPlayer&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const MatchPlayer& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const MatchPlayer* internal_default_instance() {
+    return reinterpret_cast<const MatchPlayer*>(
+               &_MatchPlayer_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    1;
+
+  friend void swap(MatchPlayer& a, MatchPlayer& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(MatchPlayer* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(MatchPlayer* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  MatchPlayer* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<MatchPlayer>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const MatchPlayer& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const MatchPlayer& from) {
+    MatchPlayer::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(MatchPlayer* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "HProtocol.MatchPlayer";
+  }
+  protected:
+  explicit MatchPlayer(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlayerCharacterFieldNumber = 1,
+  };
+  // uint32 playerCharacter = 1;
+  void clear_playercharacter();
+  uint32_t playercharacter() const;
+  void set_playercharacter(uint32_t value);
+  private:
+  uint32_t _internal_playercharacter() const;
+  void _internal_set_playercharacter(uint32_t value);
+  public:
+
+  // @@protoc_insertion_point(class_scope:HProtocol.MatchPlayer)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    uint32_t playercharacter_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Packet_2eproto;
+};
+// -------------------------------------------------------------------
+
+class JoinServer final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:HProtocol.JoinServer) */ {
+ public:
+  inline JoinServer() : JoinServer(nullptr) {}
+  ~JoinServer() override;
+  explicit PROTOBUF_CONSTEXPR JoinServer(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+
+  JoinServer(const JoinServer& from);
+  JoinServer(JoinServer&& from) noexcept
+    : JoinServer() {
+    *this = ::std::move(from);
+  }
+
+  inline JoinServer& operator=(const JoinServer& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  inline JoinServer& operator=(JoinServer&& from) noexcept {
+    if (this == &from) return *this;
+    if (GetOwningArena() == from.GetOwningArena()
+  #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
+        && GetOwningArena() != nullptr
+  #endif  // !PROTOBUF_FORCE_COPY_IN_MOVE
+    ) {
+      InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* descriptor() {
+    return GetDescriptor();
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Descriptor* GetDescriptor() {
+    return default_instance().GetMetadata().descriptor;
+  }
+  static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
+    return default_instance().GetMetadata().reflection;
+  }
+  static const JoinServer& default_instance() {
+    return *internal_default_instance();
+  }
+  static inline const JoinServer* internal_default_instance() {
+    return reinterpret_cast<const JoinServer*>(
+               &_JoinServer_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    2;
+
+  friend void swap(JoinServer& a, JoinServer& b) {
+    a.Swap(&b);
+  }
+  inline void Swap(JoinServer* other) {
+    if (other == this) return;
+  #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() != nullptr &&
+        GetOwningArena() == other->GetOwningArena()) {
+   #else  // PROTOBUF_FORCE_COPY_IN_SWAP
+    if (GetOwningArena() == other->GetOwningArena()) {
+  #endif  // !PROTOBUF_FORCE_COPY_IN_SWAP
+      InternalSwap(other);
+    } else {
+      ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
+    }
+  }
+  void UnsafeArenaSwap(JoinServer* other) {
+    if (other == this) return;
+    GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
+    InternalSwap(other);
+  }
+
+  // implements Message ----------------------------------------------
+
+  JoinServer* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<JoinServer>(arena);
+  }
+  using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
+  void CopyFrom(const JoinServer& from);
+  using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
+  void MergeFrom( const JoinServer& from) {
+    JoinServer::MergeImpl(*this, from);
+  }
+  private:
+  static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
+  public:
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  const char* _InternalParse(const char* ptr, ::PROTOBUF_NAMESPACE_ID::internal::ParseContext* ctx) final;
+  uint8_t* _InternalSerialize(
+      uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const final;
+  int GetCachedSize() const final { return _impl_._cached_size_.Get(); }
+
+  private:
+  void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
+  void SharedDtor();
+  void SetCachedSize(int size) const final;
+  void InternalSwap(JoinServer* other);
+
+  private:
+  friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
+  static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
+    return "HProtocol.JoinServer";
+  }
+  protected:
+  explicit JoinServer(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+                       bool is_message_owned = false);
+  public:
+
+  static const ClassData _class_data_;
+  const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*GetClassData() const final;
+
+  ::PROTOBUF_NAMESPACE_ID::Metadata GetMetadata() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  enum : int {
+    kPlayerIPFieldNumber = 2,
+    kPlayerCharacterFieldNumber = 3,
+    kKillerIPFieldNumber = 1,
+  };
+  // repeated string playerIP = 2;
+  int playerip_size() const;
+  private:
+  int _internal_playerip_size() const;
+  public:
+  void clear_playerip();
+  const std::string& playerip(int index) const;
+  std::string* mutable_playerip(int index);
+  void set_playerip(int index, const std::string& value);
+  void set_playerip(int index, std::string&& value);
+  void set_playerip(int index, const char* value);
+  void set_playerip(int index, const char* value, size_t size);
+  std::string* add_playerip();
+  void add_playerip(const std::string& value);
+  void add_playerip(std::string&& value);
+  void add_playerip(const char* value);
+  void add_playerip(const char* value, size_t size);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>& playerip() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>* mutable_playerip();
+  private:
+  const std::string& _internal_playerip(int index) const;
+  std::string* _internal_add_playerip();
+  public:
+
+  // repeated uint32 playerCharacter = 3;
+  int playercharacter_size() const;
+  private:
+  int _internal_playercharacter_size() const;
+  public:
+  void clear_playercharacter();
+  private:
+  uint32_t _internal_playercharacter(int index) const;
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
+      _internal_playercharacter() const;
+  void _internal_add_playercharacter(uint32_t value);
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
+      _internal_mutable_playercharacter();
+  public:
+  uint32_t playercharacter(int index) const;
+  void set_playercharacter(int index, uint32_t value);
+  void add_playercharacter(uint32_t value);
+  const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
+      playercharacter() const;
+  ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
+      mutable_playercharacter();
+
+  // string killerIP = 1;
+  void clear_killerip();
+  const std::string& killerip() const;
+  template <typename ArgT0 = const std::string&, typename... ArgT>
+  void set_killerip(ArgT0&& arg0, ArgT... args);
+  std::string* mutable_killerip();
+  PROTOBUF_NODISCARD std::string* release_killerip();
+  void set_allocated_killerip(std::string* killerip);
+  private:
+  const std::string& _internal_killerip() const;
+  inline PROTOBUF_ALWAYS_INLINE void _internal_set_killerip(const std::string& value);
+  std::string* _internal_mutable_killerip();
+  public:
+
+  // @@protoc_insertion_point(class_scope:HProtocol.JoinServer)
+ private:
+  class _Internal;
+
+  template <typename T> friend class ::PROTOBUF_NAMESPACE_ID::Arena::InternalHelper;
+  typedef void InternalArenaConstructable_;
+  typedef void DestructorSkippable_;
+  struct Impl_ {
+    ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string> playerip_;
+    ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t > playercharacter_;
+    mutable std::atomic<int> _playercharacter_cached_byte_size_;
+    ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr killerip_;
+    mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
+  };
+  union { Impl_ _impl_; };
+  friend struct ::TableStruct_Packet_2eproto;
+};
 // ===================================================================
 
 
@@ -268,9 +628,213 @@ inline void Chat::set_allocated_msg(std::string* msg) {
   // @@protoc_insertion_point(field_set_allocated:HProtocol.Chat.msg)
 }
 
+// -------------------------------------------------------------------
+
+// MatchPlayer
+
+// uint32 playerCharacter = 1;
+inline void MatchPlayer::clear_playercharacter() {
+  _impl_.playercharacter_ = 0u;
+}
+inline uint32_t MatchPlayer::_internal_playercharacter() const {
+  return _impl_.playercharacter_;
+}
+inline uint32_t MatchPlayer::playercharacter() const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchPlayer.playerCharacter)
+  return _internal_playercharacter();
+}
+inline void MatchPlayer::_internal_set_playercharacter(uint32_t value) {
+  
+  _impl_.playercharacter_ = value;
+}
+inline void MatchPlayer::set_playercharacter(uint32_t value) {
+  _internal_set_playercharacter(value);
+  // @@protoc_insertion_point(field_set:HProtocol.MatchPlayer.playerCharacter)
+}
+
+// -------------------------------------------------------------------
+
+// JoinServer
+
+// string killerIP = 1;
+inline void JoinServer::clear_killerip() {
+  _impl_.killerip_.ClearToEmpty();
+}
+inline const std::string& JoinServer::killerip() const {
+  // @@protoc_insertion_point(field_get:HProtocol.JoinServer.killerIP)
+  return _internal_killerip();
+}
+template <typename ArgT0, typename... ArgT>
+inline PROTOBUF_ALWAYS_INLINE
+void JoinServer::set_killerip(ArgT0&& arg0, ArgT... args) {
+ 
+ _impl_.killerip_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
+  // @@protoc_insertion_point(field_set:HProtocol.JoinServer.killerIP)
+}
+inline std::string* JoinServer::mutable_killerip() {
+  std::string* _s = _internal_mutable_killerip();
+  // @@protoc_insertion_point(field_mutable:HProtocol.JoinServer.killerIP)
+  return _s;
+}
+inline const std::string& JoinServer::_internal_killerip() const {
+  return _impl_.killerip_.Get();
+}
+inline void JoinServer::_internal_set_killerip(const std::string& value) {
+  
+  _impl_.killerip_.Set(value, GetArenaForAllocation());
+}
+inline std::string* JoinServer::_internal_mutable_killerip() {
+  
+  return _impl_.killerip_.Mutable(GetArenaForAllocation());
+}
+inline std::string* JoinServer::release_killerip() {
+  // @@protoc_insertion_point(field_release:HProtocol.JoinServer.killerIP)
+  return _impl_.killerip_.Release();
+}
+inline void JoinServer::set_allocated_killerip(std::string* killerip) {
+  if (killerip != nullptr) {
+    
+  } else {
+    
+  }
+  _impl_.killerip_.SetAllocated(killerip, GetArenaForAllocation());
+#ifdef PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  if (_impl_.killerip_.IsDefault()) {
+    _impl_.killerip_.Set("", GetArenaForAllocation());
+  }
+#endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
+  // @@protoc_insertion_point(field_set_allocated:HProtocol.JoinServer.killerIP)
+}
+
+// repeated string playerIP = 2;
+inline int JoinServer::_internal_playerip_size() const {
+  return _impl_.playerip_.size();
+}
+inline int JoinServer::playerip_size() const {
+  return _internal_playerip_size();
+}
+inline void JoinServer::clear_playerip() {
+  _impl_.playerip_.Clear();
+}
+inline std::string* JoinServer::add_playerip() {
+  std::string* _s = _internal_add_playerip();
+  // @@protoc_insertion_point(field_add_mutable:HProtocol.JoinServer.playerIP)
+  return _s;
+}
+inline const std::string& JoinServer::_internal_playerip(int index) const {
+  return _impl_.playerip_.Get(index);
+}
+inline const std::string& JoinServer::playerip(int index) const {
+  // @@protoc_insertion_point(field_get:HProtocol.JoinServer.playerIP)
+  return _internal_playerip(index);
+}
+inline std::string* JoinServer::mutable_playerip(int index) {
+  // @@protoc_insertion_point(field_mutable:HProtocol.JoinServer.playerIP)
+  return _impl_.playerip_.Mutable(index);
+}
+inline void JoinServer::set_playerip(int index, const std::string& value) {
+  _impl_.playerip_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::set_playerip(int index, std::string&& value) {
+  _impl_.playerip_.Mutable(index)->assign(std::move(value));
+  // @@protoc_insertion_point(field_set:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::set_playerip(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.playerip_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::set_playerip(int index, const char* value, size_t size) {
+  _impl_.playerip_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:HProtocol.JoinServer.playerIP)
+}
+inline std::string* JoinServer::_internal_add_playerip() {
+  return _impl_.playerip_.Add();
+}
+inline void JoinServer::add_playerip(const std::string& value) {
+  _impl_.playerip_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::add_playerip(std::string&& value) {
+  _impl_.playerip_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::add_playerip(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  _impl_.playerip_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:HProtocol.JoinServer.playerIP)
+}
+inline void JoinServer::add_playerip(const char* value, size_t size) {
+  _impl_.playerip_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:HProtocol.JoinServer.playerIP)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
+JoinServer::playerip() const {
+  // @@protoc_insertion_point(field_list:HProtocol.JoinServer.playerIP)
+  return _impl_.playerip_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
+JoinServer::mutable_playerip() {
+  // @@protoc_insertion_point(field_mutable_list:HProtocol.JoinServer.playerIP)
+  return &_impl_.playerip_;
+}
+
+// repeated uint32 playerCharacter = 3;
+inline int JoinServer::_internal_playercharacter_size() const {
+  return _impl_.playercharacter_.size();
+}
+inline int JoinServer::playercharacter_size() const {
+  return _internal_playercharacter_size();
+}
+inline void JoinServer::clear_playercharacter() {
+  _impl_.playercharacter_.Clear();
+}
+inline uint32_t JoinServer::_internal_playercharacter(int index) const {
+  return _impl_.playercharacter_.Get(index);
+}
+inline uint32_t JoinServer::playercharacter(int index) const {
+  // @@protoc_insertion_point(field_get:HProtocol.JoinServer.playerCharacter)
+  return _internal_playercharacter(index);
+}
+inline void JoinServer::set_playercharacter(int index, uint32_t value) {
+  _impl_.playercharacter_.Set(index, value);
+  // @@protoc_insertion_point(field_set:HProtocol.JoinServer.playerCharacter)
+}
+inline void JoinServer::_internal_add_playercharacter(uint32_t value) {
+  _impl_.playercharacter_.Add(value);
+}
+inline void JoinServer::add_playercharacter(uint32_t value) {
+  _internal_add_playercharacter(value);
+  // @@protoc_insertion_point(field_add:HProtocol.JoinServer.playerCharacter)
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
+JoinServer::_internal_playercharacter() const {
+  return _impl_.playercharacter_;
+}
+inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
+JoinServer::playercharacter() const {
+  // @@protoc_insertion_point(field_list:HProtocol.JoinServer.playerCharacter)
+  return _internal_playercharacter();
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
+JoinServer::_internal_mutable_playercharacter() {
+  return &_impl_.playercharacter_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
+JoinServer::mutable_playercharacter() {
+  // @@protoc_insertion_point(field_mutable_list:HProtocol.JoinServer.playerCharacter)
+  return _internal_mutable_playercharacter();
+}
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
