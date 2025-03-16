@@ -28,6 +28,8 @@ void AD1SurvivorController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter()); // 컨트롤러가 새로운 캐릭터를 제어할 때 갱신
+
 	if (const UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("InputData"))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
@@ -44,7 +46,6 @@ void AD1SurvivorController::BeginPlay()
 void AD1SurvivorController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
-	D1Survivor = Cast<AD1SurvivorBase>(InPawn); // 컨트롤러가 새로운 캐릭터를 제어할 때 갱신
 	if (D1Survivor.IsValid())
 	{
 		D1Survivor.Get()->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -97,12 +98,15 @@ void AD1SurvivorController::SetupInputComponent()
 
 void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 {
-	if (!D1Survivor.IsValid()) return;
-	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && !(D1Survivor->GetSurvivorState() == ESurvivorState::Healthy))
+	//D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	if (!D1Survivor.IsValid())	return;
+	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) &&
+		!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && 
+		!(D1Survivor->GetSurvivorState() == ESurvivorState::Healthy))
 	{
 		return;
 	}
-	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	if (D1Survivor->GetIsSelfRecovering() == true) return;
 
 	FVector2D MovementVector = InputValue.Get<FVector2D>();
 
@@ -348,7 +352,8 @@ void AD1SurvivorController::Input_StopInteract_Space()
 void AD1SurvivorController::Input_StartTestInput_1()
 {
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
-	D1Survivor.Get()->TakeDamageFromKiller();
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	D1Survivor->TakePickUpFromKiller(D1Survivor.Get());
 }
 
 void AD1SurvivorController::StartRun_Local()
@@ -499,7 +504,6 @@ void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
 	D1Survivor->GetCharacterMovement()->DisableMovement();
 
 	TargetSurvivor->BeingHealing(D1Survivor.Get());
-
 }
 
 void AD1SurvivorController::StopHeal_Local(AD1SurvivorBase* TargetSurvivor)

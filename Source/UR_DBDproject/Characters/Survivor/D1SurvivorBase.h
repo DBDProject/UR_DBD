@@ -41,7 +41,6 @@ public:
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
 	void MoveToExitGateStartPosition(class AD1ExitGate* Gate);
-	void StartRunning();
 
 	// 콜리전 이벤트 함수
 	UFUNCTION()
@@ -60,15 +59,21 @@ public:
 
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void TakePickUpFromKiller(class AD1KillerBase* Killer);
+	//void TakePickUpFromKiller(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller(class AD1SurvivorBase* Killer);
+	UFUNCTION()
+	//void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Local(class AD1SurvivorBase* Killer);
+	UFUNCTION(Server, Reliable)
+	//void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Server(class AD1SurvivorBase* Killer);
+	UFUNCTION(NetMulticast, Reliable)
+	//void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Multicast(class AD1SurvivorBase* Killer);
 
 	// 생존자 드랍 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakeDropFromKiller(class AD1KillerBase* Killer);
-
-	// 생존자 훅 처리 함수
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnHooked(class AD1Hook* Hook);
 
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -94,7 +99,6 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelfRecovering(bool bNewState);
 
-
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
 
@@ -112,7 +116,6 @@ public:
 	// 레플리케이션
 	UFUNCTION()
 	void OnRep_SurvivorSet();
-
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);

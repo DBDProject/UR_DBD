@@ -47,6 +47,8 @@ private:
 	void OnPickUpMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
 public:
+	UFUNCTION()
+	void Local_PickUpSurvivor(AD1KillerBase* Player);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_PickUpSurvivor(AD1KillerBase* Player);
 };

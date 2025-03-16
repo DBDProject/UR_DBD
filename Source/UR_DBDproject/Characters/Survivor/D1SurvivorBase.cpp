@@ -21,6 +21,7 @@
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
 #include "Net/UnrealNetwork.h"
+#include "D1SurvivorController.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -40,7 +41,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
+	//GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
@@ -49,6 +50,8 @@ AD1SurvivorBase::AD1SurvivorBase()
 	InteractionBox->SetBoxExtent(FVector(50.f, 50.f, 100.f));
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
+
+	RootComponent->SetMobility(EComponentMobility::Movable);
 
 	static ConstructorHelpers::FObjectFinder<UAnimMontage> VaultMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Vault.AM_Meg_Vault"));
 	if (VaultMontageAsset.Succeeded())
@@ -70,15 +73,17 @@ AD1SurvivorBase::AD1SurvivorBase()
 	{
 		PickUpMontage = PickUpMontageAsset.Object;
 	}
-
-	CurrentState = ESurvivorState::Healthy;
 }
 
 void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
+	CurrentState = ESurvivorState::Healthy;
 
+	// TEST
 	CurrentState = ESurvivorState::Crawl;
+	//HealingProgress = 90.f;
+	
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
@@ -152,7 +157,7 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
-	if (bIsBeingHealed)
+	if (bIsBeingHealed || bIsCrawlSelfRecovering)
 	{
 		UpdateHealingProgress(DeltaTime);
 	}
@@ -197,7 +202,6 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	// 치료가 완료되었는지 확인
 	if (HealingProgress >= 100.0f)
 	{
-		StopBeingHealing();
 		FinishHealing();
 	}
 }
@@ -249,7 +253,7 @@ void AD1SurvivorBase::MoveToVaultStartPosition()
 	SetActorRotation(LookAtRotation);
 }
 
-void AD1SurvivorBase::PlayMontage(UAnimMontage* Montage, FName SectionName)
+void AD1SurvivorBase::PlayMontage(UAnimMontage* Montage, FName SectionName = "Default")
 {
 	if (!Montage) return;
 
@@ -292,7 +296,19 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 	}
 	else if (Montage == HitMontage)
 	{
+		if (CurrentState == ESurvivorState::Healthy)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
+			PlayAnimMontage(HitMontage, 1.0f, SectionName);
+		}
+		else if (CurrentState == ESurvivorState::Injured)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
+			PlayAnimMontage(HitMontage, 1.0f, SectionName);
 
+			// 상태 초기화
+			HealingProgress = 0.f;
+		}
 	}
 	else if (Montage == PickUpMontage)
 	{
@@ -307,6 +323,25 @@ void AD1SurvivorBase::Multicast_PlayMontage_Implementation(UAnimMontage* Montage
 {
 	PlayMontage_Local(Montage, SectionName);
 }
+
+void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
+{
+	if (!Hook) return;
+	if (CurrentState == ESurvivorState::Hooked) return;
+
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+
+	FName HookSocket = "socket_SurvivorHook";
+
+	AttachToComponent(Hook->GetHookMesh(),
+		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
+		HookSocket);
+
+	GetMesh()->SetRelativeLocationAndRotation(FVector(65.f, 0.f, 0.f), FRotator(0.f, -90.f, 0.f));
+
+	OnHooked();
+}
+
 void AD1SurvivorBase::OnHooked()
 {
 	HookedCount++;
@@ -433,11 +468,6 @@ void AD1SurvivorBase::MoveToExitGateStartPosition(AD1ExitGate* Gate)
 	SetActorRotation(LookAtRotation);
 }
 
-void AD1SurvivorBase::StartRunning()
-{
-	GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetRunSpeed();
-}
-
 
 void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
@@ -504,8 +534,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		case ESurvivorState::Healthy:
 		{
 
-			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetInjWalkSpeed();
-			PlayAnimMontage(HitMontage, 1.0f, "Hit_BK");
+			PlayMontage(HitMontage, "Hit_BK");
 			CurrentState = ESurvivorState::Injured;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
 			break;
@@ -514,8 +543,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 
 		case ESurvivorState::Injured:
 		{
-			//GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetCrawlSpeed();
-			PlayAnimMontage(HitMontage, 1.0f);
+			PlayMontage(HitMontage, "BK");
 			CurrentState = ESurvivorState::Crawl;
 			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
 			break;
@@ -530,27 +558,50 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	}
 }
 
-void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
+//void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller(AD1SurvivorBase* Killer)
 {
-	if (!Killer) return;
+	//if (!Killer) return;
 
-	// 충돌 비활성화
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	if (!HasAuthority())
+	{
+		TakePickUpFromKiller_Server(Killer);
+		return;
+	}
 
-	// 물리 시뮬레이션 중지
-	GetMesh()->SetSimulatePhysics(false);
+	TakePickUpFromKiller_Local(Killer);
 
-	FName AttachSocketName = "joint_CarryLT_01"; // 살인자의 왼손 본
-
-	// 캐릭터를 본(소켓)에 부착
-	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
-
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -1.07f), FRotator(0.f, 0.f, 0.f));
-
-	SetSurvivorState(ESurvivorState::PickedUp);
 }
 
-void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
+//void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1SurvivorBase* Killer)
+{
+
+	//GetMesh()->SetMobility(EComponentMobility::Movable);
+
+	Killer->GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 0.f), FRotator(0.f, 0.f, 0.f));
+
+	if (HasAuthority())
+	{
+		ForceNetUpdate();
+	}
+}
+
+//void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1SurvivorBase* Killer)
+{
+	//if (!Killer) return;
+	TakePickUpFromKiller_Multicast(Killer);
+}
+
+//void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1KillerBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1SurvivorBase* Killer)
+{
+	//if (!Killer) return;
+
+	TakePickUpFromKiller_Local(Killer);
+}
+
 void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
 {
 	if (!Killer) return;
@@ -559,24 +610,6 @@ void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
 
 
 	SetSurvivorState(ESurvivorState::Crawl);
-}
-
-void AD1SurvivorBase::OnHooked(AD1Hook* Hook)
-{
-	if (!Hook) return;
-	if (CurrentState == ESurvivorState::Hooked) return;
-
-	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
-	FName HookSocket = "socket_SurvivorHook";
-
-	AttachToComponent(Hook->GetHookMesh(),
-		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
-		HookSocket);
-
-	GetMesh()->SetRelativeLocationAndRotation(FVector(65.f, 0.f, 0.f), FRotator(0.f, -90.f, 0.f));
-
-	OnHooked();
 }
 
 void AD1SurvivorBase::BeingHealing(AD1SurvivorBase* Healer)
@@ -648,6 +681,17 @@ void AD1SurvivorBase::Multicast_UpdateHealingProgress_Implementation(float NewPr
 {
 	HealingProgress = NewProgress;
 }
+
+void AD1SurvivorBase::Multicast_UpdateCrawlBleedOut_Implementation(float NewProgress)
+{
+	CrawlHealth = NewProgress;
+}
+
+void AD1SurvivorBase::Server_SetSelfRecovering_Implementation(bool bNewState)
+{
+	bIsCrawlSelfRecovering = bNewState;
+}
+
 void AD1SurvivorBase::FinishHealing()
 {
 	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));
@@ -657,22 +701,21 @@ void AD1SurvivorBase::FinishHealing()
 	else if (CurrentState == ESurvivorState::Crawl)
 		CurrentState = ESurvivorState::Injured;
 
+	if (HasAuthority())
+	{
+		if (HealingSource.IsValid())
+		{
+			Cast<AD1SurvivorController>(HealingSource->GetController())->StopHeal_Local(this);
+		}
+	}
 	bCanBeHealed = false;
-	GetWorldTimerManager().SetTimer(HealingCooldownTimer, this, &AD1SurvivorBase::ResetHealingCooldown, 1.0f, false);
+	GetWorldTimerManager().SetTimer(HealingCooldownTimer, this, &AD1SurvivorBase::ResetHealingCooldown, 0.5f, false);
 
+	StopBeingHealing();
 	// 치료 상태 초기화
 	HealingProgress = 0.0f;
 	bIsBeingHealed = false;
 	HealingSource = nullptr;
-}
-void AD1SurvivorBase::Multicast_UpdateCrawlBleedOut_Implementation(float NewProgress)
-{
-	CrawlHealth = NewProgress;
-}
-
-void AD1SurvivorBase::Server_SetSelfRecovering_Implementation(bool bNewState)
-{
-	bIsCrawlSelfRecovering = bNewState;
 }
 
 // 아이템 장착 함수
@@ -760,5 +803,4 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
 	}
 }
-
 
