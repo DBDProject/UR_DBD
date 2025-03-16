@@ -36,10 +36,11 @@ public:
 
 	void SmoothCameraTransition(float DeltaTime);
 	void UpdateHealingProgress(float DeltaTime);
+	void UpdateCrawlBleedOut(float DeltaTime);
+
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
 	void MoveToExitGateStartPosition(class AD1ExitGate* Gate);
-	void StartRunning();
 
 	// 콜리전 이벤트 함수
 	UFUNCTION()
@@ -58,15 +59,21 @@ public:
 
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void TakePickUpFromKiller(class AD1KillerBase* Killer);
+	//void TakePickUpFromKiller(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller(class AD1SurvivorBase* Killer);
+	UFUNCTION()
+	//void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Local(class AD1SurvivorBase* Killer);
+	UFUNCTION(Server, Reliable)
+	//void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Server(class AD1SurvivorBase* Killer);
+	UFUNCTION(NetMulticast, Reliable)
+	//void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Multicast(class AD1SurvivorBase* Killer);
 
 	// 생존자 드랍 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakeDropFromKiller(class AD1KillerBase* Killer);
-
-	// 생존자 훅 처리 함수
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnHooked(class AD1Hook* Hook);
 
 	// 생존자 치유 받는 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -87,6 +94,10 @@ public:
 	void Multicast_StopBeingHealing();    
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_UpdateHealingProgress(float NewProgress);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateCrawlBleedOut(float NewProgress);
+	UFUNCTION(Server, Reliable)
+	void Server_SetSelfRecovering(bool bNewState);
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
@@ -106,6 +117,11 @@ public:
 	UFUNCTION()
 	void OnRep_SurvivorSet();
 
+	void ChangeMeshTransform(FVector NewLocation, FRotator NewRotation);
+	UFUNCTION()
+	void OnRep_UpdateMeshTransform();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateMeshTransform(FVector NewLocation, FRotator NewRotation);
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -119,6 +135,28 @@ protected:
 	UFUNCTION(Server, Reliable)
 	void Server_UpdatePalletLocation(AD1Pallet* Pallet, EPalletLocation PalletLocation);
 	
+public: // 갈고리
+	// 생존자 훅 처리 함수
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void StartOnHooked(class AD1Hook* Hook);
+protected:
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHooked();
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnRescued();
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void Die();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void DieFromBleedOut();
+
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void RemoveFromGame();
+
+	void ApplyHookDamage();
+
+	// [[[[[[PROPERTY]]]]]]
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> VaultMontage; // 창 넘기기 몽타주
@@ -133,6 +171,12 @@ public:
 	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
 
 protected:
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
+	FVector MeshLocation;
+
+	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
+	FRotator MeshRotation;
+
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;
@@ -198,8 +242,32 @@ protected: // 치료 기능
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bCanBeHealed = true;
 
+protected: // 빈사 상태
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor")
+	float CrawlHealth = 100.0f; // 빈사 상태 HP
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor")
+	bool bIsCrawlSelfRecovering = false; // 빈사 시 자가회복 여부
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float SelfRecoveryRate = 95.f / 30.f; // 자가회복 속도
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float BleedOutRate = 100.f / 240.f; // 출혈 속도
+
+protected: // 갈고리
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	int HookedCount = 0;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	float HookHealth = 100.0f;
+
+	// 갈고리 데미지 타이머
+	FTimerHandle HookDamageTimer;
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
+	// 사망 처리 타이머
+	FTimerHandle DeathRemoveTimer;
 
 protected: // 탈출구
 	// 탈출구 열고 있는지
@@ -232,6 +300,9 @@ public:
 	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
 	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 	bool GetCanBeHealed() { return bCanBeHealed; }
+
+	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
+	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };
