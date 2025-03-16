@@ -563,14 +563,21 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1SurvivorBase* Killer)
 {
 	//if (!Killer) return;
 
-	if (!HasAuthority())
+	//if (!HasAuthority())
+	//{
+	//	TakePickUpFromKiller_Server(Killer);
+	//	return;
+	//}
+
+	//TakePickUpFromKiller_Local(Killer);
+
+	if (HasAuthority())
 	{
-		TakePickUpFromKiller_Server(Killer);
-		return;
+		auto a = FVector(0.f, 0.f, 0.f);
+		auto b = FRotator(0.f, 0.f, 0.f);
+		ChangeMeshTransform(a, b);
+		TakePickUpFromKiller_Multicast(Killer);
 	}
-
-	TakePickUpFromKiller_Local(Killer);
-
 }
 
 //void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
@@ -599,7 +606,11 @@ void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1SurvivorB
 {
 	//if (!Killer) return;
 
-	TakePickUpFromKiller_Local(Killer);
+	//TakePickUpFromKiller_Local(Killer);
+
+	auto a = FVector(0.f, 0.f, 0.f);
+	auto b = FRotator(0.f, 0.f, 0.f);
+	ChangeMeshTransform(a, b);
 }
 
 void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
@@ -804,3 +815,28 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 	}
 }
 
+void AD1SurvivorBase::Multicast_UpdateMeshTransform_Implementation(FVector NewLocation, FRotator NewRotation)
+{
+	if (GetMesh())
+	{
+		GetMesh()->SetRelativeLocationAndRotation(NewLocation, NewRotation);
+	}
+}
+
+void AD1SurvivorBase::OnRep_UpdateMeshTransform()
+{
+	if (GetMesh())
+	{
+		GetMesh()->SetRelativeLocationAndRotation(MeshLocation, MeshRotation);
+	}
+}
+
+void AD1SurvivorBase::ChangeMeshTransform(FVector NewLocation, FRotator NewRotation)
+{
+	if (HasAuthority())
+	{
+		MeshLocation = NewLocation;
+		MeshRotation = NewRotation;
+		Multicast_UpdateMeshTransform(NewLocation, NewRotation);
+	}
+}
