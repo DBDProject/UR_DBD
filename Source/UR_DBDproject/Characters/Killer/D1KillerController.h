@@ -48,6 +48,7 @@ private:
 	void Input_Look(const FInputActionValue& InputValue);
 	void Input_LeftClick(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
+	void Input_RightClickRelease(const FInputActionValue& InputValue);
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_OnCtrlReleased(const FInputActionValue& InputValue);
 	void Input_Drop(const FInputActionValue& InputValue);
@@ -58,6 +59,12 @@ private:
 	void LeftClick_Transform();
 	UFUNCTION()
 	void RightClick_Transform();
+
+	float ChargeStartTime = 0.0f; 
+	bool bIsCharging = false; 
+	float ChargeDuration = 0.9f;   
+	FTimerHandle ChargeTimerHandle;
+	void CompleteCharge();
 
 	bool bIsCtrlPressed = false;
 	bool bIgnoreInputLook = false;

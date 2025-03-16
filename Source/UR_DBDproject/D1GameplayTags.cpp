@@ -21,6 +21,8 @@ namespace D1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactStart, "Killer.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactEnd, "Killer.Attack.DetactEnd");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_PowerAttack_DetactStart, "Killer.PowerAttack.DetactStart");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_PowerAttack_DetactEnd, "Killer.PowerAttack.DetactEnd");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactStart, "Killer.Wolf.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactEnd, "Killer.Wolf.Attack.DetactEnd");
 

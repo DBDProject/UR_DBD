@@ -66,20 +66,21 @@ void AD1KillerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
 		auto Attack1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Attack1);
-		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Started, this, &ThisClass::Input_LeftClick);
+		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_LeftClick);
 
 		auto RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
-		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Started, this, &ThisClass::Input_RightClick);
+		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Triggered, this, &ThisClass::Input_RightClick);
+		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Completed, this, &ThisClass::Input_RightClickRelease);
 
 		auto Skill1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Skill1); //Ctrl
-		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
+		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_Skill1);
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Completed, this, &ThisClass::Input_OnCtrlReleased);
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar); //Spacebar
-		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Triggered, this, &ThisClass::HandleInteraction);
 
 		auto DropAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Drop); // R
-		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ThisClass::Input_Drop);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Drop);
 
 	}
 }
@@ -125,6 +126,26 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->WolfAttackCollision->SetActive(false);
 			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			D1Killer->SetbAttackSuccess(false);
+		}
+	}
+
+	if (EventTag == (D1GameplayTags::Killer_PowerAttack_DetactStart))
+	{
+		if (D1Killer && D1Killer->PowerAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_PowerAttack_DetactStart"));
+			D1Killer->PowerAttackCollision->SetActive(true);
+			D1Killer->PowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+	}
+
+	if (EventTag == (D1GameplayTags::Killer_PowerAttack_DetactEnd))
+	{
+		if (D1Killer && D1Killer->PowerAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_PowerAttack_DetactEnd"));
+			D1Killer->PowerAttackCollision->SetActive(false);
+			D1Killer->PowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 		}
 	}
 }
@@ -199,6 +220,35 @@ void AD1KillerController::Input_RightClick(const FInputActionValue& InputValue)
 	{
 		UE_LOG(LogTemp, Log, TEXT("🎯 Ctrl + Right Click Activated!"));
 		RightClick_Transform();
+		return;
+	}
+
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
+		ChargeStartTime = GetWorld()->GetTimeSeconds();
+		bIsCharging = true;
+		GetWorld()->GetTimerManager().SetTimer(ChargeTimerHandle, this, &AD1KillerController::CompleteCharge, ChargeDuration, false);
+
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PowerAttack);
+		
+		return;
+	}
+}
+
+void AD1KillerController::Input_RightClickRelease(const FInputActionValue& InputValue)
+{
+	if (!D1Killer)
+		return;
+
+	GetWorld()->GetTimerManager().ClearTimer(ChargeTimerHandle);
+	bIsCharging = false;
+}
+
+void AD1KillerController::CompleteCharge()
+{
+	if (bIsCharging)
+	{
 	}
 }
 
