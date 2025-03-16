@@ -40,7 +40,7 @@ void UD1GA_Dracula_Hook::ActivateAbility(
 	KillerController->SetIgnoreLookInput(true);
 
 	Hook = Killer->GetCurrentHook();
-	AD1SurvivorBase* CarriedSurvivor = KillerController->GetCarriedSurvivor();
+	AD1SurvivorBase* CarriedSurvivor = Killer->GetCarriedSurvivor();
 	if (!Hook || !CarriedSurvivor)
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -59,6 +59,11 @@ void UD1GA_Dracula_Hook::ActivateAbility(
 	{
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
+	}
+
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_HookSurvivor(Killer);
 	}
 
 	MoveToHookLocation();
@@ -97,9 +102,18 @@ void UD1GA_Dracula_Hook::OnFinalMontageEnded(UAnimMontage* Montage, bool bInterr
 	TPVAnimInstance->SetIsCarryingSurvivor(false);
 	FPVAnimInstance->SetIsCarryingSurvivor(false);
 
-	KillerController->SetCarriedSurvivor(nullptr);
+	Killer->SetCarriedSurvivor(nullptr);
 	Cast<AD1KillerBase>(KillerController->GetPawn())->SetDetectedCrawlSurvivor(nullptr);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UD1GA_Dracula_Hook::Multicast_HookSurvivor_Implementation(AD1KillerBase* Player)
+{
+	UD1KillerBaseAnim* TPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetCharacterMesh().Get()->GetAnimInstance());
+	UD1KillerBaseAnim* FPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetFPVMesh().Get()->GetAnimInstance());
+
+	TPVAnimInstance->Montage_Play(TPV_HookSurvivor.Get(), 1.0f);
+	FPVAnimInstance->Montage_Play(FPV_HookSurvivor.Get(), 1.0f);
 }
 
 void UD1GA_Dracula_Hook::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

@@ -63,13 +63,19 @@ void UD1GA_Dracula_DestroyPallet::ActivateAbility(
 	}
 
 	Killer->GetController()->SetIgnoreLookInput(true);
-	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(Killer);
+	EPalletLocation PalletLocation = Pallet->MovePlayerToInteractionPoint(Killer, ECharacterType::DRACULA);
 
-	FVector TargetLocation = Pallet->GetActorLocation();
+	/*FVector TargetLocation = Pallet->GetActorLocation();
+	TargetLocation.Y += 60.0f;
 	FVector KillerLocation = Killer->GetActorLocation();
 	FRotator LookAtRotation = (TargetLocation - KillerLocation).Rotation();
 	LookAtRotation.Pitch = -15.0f;
-	KillerController->SetControlRotation(LookAtRotation);
+	KillerController->SetControlRotation(LookAtRotation);*/
+
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_PlayDestroyPallet(Killer);
+	}
 
 	// ✅ Montage 시작
 	TPVAnimInstance->Montage_Play(TPV_DestroyPallet.Get());
@@ -104,10 +110,36 @@ void UD1GA_Dracula_DestroyPallet::OnEndMontage(UAnimMontage* Montage, bool bInte
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
+void UD1GA_Dracula_DestroyPallet::Multicast_PlayDestroyPallet_Implementation(AD1KillerBase* Player)
+{
+	if (!Player) return;
+	AD1Pallet* Pallet = Player->GetCurrentPallet();
+	Pallet->MovePlayerToInteractionPoint(Player, ECharacterType::DRACULA);
+
+	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
+
+	TPVAnimInstance->Montage_Play(TPV_DestroyPallet.Get());
+	FPVAnimInstance->Montage_Play(FPV_DestroyPallet.Get());
+
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindLambda([Pallet](UAnimMontage* Montage, bool bInterrupted)
+		{
+			if (!bInterrupted && Pallet)  // 애니메이션이 정상적으로 끝났을 경우
+			{
+				Pallet->OnDestroy();
+				Pallet->SetCurrentState(EPalletState::Destroyed);
+				UE_LOG(LogTemp, Log, TEXT("✅ Pallet Destroyed!"));
+			}
+		});
+
+	TPVAnimInstance->Montage_SetEndDelegate(EndDelegate, TPV_DestroyPallet.Get());
+}
+
 void UD1GA_Dracula_DestroyPallet::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
 	Killer->GetController()->SetIgnoreLookInput(false);
-	UE_LOG(LogTemp, Log, TEXT("✅ DestroyPallet GAS Finished"));	
+	UE_LOG(LogTemp, Log, TEXT("✅ DestroyPallet GAS Finished"));
 }

@@ -63,8 +63,7 @@ enum class EDraculaTransformationState : uint8
 {
 	Dracula UMETA(DisplayName = "Dracula"),
 	Wolf UMETA(DisplayName = "Wolf"),
-	Bat UMETA(DisplayName = "Bat"),
-	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
+	Bat UMETA(DisplayName = "Bat"), // 변신 선택 모드
 };
 
 UENUM(BlueprintType)

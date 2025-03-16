@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
+
 #include "D1GA_Dracula_Transform.generated.h"
 
 /**
@@ -54,8 +55,17 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	EDraculaTransformationState CurrentTransformState;
 
-private:
+public:
 	void OnOutMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void OnFinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OutTransform(AD1KillerBase* Player);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_EndTransform(AD1KillerBase* Player);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SetHiddenState(AD1KillerBase* Player, bool bDraculaVisible, bool bWolfVisible, bool bBatVisible);
 };

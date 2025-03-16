@@ -6,7 +6,9 @@
 #include "Abilities/GameplayAbility.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "Animation/D1KillerBaseAnim.h"
 #include "D1Define.h"
+#include "Net/UnrealNetwork.h"
 #include "D1GameplayAbility.generated.h"
 
 /**
