@@ -75,13 +75,13 @@ enum class ECharacterType : uint8
 	/*
 		Survivor
 	*/
-	SURVIVOR_NONE UMETA(DisplayName = "NONE"),
-	SURVIVOR_MEG UMETA(DisplayName = "MEG"),
+	NONE UMETA(DisplayName = "NONE"),
+	MEG UMETA(DisplayName = "MEG"),
 
 	/*
 		Killer
 	*/
-	KILLER_DRACULA UMETA(DisplayName = "DRACULA"),
+	DRACULA UMETA(DisplayName = "DRACULA"),
 };
 
 USTRUCT(BlueprintType)
@@ -95,7 +95,7 @@ struct FPlayerInfo
 	UPROPERTY(BlueprintReadWrite)
 	ECharacterType characterType;
 
-	FPlayerInfo() : userIP("127.0.0.1"), characterType(ECharacterType::SURVIVOR_NONE) {}
+	FPlayerInfo() : userIP("127.0.0.1"), characterType(ECharacterType::NONE) {}
 };
 
 USTRUCT(BlueprintType)

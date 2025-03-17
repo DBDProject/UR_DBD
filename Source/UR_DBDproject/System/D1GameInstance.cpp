@@ -31,12 +31,12 @@ void UD1GameInstance::SetServerInfoForDebug()
 	for (int i = 0; i < 4; i++)
 	{
 		FPlayerInfo info;
-		info.characterType = ECharacterType::SURVIVOR_MEG;
+		info.characterType = ECharacterType::MEG;
 		info.userIP = FString(TEXT("127.0.0.1"));
 		m_serverInfo.survivorInfos.Add(info);
 	}
 
-	m_serverInfo.killerInfo.characterType = ECharacterType::KILLER_DRACULA;
+	m_serverInfo.killerInfo.characterType = ECharacterType::DRACULA;
 	m_serverInfo.killerInfo.userIP = FString(TEXT("127.0.0.1"));
 	m_serverInfo.maxPlayer = 0;
 }

@@ -45,6 +45,8 @@ struct FMatchInfo
 
 	UPROPERTY(BlueprintReadOnly)
 	TArray<uint8> survivorCharacterTypes;
+
+	FMatchInfo() : maxPlayer(0), isServer(0), killerCharacterType(0) {}
 };
 
 // Delegate declaration for network events
