@@ -558,59 +558,47 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	}
 }
 
-//void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
-void AD1SurvivorBase::TakePickUpFromKiller(AD1SurvivorBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 {
-	//if (!Killer) return;
+	if (!Killer) return;
 
-	//if (!HasAuthority())
-	//{
-	//	TakePickUpFromKiller_Server(Killer);
-	//	return;
-	//}
+	if (GetController()->IsLocalController())
+	{
+		TakePickUpFromKiller_Server(Killer);
+	}
+}
 
-	//TakePickUpFromKiller_Local(Killer);
+void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
+{
+	if (!Killer) return;
+
+	// 충돌 비활성화
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	// 물리 시뮬레이션 중지
+	GetMesh()->SetSimulatePhysics(false);
+	FName AttachSocketName = "joint_CarryLT_01"; // 살인자의 왼손 본
+	// 캐릭터를 본(소켓)에 부착
+	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 0.f), FRotator(0.f, 0.f, 0.f));
+	SetSurvivorState(ESurvivorState::PickedUp);
+}
+
+void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
+{
+	if (!Killer) return;
 
 	if (HasAuthority())
 	{
-		auto a = FVector(0.f, 0.f, 0.f);
-		auto b = FRotator(0.f, 0.f, 0.f);
-		ChangeMeshTransform(a, b);
 		TakePickUpFromKiller_Multicast(Killer);
 	}
 }
 
-//void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
-void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1SurvivorBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1KillerBase* Killer)
 {
+	if (!Killer) return;
 
-	//GetMesh()->SetMobility(EComponentMobility::Movable);
+	TakePickUpFromKiller_Local(Killer);
 
-	Killer->GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 0.f), FRotator(0.f, 0.f, 0.f));
-
-	if (HasAuthority())
-	{
-		ForceNetUpdate();
-	}
-}
-
-//void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
-void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1SurvivorBase* Killer)
-{
-	//if (!Killer) return;
-	TakePickUpFromKiller_Multicast(Killer);
-}
-
-//void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1KillerBase* Killer)
-void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1SurvivorBase* Killer)
-{
-	//if (!Killer) return;
-
-	//TakePickUpFromKiller_Local(Killer);
-
-	auto a = FVector(0.f, 0.f, 0.f);
-	auto b = FRotator(0.f, 0.f, 0.f);
-	ChangeMeshTransform(a, b);
 }
 
 void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
@@ -812,31 +800,5 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 	{
 		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
 		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
-	}
-}
-
-void AD1SurvivorBase::Multicast_UpdateMeshTransform_Implementation(FVector NewLocation, FRotator NewRotation)
-{
-	if (GetMesh())
-	{
-		GetMesh()->SetRelativeLocationAndRotation(NewLocation, NewRotation);
-	}
-}
-
-void AD1SurvivorBase::OnRep_UpdateMeshTransform()
-{
-	if (GetMesh())
-	{
-		GetMesh()->SetRelativeLocationAndRotation(MeshLocation, MeshRotation);
-	}
-}
-
-void AD1SurvivorBase::ChangeMeshTransform(FVector NewLocation, FRotator NewRotation)
-{
-	if (HasAuthority())
-	{
-		MeshLocation = NewLocation;
-		MeshRotation = NewRotation;
-		Multicast_UpdateMeshTransform(NewLocation, NewRotation);
 	}
 }

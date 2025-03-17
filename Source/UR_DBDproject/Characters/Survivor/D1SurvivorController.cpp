@@ -353,7 +353,7 @@ void AD1SurvivorController::Input_StartTestInput_1()
 {
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
-	D1Survivor->TakePickUpFromKiller(D1Survivor.Get());
+	//D1Survivor->TakePickUpFromKiller(D1Survivor.Get());
 }
 
 void AD1SurvivorController::StartRun_Local()

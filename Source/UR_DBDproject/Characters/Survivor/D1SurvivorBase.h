@@ -59,17 +59,13 @@ public:
 
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	//void TakePickUpFromKiller(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller(class AD1KillerBase* Killer);
 	UFUNCTION()
-	//void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Local(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
 	UFUNCTION(Server, Reliable)
-	//void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Server(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
 	UFUNCTION(NetMulticast, Reliable)
-	//void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Multicast(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
 
 	// 생존자 드랍 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -116,12 +112,6 @@ public:
 	// 레플리케이션
 	UFUNCTION()
 	void OnRep_SurvivorSet();
-
-	void ChangeMeshTransform(FVector NewLocation, FRotator NewRotation);
-	UFUNCTION()
-	void OnRep_UpdateMeshTransform();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateMeshTransform(FVector NewLocation, FRotator NewRotation);
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -171,12 +161,6 @@ public:
 	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
 
 protected:
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
-	FVector MeshLocation;
-
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
-	FRotator MeshRotation;
-
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;

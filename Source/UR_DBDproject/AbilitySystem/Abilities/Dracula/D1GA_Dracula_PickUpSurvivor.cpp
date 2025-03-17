@@ -102,8 +102,7 @@ void UD1GA_Dracula_PickUpSurvivor::Local_PickUpSurvivor(AD1KillerBase* Player)
 		TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
 		FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);
 
-		//Survivor->TakePickUpFromKiller(Player);
-		Survivor->TakePickUpFromKiller(Survivor);
+		Survivor->TakePickUpFromKiller(Player);
 	}
 }
 
