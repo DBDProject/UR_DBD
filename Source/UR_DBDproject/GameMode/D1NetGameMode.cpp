@@ -105,7 +105,7 @@ void AD1NetGameMode::LoadAsyncGameMap(const FString& LevelName)
 	// 비동기 로딩 실행
 	OnAsyncLoadMapStart.Broadcast();
 	Streamable.RequestAsyncLoad(MapToLoad,
-		FStreamableDelegate::CreateUObject(this, &AD1NetGameMode::OnLevelLoadComplete), 30);
+		FStreamableDelegate::CreateUObject(this, &AD1NetGameMode::OnLevelLoadComplete), 70);
 
 	UE_LOG(LogTemp, Warning, TEXT("비동기 로딩 시작: '%s' 레벨을 로드 중..."), *LevelName);
 	bIsAsyncLoading = true;

@@ -54,6 +54,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSurvivorMatchACK);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FKillerMatchACK);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMatchCancelACK);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMatchAbandoned);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMatchStart);
 
 UCLASS()
 class DBDNETCORE_API UDBDPacketProcessor : public UObject
@@ -85,6 +86,9 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
 	FMatchAbandoned OnMatchAbandoned;
 
+	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
+	FMatchStart OnMatchStart;
+
 private:
 	void ProcessChatMsg(const TSharedPtr<HPACKET>& packet);
 	void ProcessKillerMatchACK(const TSharedPtr<HPACKET>& packet);
@@ -92,6 +96,7 @@ private:
 	void ProcessMatchCancelACK(const TSharedPtr<HPACKET>& packet);
 	void ProcessMatchReady(const TSharedPtr<HPACKET>& packet);
 	void ProcessMatchAbandoned(const TSharedPtr<HPACKET>& packet);
+	void ProcessMatchStart(const TSharedPtr<HPACKET>& packet);
 
 public:
 	void Init(class UDBDNetManager* netManager);
@@ -110,6 +115,9 @@ public:
 
 	UFUNCTION(BluePrintCallable, Category = "DBDNet")
 	void SendMatchCancel();
+
+	UFUNCTION(BluePrintCallable, Category = "DBDNet")
+	void SendMapLoadEnd();
 
 	template <class T>
 	static bool SerializePacket(const HPACKET_TYPE packetType, const T& inSerializedData,

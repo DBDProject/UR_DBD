@@ -54,6 +54,11 @@ void UDBDPacketProcessor::ProcessMatchAbandoned(const TSharedPtr<HPACKET>& packe
 	OnMatchAbandoned.Broadcast();
 }
 
+void UDBDPacketProcessor::ProcessMatchStart(const TSharedPtr<HPACKET>& packet)
+{
+	OnMatchStart.Broadcast();
+}
+
 void UDBDPacketProcessor::Init(class UDBDNetManager* netManager)
 {
 	if (!IsValid(netManager))
@@ -87,6 +92,11 @@ void UDBDPacketProcessor::Init(class UDBDNetManager* netManager)
 	m_callback.Add(HPACKET_TYPE::SEND_MATCH_ABANDONED, [this](const TSharedPtr<HPACKET>& Packet) {
 		this->ProcessMatchAbandoned(Packet);
 		});
+
+	m_callback.Add(HPACKET_TYPE::SEND_MATCH_START, [this](const TSharedPtr<HPACKET>& Packet) {
+		this->ProcessMatchStart(Packet);
+		});
+
 }
 
 void UDBDPacketProcessor::SendSurvivorMatchRequest(uint8 characterType)
@@ -125,6 +135,14 @@ void UDBDPacketProcessor::SendMatchCancel()
 {
 	HPACKET packet;
 	packet.ph.type = HPACKET_TYPE::SEND_MATCH_CANCEL;
+	packet.ph.len = PACKET_HEADER_SIZE;
+	m_pNetManager->SendPacket(packet);
+}
+
+void UDBDPacketProcessor::SendMapLoadEnd()
+{
+	HPACKET packet;
+	packet.ph.type = HPACKET_TYPE::SEND_MAP_LOAD_END;
 	packet.ph.len = PACKET_HEADER_SIZE;
 	m_pNetManager->SendPacket(packet);
 }
