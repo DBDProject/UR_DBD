@@ -40,4 +40,7 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_PowerAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_VaultWindow);
+
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Cooldown_DraculaPowerAttack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Cooldown_WolfPowerAttack);
 }

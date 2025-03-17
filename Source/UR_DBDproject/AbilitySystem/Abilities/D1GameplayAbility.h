@@ -11,6 +11,7 @@
 #include "Net/UnrealNetwork.h"
 #include "D1GameplayAbility.generated.h"
 
+class AABTA_Trace;
 /**
  * 
  */

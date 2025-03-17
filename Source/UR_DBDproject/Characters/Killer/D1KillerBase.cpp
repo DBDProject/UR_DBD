@@ -19,6 +19,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_PowerAttack.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -221,6 +222,11 @@ void AD1KillerBase::InitAbilitySystem()
 	}
 }
 
+void AD1KillerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
+}
+
 void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	AD1KillerController* KC = Cast<AD1KillerController>(GetController());
@@ -414,10 +420,10 @@ void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Overlap
 
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Wolf Attack 적중: %s"), *OtherActor->GetName());
+		UE_LOG(LogTemp, Log, TEXT("Power Attack 적중: %s"), *OtherActor->GetName());
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
+			UE_LOG(LogTemp, Warning, TEXT("Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
 			Survivor->TakeDamageFromKiller();
 		}
 	}

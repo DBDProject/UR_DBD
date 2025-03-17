@@ -2,14 +2,13 @@
 
 
 #include "Characters/Killer/D1KillerController.h"
+#include "Characters/Killer/D1KillerBase.h"
 #include "Data/D1InputData.h"
 #include "System/D1AssetManager.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "D1GameplayTags.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Characters/Killer/D1KillerBase.h"
-#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -17,10 +16,7 @@
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Interactables/D1Generator.h"
-#include "Interactables/D1VaultObject.h"
-#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
-#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/D1AbilitySystemComponent.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -48,6 +44,7 @@ void AD1KillerController::BeginPlay()
 		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh().Get()->GetAnimInstance());
 		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
+		SetupInputComponent();
 	}
 }
 
@@ -55,7 +52,21 @@ void AD1KillerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (const UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("KillerInputData"))
+	if (!D1Killer)
+	{
+		return;
+	}
+
+	UD1AbilitySystemComponent* AbilitySystemComponent = D1Killer->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AbilitySystemComponent is NULL!"));
+		return;
+	}
+
+	AbilitySystemComponent->AddCharacterAbilities(D1Killer->StartupAbilities);
+
+	if (UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("KillerInputData"))
 	{
 		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 
@@ -66,23 +77,25 @@ void AD1KillerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
 		auto Attack1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Attack1);
-		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_LeftClick);
+		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Started, this, &ThisClass::Input_LeftClick);
 
-		auto RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
-		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Triggered, this, &ThisClass::Input_RightClick);
+		RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
+		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Started, this, &ThisClass::Input_RightClick);
 		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Completed, this, &ThisClass::Input_RightClickRelease);
+		AbilitySystemComponent->SetInputBinding(RightClickAction, D1GameplayTags::Killer_Ability_PowerAttack);
 
 		auto Skill1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Skill1); //Ctrl
-		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_Skill1);
+		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Completed, this, &ThisClass::Input_OnCtrlReleased);
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar); //Spacebar
-		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Triggered, this, &ThisClass::HandleInteraction);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
 
 		auto DropAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Drop); // R
-		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Drop);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ThisClass::Input_Drop);
 
 	}
+
 }
 
 void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
@@ -226,12 +239,10 @@ void AD1KillerController::Input_RightClick(const FInputActionValue& InputValue)
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
-		ChargeStartTime = GetWorld()->GetTimeSeconds();
-		bIsCharging = true;
-		GetWorld()->GetTimerManager().SetTimer(ChargeTimerHandle, this, &AD1KillerController::CompleteCharge, ChargeDuration, false);
-
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PowerAttack);
-		
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(RightClickAction);
+		}
 		return;
 	}
 }
@@ -241,14 +252,15 @@ void AD1KillerController::Input_RightClickRelease(const FInputActionValue& Input
 	if (!D1Killer)
 		return;
 
-	GetWorld()->GetTimerManager().ClearTimer(ChargeTimerHandle);
-	bIsCharging = false;
-}
-
-void AD1KillerController::CompleteCharge()
-{
-	if (bIsCharging)
+	UE_LOG(LogTemp, Warning, TEXT("🛑 Power Attack Stopped!"));
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->OnAbilityInputReleased(RightClickAction);
+		}
+		return;
 	}
 }
 

@@ -17,6 +17,9 @@ class UR_DBDPROJECT_API UD1GA_Dracula_PowerAttack : public UD1GameplayAbility
 public:
 	UD1GA_Dracula_PowerAttack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	TSubclassOf<UGameplayEffect> CooldownEffect;
+
 protected:
 	virtual bool CanActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -38,10 +41,8 @@ protected:
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
 
-	virtual void InputReleased(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo) override;
+	UFUNCTION()
+	void OnInputReleased(float TimeHeld);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> TPV_PowerAttack;
@@ -49,17 +50,18 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> FPV_PowerAttack;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<class UAnimMontage> Wolf_PowerAttack;
+
 	FTimerHandle ChargeTimerHandle;
 
+	float ChargingStartTime = 0.0f;
 	float ChargeDuration = 0.9f;
-	bool bIsCharging = false;
 
 private:
-	void LoopChargeSection(UAnimMontage* Montage, bool bInterrupted);
 	void FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
-	void CompleteCharge();
 
 public:
-	//UFUNCTION(NetMulticast, Reliable)
-	//void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
 };
