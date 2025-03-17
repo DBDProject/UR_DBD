@@ -75,13 +75,13 @@ enum class ECharacterType : uint8
 	/*
 		Survivor
 	*/
-	NONE UMETA(DisplayName = "NONE"),
-	MEG UMETA(DisplayName = "MEG"),
+	SURVIVOR_NONE UMETA(DisplayName = "NONE"),
+	SURVIVOR_MEG UMETA(DisplayName = "MEG"),
 
 	/*
 		Killer
 	*/
-	DRACULA UMETA(DisplayName = "DRACULA"),
+	KILLER_DRACULA UMETA(DisplayName = "DRACULA"),
 };
 
 USTRUCT(BlueprintType)
@@ -95,7 +95,7 @@ struct FPlayerInfo
 	UPROPERTY(BlueprintReadWrite)
 	ECharacterType characterType;
 
-	FPlayerInfo() : userIP("127.0.0.1"), characterType(ECharacterType::NONE) {}
+	FPlayerInfo() : userIP("127.0.0.1"), characterType(ECharacterType::SURVIVOR_NONE) {}
 };
 
 USTRUCT(BlueprintType)
@@ -110,7 +110,10 @@ struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 
 	FPlayerInfo killerInfo;
 
 	UPROPERTY(BlueprintReadWrite)
-	bool bIsServer = false; // 서버장 체크
+	uint8 maxPlayer;
+
+	UPROPERTY(BlueprintReadWrite)
+	bool isServer;
 };
 
 USTRUCT(BlueprintType)

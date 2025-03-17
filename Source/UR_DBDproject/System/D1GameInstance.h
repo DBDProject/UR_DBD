@@ -37,6 +37,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "SetServerInfoForDebug"))
 	void SetServerInfoForDebug();
 
+	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "SetServerInfo"))
+	void SetServerInfo(const FMatchInfo& matchInfo);
+
 public:
 	virtual void Init() override;
 	virtual void Shutdown() override;

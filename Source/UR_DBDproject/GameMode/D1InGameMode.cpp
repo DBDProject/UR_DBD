@@ -128,6 +128,8 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 			// 캐릭터 데이터 테이블 로드
 			m_dataTable = LoadObject<UDataTable>(nullptr, TEXT("DataTable'/Game/DBD/Data/CharacterDataTable.CharacterDataTable'"));
 		}
+
+		READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 	}
 }
 
