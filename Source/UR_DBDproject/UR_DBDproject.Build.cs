@@ -9,6 +9,8 @@ public class UR_DBDproject : ModuleRules
     {
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 
+        PublicDefinitions.Add("NOMINMAX");
+
         PublicIncludePaths.AddRange(new string[]
         {
             "UR_DBDproject",
@@ -27,9 +29,11 @@ public class UR_DBDproject : ModuleRules
             "NavigationSystem",
             "AIModule",
             "Niagara",
-            "UMG"
+            "UMG",
+            "DBDUI",
+            "DBDNetCore"
     });
 
-        PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
+        //PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
     }
 }

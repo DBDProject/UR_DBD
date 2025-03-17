@@ -73,7 +73,7 @@ void UDBDNetManager::Init()
 	if (!IsValid(m_packetProcessor))
 	{
 		m_packetProcessor = NewObject<UDBDPacketProcessor>(this, FName("UDBDPacketProcessor"));
-		m_packetProcessor->Init();
+		m_packetProcessor->Init(this);
 	}
 }
 
@@ -82,6 +82,7 @@ void UDBDNetManager::Release()
 	Disconnect();
 	StopThread();
 	WSACleanup();
+	m_packetProcessor->Release();
 
 	if (m_packetProcessor)
 		m_packetProcessor->ConditionalBeginDestroy();
@@ -127,30 +128,6 @@ void UDBDNetManager::Disconnect()
 		m_bIsConnected = false;
 		UE_LOG(LogClass, Warning, TEXT("[DBDNet]서버 접속 끊김"));
 	}
-}
-
-bool UDBDNetManager::SendSurvivorMatchRequest()
-{
-	return true;
-}
-
-bool UDBDNetManager::SendKillerMatchRequest()
-{
-	return true;
-}
-
-bool UDBDNetManager::SendChatMessage(const FString& message)
-{
-	HProtocol::Chat chatMsg;
-	HPACKET packet;
-
-	std::string packetData = TCHAR_TO_UTF8(*message);
-
-	chatMsg.set_msg(packetData);
-	UDBDPacketProcessor::SerializePacket(HPACKET_TYPE::CHAT_MSG, chatMsg, packet);
-	SendPacket(packet);
-
-	return true;
 }
 
 bool UDBDNetManager::ConnectLocalServer(const int port)
@@ -319,7 +296,7 @@ UDBDPacketProcessor* UDBDNetManager::GetPacketProcessor()
 	if (!IsValid(m_packetProcessor))
 	{
 		m_packetProcessor = NewObject<UDBDPacketProcessor>(this, FName("UDBDPacketProcessor"));
-		m_packetProcessor->Init();
+		m_packetProcessor->Init(this);
 	}
 
 	return m_packetProcessor;
@@ -346,7 +323,6 @@ void UDBDNetManager::ProcessPacket()
 		TSharedPtr<HPACKET> packet;
 
 		m_packetQueue.Dequeue(packet);
-		m_packetQueue.Pop();
 		m_packetProcessor->Process(packet);
 	}
 

@@ -2,7 +2,7 @@
 
 /*
 	Author : 변한빛
-	Last Update : 2025-03-16
+	Last Update : 2025-03-17
 	Description : DBD 수신 받는 쓰레드 정의
 */
 
@@ -13,6 +13,7 @@ DBDNetWorker::DBDNetWorker(UDBDNetManager* pNetManager)
 	m_pNetManager = pNetManager;
 	m_bRunning = true;
 	m_readPos = 0;
+	m_writePos = 0;
 }
 
 DBDNetWorker::~DBDNetWorker()
@@ -42,28 +43,47 @@ void DBDNetWorker::ReceivePacket()
 	}
 	else
 	{
-		m_readPos += recvByte;
-
-		if (m_readPos >= MAX_BUFFER_SIZE)
+		if (recvByte >= MAX_BUFFER_SIZE)
 		{
 			UE_LOG(LogClass, Error, TEXT("[DBDNet]Too Large Packet"));
 			m_pNetManager->Disconnect();
 			m_bRunning = false;
 		}
 
-		HPACKET* m_packet = (HPACKET*)m_recvBuffer;
-
-		if (m_readPos >= PACKET_HEADER_SIZE)
+		if (m_writePos + recvByte >= MAX_BUFFER_SIZE)
 		{
-			if (m_packet->ph.len <= m_readPos)
-			{
+			MoveMemory(m_recvBuffer, &m_recvBuffer[m_readPos], m_writePos);
+			m_writePos -= m_readPos;
+			m_readPos = 0;
+		}
+
+		m_writePos += recvByte;
+
+		if (m_writePos >= PACKET_HEADER_SIZE)
+		{
+			do {
+				HPACKET* m_packet = (HPACKET*)&m_recvBuffer[m_readPos];
+
+				if (m_packet->ph.len > MAX_BUFFER_SIZE)
+				{
+					UE_LOG(LogClass, Error, TEXT("[DBDNet]Too Large Packet"));
+					m_pNetManager->Disconnect();
+					m_bRunning = false;
+					break;
+				}
+
+				if (m_writePos < m_packet->ph.len)
+					break;
+
 				TSharedPtr<HPACKET> packetData = MakeShared<HPACKET>();
 				FMemory::Memzero(packetData.Get(), sizeof(HPACKET));
-				FMemory::Memcpy(packetData.Get(), m_recvBuffer, static_cast<SIZE_T>(m_packet->ph.len));
+				FMemory::Memcpy(packetData.Get(), &m_recvBuffer[m_readPos], static_cast<SIZE_T>(m_packet->ph.len));
 
-				m_readPos = 0;
+				m_readPos += m_packet->ph.len;
+				m_writePos -= m_packet->ph.len;
 				m_pNetManager->AddPacket(packetData);
-			}
+
+			} while (m_writePos >= PACKET_HEADER_SIZE);
 		}
 	}
 }

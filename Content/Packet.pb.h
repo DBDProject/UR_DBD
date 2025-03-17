@@ -51,14 +51,14 @@ extern ChatDefaultTypeInternal _Chat_default_instance_;
 class MatchPlayer;
 struct MatchPlayerDefaultTypeInternal;
 extern MatchPlayerDefaultTypeInternal _MatchPlayer_default_instance_;
-class MatchReady;
-struct MatchReadyDefaultTypeInternal;
-extern MatchReadyDefaultTypeInternal _MatchReady_default_instance_;
+class MatchStart;
+struct MatchStartDefaultTypeInternal;
+extern MatchStartDefaultTypeInternal _MatchStart_default_instance_;
 }  // namespace HProtocol
 PROTOBUF_NAMESPACE_OPEN
 template<> ::HProtocol::Chat* Arena::CreateMaybeMessage<::HProtocol::Chat>(Arena*);
 template<> ::HProtocol::MatchPlayer* Arena::CreateMaybeMessage<::HProtocol::MatchPlayer>(Arena*);
-template<> ::HProtocol::MatchReady* Arena::CreateMaybeMessage<::HProtocol::MatchReady>(Arena*);
+template<> ::HProtocol::MatchStart* Arena::CreateMaybeMessage<::HProtocol::MatchStart>(Arena*);
 PROTOBUF_NAMESPACE_CLOSE
 namespace HProtocol {
 
@@ -365,24 +365,24 @@ class MatchPlayer final :
 };
 // -------------------------------------------------------------------
 
-class MatchReady final :
-    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:HProtocol.MatchReady) */ {
+class MatchStart final :
+    public ::PROTOBUF_NAMESPACE_ID::Message /* @@protoc_insertion_point(class_definition:HProtocol.MatchStart) */ {
  public:
-  inline MatchReady() : MatchReady(nullptr) {}
-  ~MatchReady() override;
-  explicit PROTOBUF_CONSTEXPR MatchReady(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
+  inline MatchStart() : MatchStart(nullptr) {}
+  ~MatchStart() override;
+  explicit PROTOBUF_CONSTEXPR MatchStart(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized);
 
-  MatchReady(const MatchReady& from);
-  MatchReady(MatchReady&& from) noexcept
-    : MatchReady() {
+  MatchStart(const MatchStart& from);
+  MatchStart(MatchStart&& from) noexcept
+    : MatchStart() {
     *this = ::std::move(from);
   }
 
-  inline MatchReady& operator=(const MatchReady& from) {
+  inline MatchStart& operator=(const MatchStart& from) {
     CopyFrom(from);
     return *this;
   }
-  inline MatchReady& operator=(MatchReady&& from) noexcept {
+  inline MatchStart& operator=(MatchStart&& from) noexcept {
     if (this == &from) return *this;
     if (GetOwningArena() == from.GetOwningArena()
   #ifdef PROTOBUF_FORCE_COPY_IN_MOVE
@@ -405,20 +405,20 @@ class MatchReady final :
   static const ::PROTOBUF_NAMESPACE_ID::Reflection* GetReflection() {
     return default_instance().GetMetadata().reflection;
   }
-  static const MatchReady& default_instance() {
+  static const MatchStart& default_instance() {
     return *internal_default_instance();
   }
-  static inline const MatchReady* internal_default_instance() {
-    return reinterpret_cast<const MatchReady*>(
-               &_MatchReady_default_instance_);
+  static inline const MatchStart* internal_default_instance() {
+    return reinterpret_cast<const MatchStart*>(
+               &_MatchStart_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     2;
 
-  friend void swap(MatchReady& a, MatchReady& b) {
+  friend void swap(MatchStart& a, MatchStart& b) {
     a.Swap(&b);
   }
-  inline void Swap(MatchReady* other) {
+  inline void Swap(MatchStart* other) {
     if (other == this) return;
   #ifdef PROTOBUF_FORCE_COPY_IN_SWAP
     if (GetOwningArena() != nullptr &&
@@ -431,7 +431,7 @@ class MatchReady final :
       ::PROTOBUF_NAMESPACE_ID::internal::GenericSwap(this, other);
     }
   }
-  void UnsafeArenaSwap(MatchReady* other) {
+  void UnsafeArenaSwap(MatchStart* other) {
     if (other == this) return;
     GOOGLE_DCHECK(GetOwningArena() == other->GetOwningArena());
     InternalSwap(other);
@@ -439,14 +439,14 @@ class MatchReady final :
 
   // implements Message ----------------------------------------------
 
-  MatchReady* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
-    return CreateMaybeMessage<MatchReady>(arena);
+  MatchStart* New(::PROTOBUF_NAMESPACE_ID::Arena* arena = nullptr) const final {
+    return CreateMaybeMessage<MatchStart>(arena);
   }
   using ::PROTOBUF_NAMESPACE_ID::Message::CopyFrom;
-  void CopyFrom(const MatchReady& from);
+  void CopyFrom(const MatchStart& from);
   using ::PROTOBUF_NAMESPACE_ID::Message::MergeFrom;
-  void MergeFrom( const MatchReady& from) {
-    MatchReady::MergeImpl(*this, from);
+  void MergeFrom( const MatchStart& from) {
+    MatchStart::MergeImpl(*this, from);
   }
   private:
   static void MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg);
@@ -464,15 +464,15 @@ class MatchReady final :
   void SharedCtor(::PROTOBUF_NAMESPACE_ID::Arena* arena, bool is_message_owned);
   void SharedDtor();
   void SetCachedSize(int size) const final;
-  void InternalSwap(MatchReady* other);
+  void InternalSwap(MatchStart* other);
 
   private:
   friend class ::PROTOBUF_NAMESPACE_ID::internal::AnyMetadata;
   static ::PROTOBUF_NAMESPACE_ID::StringPiece FullMessageName() {
-    return "HProtocol.MatchReady";
+    return "HProtocol.MatchStart";
   }
   protected:
-  explicit MatchReady(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+  explicit MatchStart(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                        bool is_message_owned = false);
   public:
 
@@ -489,8 +489,7 @@ class MatchReady final :
     kSurvivorIPFieldNumber = 5,
     kSurvivorCharacterFieldNumber = 6,
     kKillerIPFieldNumber = 3,
-    kMaxPlayerFieldNumber = 1,
-    kIsServerFieldNumber = 2,
+    kMaxPlayerFieldNumber = 2,
     kKillerCharacterFieldNumber = 4,
   };
   // repeated string survivorIP = 5;
@@ -553,22 +552,13 @@ class MatchReady final :
   std::string* _internal_mutable_killerip();
   public:
 
-  // uint32 maxPlayer = 1;
+  // uint32 maxPlayer = 2;
   void clear_maxplayer();
   uint32_t maxplayer() const;
   void set_maxplayer(uint32_t value);
   private:
   uint32_t _internal_maxplayer() const;
   void _internal_set_maxplayer(uint32_t value);
-  public:
-
-  // uint32 isServer = 2;
-  void clear_isserver();
-  uint32_t isserver() const;
-  void set_isserver(uint32_t value);
-  private:
-  uint32_t _internal_isserver() const;
-  void _internal_set_isserver(uint32_t value);
   public:
 
   // uint32 killerCharacter = 4;
@@ -580,7 +570,7 @@ class MatchReady final :
   void _internal_set_killercharacter(uint32_t value);
   public:
 
-  // @@protoc_insertion_point(class_scope:HProtocol.MatchReady)
+  // @@protoc_insertion_point(class_scope:HProtocol.MatchStart)
  private:
   class _Internal;
 
@@ -593,7 +583,6 @@ class MatchReady final :
     mutable std::atomic<int> _survivorcharacter_cached_byte_size_;
     ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr killerip_;
     uint32_t maxplayer_;
-    uint32_t isserver_;
     uint32_t killercharacter_;
     mutable ::PROTOBUF_NAMESPACE_ID::internal::CachedSize _cached_size_;
   };
@@ -687,84 +676,64 @@ inline void MatchPlayer::set_playercharacter(uint32_t value) {
 
 // -------------------------------------------------------------------
 
-// MatchReady
+// MatchStart
 
-// uint32 maxPlayer = 1;
-inline void MatchReady::clear_maxplayer() {
+// uint32 maxPlayer = 2;
+inline void MatchStart::clear_maxplayer() {
   _impl_.maxplayer_ = 0u;
 }
-inline uint32_t MatchReady::_internal_maxplayer() const {
+inline uint32_t MatchStart::_internal_maxplayer() const {
   return _impl_.maxplayer_;
 }
-inline uint32_t MatchReady::maxplayer() const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.maxPlayer)
+inline uint32_t MatchStart::maxplayer() const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchStart.maxPlayer)
   return _internal_maxplayer();
 }
-inline void MatchReady::_internal_set_maxplayer(uint32_t value) {
+inline void MatchStart::_internal_set_maxplayer(uint32_t value) {
   
   _impl_.maxplayer_ = value;
 }
-inline void MatchReady::set_maxplayer(uint32_t value) {
+inline void MatchStart::set_maxplayer(uint32_t value) {
   _internal_set_maxplayer(value);
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.maxPlayer)
-}
-
-// uint32 isServer = 2;
-inline void MatchReady::clear_isserver() {
-  _impl_.isserver_ = 0u;
-}
-inline uint32_t MatchReady::_internal_isserver() const {
-  return _impl_.isserver_;
-}
-inline uint32_t MatchReady::isserver() const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.isServer)
-  return _internal_isserver();
-}
-inline void MatchReady::_internal_set_isserver(uint32_t value) {
-  
-  _impl_.isserver_ = value;
-}
-inline void MatchReady::set_isserver(uint32_t value) {
-  _internal_set_isserver(value);
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.isServer)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.maxPlayer)
 }
 
 // string killerIP = 3;
-inline void MatchReady::clear_killerip() {
+inline void MatchStart::clear_killerip() {
   _impl_.killerip_.ClearToEmpty();
 }
-inline const std::string& MatchReady::killerip() const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.killerIP)
+inline const std::string& MatchStart::killerip() const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchStart.killerIP)
   return _internal_killerip();
 }
 template <typename ArgT0, typename... ArgT>
 inline PROTOBUF_ALWAYS_INLINE
-void MatchReady::set_killerip(ArgT0&& arg0, ArgT... args) {
+void MatchStart::set_killerip(ArgT0&& arg0, ArgT... args) {
  
  _impl_.killerip_.Set(static_cast<ArgT0 &&>(arg0), args..., GetArenaForAllocation());
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.killerIP)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.killerIP)
 }
-inline std::string* MatchReady::mutable_killerip() {
+inline std::string* MatchStart::mutable_killerip() {
   std::string* _s = _internal_mutable_killerip();
-  // @@protoc_insertion_point(field_mutable:HProtocol.MatchReady.killerIP)
+  // @@protoc_insertion_point(field_mutable:HProtocol.MatchStart.killerIP)
   return _s;
 }
-inline const std::string& MatchReady::_internal_killerip() const {
+inline const std::string& MatchStart::_internal_killerip() const {
   return _impl_.killerip_.Get();
 }
-inline void MatchReady::_internal_set_killerip(const std::string& value) {
+inline void MatchStart::_internal_set_killerip(const std::string& value) {
   
   _impl_.killerip_.Set(value, GetArenaForAllocation());
 }
-inline std::string* MatchReady::_internal_mutable_killerip() {
+inline std::string* MatchStart::_internal_mutable_killerip() {
   
   return _impl_.killerip_.Mutable(GetArenaForAllocation());
 }
-inline std::string* MatchReady::release_killerip() {
-  // @@protoc_insertion_point(field_release:HProtocol.MatchReady.killerIP)
+inline std::string* MatchStart::release_killerip() {
+  // @@protoc_insertion_point(field_release:HProtocol.MatchStart.killerIP)
   return _impl_.killerip_.Release();
 }
-inline void MatchReady::set_allocated_killerip(std::string* killerip) {
+inline void MatchStart::set_allocated_killerip(std::string* killerip) {
   if (killerip != nullptr) {
     
   } else {
@@ -776,148 +745,148 @@ inline void MatchReady::set_allocated_killerip(std::string* killerip) {
     _impl_.killerip_.Set("", GetArenaForAllocation());
   }
 #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
-  // @@protoc_insertion_point(field_set_allocated:HProtocol.MatchReady.killerIP)
+  // @@protoc_insertion_point(field_set_allocated:HProtocol.MatchStart.killerIP)
 }
 
 // uint32 killerCharacter = 4;
-inline void MatchReady::clear_killercharacter() {
+inline void MatchStart::clear_killercharacter() {
   _impl_.killercharacter_ = 0u;
 }
-inline uint32_t MatchReady::_internal_killercharacter() const {
+inline uint32_t MatchStart::_internal_killercharacter() const {
   return _impl_.killercharacter_;
 }
-inline uint32_t MatchReady::killercharacter() const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.killerCharacter)
+inline uint32_t MatchStart::killercharacter() const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchStart.killerCharacter)
   return _internal_killercharacter();
 }
-inline void MatchReady::_internal_set_killercharacter(uint32_t value) {
+inline void MatchStart::_internal_set_killercharacter(uint32_t value) {
   
   _impl_.killercharacter_ = value;
 }
-inline void MatchReady::set_killercharacter(uint32_t value) {
+inline void MatchStart::set_killercharacter(uint32_t value) {
   _internal_set_killercharacter(value);
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.killerCharacter)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.killerCharacter)
 }
 
 // repeated string survivorIP = 5;
-inline int MatchReady::_internal_survivorip_size() const {
+inline int MatchStart::_internal_survivorip_size() const {
   return _impl_.survivorip_.size();
 }
-inline int MatchReady::survivorip_size() const {
+inline int MatchStart::survivorip_size() const {
   return _internal_survivorip_size();
 }
-inline void MatchReady::clear_survivorip() {
+inline void MatchStart::clear_survivorip() {
   _impl_.survivorip_.Clear();
 }
-inline std::string* MatchReady::add_survivorip() {
+inline std::string* MatchStart::add_survivorip() {
   std::string* _s = _internal_add_survivorip();
-  // @@protoc_insertion_point(field_add_mutable:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_add_mutable:HProtocol.MatchStart.survivorIP)
   return _s;
 }
-inline const std::string& MatchReady::_internal_survivorip(int index) const {
+inline const std::string& MatchStart::_internal_survivorip(int index) const {
   return _impl_.survivorip_.Get(index);
 }
-inline const std::string& MatchReady::survivorip(int index) const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.survivorIP)
+inline const std::string& MatchStart::survivorip(int index) const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchStart.survivorIP)
   return _internal_survivorip(index);
 }
-inline std::string* MatchReady::mutable_survivorip(int index) {
-  // @@protoc_insertion_point(field_mutable:HProtocol.MatchReady.survivorIP)
+inline std::string* MatchStart::mutable_survivorip(int index) {
+  // @@protoc_insertion_point(field_mutable:HProtocol.MatchStart.survivorIP)
   return _impl_.survivorip_.Mutable(index);
 }
-inline void MatchReady::set_survivorip(int index, const std::string& value) {
+inline void MatchStart::set_survivorip(int index, const std::string& value) {
   _impl_.survivorip_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::set_survivorip(int index, std::string&& value) {
+inline void MatchStart::set_survivorip(int index, std::string&& value) {
   _impl_.survivorip_.Mutable(index)->assign(std::move(value));
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::set_survivorip(int index, const char* value) {
+inline void MatchStart::set_survivorip(int index, const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   _impl_.survivorip_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_set_char:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::set_survivorip(int index, const char* value, size_t size) {
+inline void MatchStart::set_survivorip(int index, const char* value, size_t size) {
   _impl_.survivorip_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_set_pointer:HProtocol.MatchStart.survivorIP)
 }
-inline std::string* MatchReady::_internal_add_survivorip() {
+inline std::string* MatchStart::_internal_add_survivorip() {
   return _impl_.survivorip_.Add();
 }
-inline void MatchReady::add_survivorip(const std::string& value) {
+inline void MatchStart::add_survivorip(const std::string& value) {
   _impl_.survivorip_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_add:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::add_survivorip(std::string&& value) {
+inline void MatchStart::add_survivorip(std::string&& value) {
   _impl_.survivorip_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_add:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::add_survivorip(const char* value) {
+inline void MatchStart::add_survivorip(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   _impl_.survivorip_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_add_char:HProtocol.MatchStart.survivorIP)
 }
-inline void MatchReady::add_survivorip(const char* value, size_t size) {
+inline void MatchStart::add_survivorip(const char* value, size_t size) {
   _impl_.survivorip_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:HProtocol.MatchReady.survivorIP)
+  // @@protoc_insertion_point(field_add_pointer:HProtocol.MatchStart.survivorIP)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>&
-MatchReady::survivorip() const {
-  // @@protoc_insertion_point(field_list:HProtocol.MatchReady.survivorIP)
+MatchStart::survivorip() const {
+  // @@protoc_insertion_point(field_list:HProtocol.MatchStart.survivorIP)
   return _impl_.survivorip_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedPtrField<std::string>*
-MatchReady::mutable_survivorip() {
-  // @@protoc_insertion_point(field_mutable_list:HProtocol.MatchReady.survivorIP)
+MatchStart::mutable_survivorip() {
+  // @@protoc_insertion_point(field_mutable_list:HProtocol.MatchStart.survivorIP)
   return &_impl_.survivorip_;
 }
 
 // repeated uint32 survivorCharacter = 6;
-inline int MatchReady::_internal_survivorcharacter_size() const {
+inline int MatchStart::_internal_survivorcharacter_size() const {
   return _impl_.survivorcharacter_.size();
 }
-inline int MatchReady::survivorcharacter_size() const {
+inline int MatchStart::survivorcharacter_size() const {
   return _internal_survivorcharacter_size();
 }
-inline void MatchReady::clear_survivorcharacter() {
+inline void MatchStart::clear_survivorcharacter() {
   _impl_.survivorcharacter_.Clear();
 }
-inline uint32_t MatchReady::_internal_survivorcharacter(int index) const {
+inline uint32_t MatchStart::_internal_survivorcharacter(int index) const {
   return _impl_.survivorcharacter_.Get(index);
 }
-inline uint32_t MatchReady::survivorcharacter(int index) const {
-  // @@protoc_insertion_point(field_get:HProtocol.MatchReady.survivorCharacter)
+inline uint32_t MatchStart::survivorcharacter(int index) const {
+  // @@protoc_insertion_point(field_get:HProtocol.MatchStart.survivorCharacter)
   return _internal_survivorcharacter(index);
 }
-inline void MatchReady::set_survivorcharacter(int index, uint32_t value) {
+inline void MatchStart::set_survivorcharacter(int index, uint32_t value) {
   _impl_.survivorcharacter_.Set(index, value);
-  // @@protoc_insertion_point(field_set:HProtocol.MatchReady.survivorCharacter)
+  // @@protoc_insertion_point(field_set:HProtocol.MatchStart.survivorCharacter)
 }
-inline void MatchReady::_internal_add_survivorcharacter(uint32_t value) {
+inline void MatchStart::_internal_add_survivorcharacter(uint32_t value) {
   _impl_.survivorcharacter_.Add(value);
 }
-inline void MatchReady::add_survivorcharacter(uint32_t value) {
+inline void MatchStart::add_survivorcharacter(uint32_t value) {
   _internal_add_survivorcharacter(value);
-  // @@protoc_insertion_point(field_add:HProtocol.MatchReady.survivorCharacter)
+  // @@protoc_insertion_point(field_add:HProtocol.MatchStart.survivorCharacter)
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
-MatchReady::_internal_survivorcharacter() const {
+MatchStart::_internal_survivorcharacter() const {
   return _impl_.survivorcharacter_;
 }
 inline const ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >&
-MatchReady::survivorcharacter() const {
-  // @@protoc_insertion_point(field_list:HProtocol.MatchReady.survivorCharacter)
+MatchStart::survivorcharacter() const {
+  // @@protoc_insertion_point(field_list:HProtocol.MatchStart.survivorCharacter)
   return _internal_survivorcharacter();
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
-MatchReady::_internal_mutable_survivorcharacter() {
+MatchStart::_internal_mutable_survivorcharacter() {
   return &_impl_.survivorcharacter_;
 }
 inline ::PROTOBUF_NAMESPACE_ID::RepeatedField< uint32_t >*
-MatchReady::mutable_survivorcharacter() {
-  // @@protoc_insertion_point(field_mutable_list:HProtocol.MatchReady.survivorCharacter)
+MatchStart::mutable_survivorcharacter() {
+  // @@protoc_insertion_point(field_mutable_list:HProtocol.MatchStart.survivorCharacter)
   return _internal_mutable_survivorcharacter();
 }
 

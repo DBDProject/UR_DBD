@@ -47,22 +47,25 @@ struct MatchPlayerDefaultTypeInternal {
   };
 };
 PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MatchPlayerDefaultTypeInternal _MatchPlayer_default_instance_;
-PROTOBUF_CONSTEXPR JoinServer::JoinServer(
+PROTOBUF_CONSTEXPR MatchReady::MatchReady(
     ::_pbi::ConstantInitialized): _impl_{
-    /*decltype(_impl_.playerip_)*/{}
-  , /*decltype(_impl_.playercharacter_)*/{}
-  , /*decltype(_impl_._playercharacter_cached_byte_size_)*/{0}
+    /*decltype(_impl_.survivorip_)*/{}
+  , /*decltype(_impl_.survivorcharacter_)*/{}
+  , /*decltype(_impl_._survivorcharacter_cached_byte_size_)*/{0}
   , /*decltype(_impl_.killerip_)*/{&::_pbi::fixed_address_empty_string, ::_pbi::ConstantInitialized{}}
+  , /*decltype(_impl_.maxplayer_)*/0u
+  , /*decltype(_impl_.isserver_)*/0u
+  , /*decltype(_impl_.killercharacter_)*/0u
   , /*decltype(_impl_._cached_size_)*/{}} {}
-struct JoinServerDefaultTypeInternal {
-  PROTOBUF_CONSTEXPR JoinServerDefaultTypeInternal()
+struct MatchReadyDefaultTypeInternal {
+  PROTOBUF_CONSTEXPR MatchReadyDefaultTypeInternal()
       : _instance(::_pbi::ConstantInitialized{}) {}
-  ~JoinServerDefaultTypeInternal() {}
+  ~MatchReadyDefaultTypeInternal() {}
   union {
-    JoinServer _instance;
+    MatchReady _instance;
   };
 };
-PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 JoinServerDefaultTypeInternal _JoinServer_default_instance_;
+PROTOBUF_ATTRIBUTE_NO_DESTROY PROTOBUF_CONSTINIT PROTOBUF_ATTRIBUTE_INIT_PRIORITY1 MatchReadyDefaultTypeInternal _MatchReady_default_instance_;
 }  // namespace HProtocol
 static ::_pb::Metadata file_level_metadata_Packet_2eproto[3];
 static constexpr ::_pb::EnumDescriptor const** file_level_enum_descriptors_Packet_2eproto = nullptr;
@@ -84,37 +87,41 @@ const uint32_t TableStruct_Packet_2eproto::offsets[] PROTOBUF_SECTION_VARIABLE(p
   ~0u,  // no _inlined_string_donated_
   PROTOBUF_FIELD_OFFSET(::HProtocol::MatchPlayer, _impl_.playercharacter_),
   ~0u,  // no _has_bits_
-  PROTOBUF_FIELD_OFFSET(::HProtocol::JoinServer, _internal_metadata_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   ~0u,  // no _inlined_string_donated_
-  PROTOBUF_FIELD_OFFSET(::HProtocol::JoinServer, _impl_.killerip_),
-  PROTOBUF_FIELD_OFFSET(::HProtocol::JoinServer, _impl_.playerip_),
-  PROTOBUF_FIELD_OFFSET(::HProtocol::JoinServer, _impl_.playercharacter_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.maxplayer_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.isserver_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.killerip_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.killercharacter_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.survivorip_),
+  PROTOBUF_FIELD_OFFSET(::HProtocol::MatchReady, _impl_.survivorcharacter_),
 };
 static const ::_pbi::MigrationSchema schemas[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, -1, sizeof(::HProtocol::Chat)},
   { 7, -1, -1, sizeof(::HProtocol::MatchPlayer)},
-  { 14, -1, -1, sizeof(::HProtocol::JoinServer)},
+  { 14, -1, -1, sizeof(::HProtocol::MatchReady)},
 };
 
 static const ::_pb::Message* const file_default_instances[] = {
   &::HProtocol::_Chat_default_instance_._instance,
   &::HProtocol::_MatchPlayer_default_instance_._instance,
-  &::HProtocol::_JoinServer_default_instance_._instance,
+  &::HProtocol::_MatchReady_default_instance_._instance,
 };
 
 const char descriptor_table_protodef_Packet_2eproto[] PROTOBUF_SECTION_VARIABLE(protodesc_cold) =
   "\n\014Packet.proto\022\tHProtocol\"\023\n\004Chat\022\013\n\003msg"
   "\030\001 \001(\t\"&\n\013MatchPlayer\022\027\n\017playerCharacter"
-  "\030\001 \001(\r\"I\n\nJoinServer\022\020\n\010killerIP\030\001 \001(\t\022\020"
-  "\n\010playerIP\030\002 \003(\t\022\027\n\017playerCharacter\030\003 \003("
-  "\rb\006proto3"
+  "\030\001 \001(\r\"\213\001\n\nMatchReady\022\021\n\tmaxPlayer\030\001 \001(\r"
+  "\022\020\n\010isServer\030\002 \001(\r\022\020\n\010killerIP\030\003 \001(\t\022\027\n\017"
+  "killerCharacter\030\004 \001(\r\022\022\n\nsurvivorIP\030\005 \003("
+  "\t\022\031\n\021survivorCharacter\030\006 \003(\rb\006proto3"
   ;
 static ::_pbi::once_flag descriptor_table_Packet_2eproto_once;
 const ::_pbi::DescriptorTable descriptor_table_Packet_2eproto = {
-    false, false, 169, descriptor_table_protodef_Packet_2eproto,
+    false, false, 236, descriptor_table_protodef_Packet_2eproto,
     "Packet.proto",
     &descriptor_table_Packet_2eproto_once, nullptr, 0, 3,
     schemas, file_default_instances, TableStruct_Packet_2eproto::offsets,
@@ -512,24 +519,27 @@ void MatchPlayer::InternalSwap(MatchPlayer* other) {
 
 // ===================================================================
 
-class JoinServer::_Internal {
+class MatchReady::_Internal {
  public:
 };
 
-JoinServer::JoinServer(::PROTOBUF_NAMESPACE_ID::Arena* arena,
+MatchReady::MatchReady(::PROTOBUF_NAMESPACE_ID::Arena* arena,
                          bool is_message_owned)
   : ::PROTOBUF_NAMESPACE_ID::Message(arena, is_message_owned) {
   SharedCtor(arena, is_message_owned);
-  // @@protoc_insertion_point(arena_constructor:HProtocol.JoinServer)
+  // @@protoc_insertion_point(arena_constructor:HProtocol.MatchReady)
 }
-JoinServer::JoinServer(const JoinServer& from)
+MatchReady::MatchReady(const MatchReady& from)
   : ::PROTOBUF_NAMESPACE_ID::Message() {
-  JoinServer* const _this = this; (void)_this;
+  MatchReady* const _this = this; (void)_this;
   new (&_impl_) Impl_{
-      decltype(_impl_.playerip_){from._impl_.playerip_}
-    , decltype(_impl_.playercharacter_){from._impl_.playercharacter_}
-    , /*decltype(_impl_._playercharacter_cached_byte_size_)*/{0}
+      decltype(_impl_.survivorip_){from._impl_.survivorip_}
+    , decltype(_impl_.survivorcharacter_){from._impl_.survivorcharacter_}
+    , /*decltype(_impl_._survivorcharacter_cached_byte_size_)*/{0}
     , decltype(_impl_.killerip_){}
+    , decltype(_impl_.maxplayer_){}
+    , decltype(_impl_.isserver_){}
+    , decltype(_impl_.killercharacter_){}
     , /*decltype(_impl_._cached_size_)*/{}};
 
   _internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
@@ -541,18 +551,24 @@ JoinServer::JoinServer(const JoinServer& from)
     _this->_impl_.killerip_.Set(from._internal_killerip(), 
       _this->GetArenaForAllocation());
   }
-  // @@protoc_insertion_point(copy_constructor:HProtocol.JoinServer)
+  ::memcpy(&_impl_.maxplayer_, &from._impl_.maxplayer_,
+    static_cast<size_t>(reinterpret_cast<char*>(&_impl_.killercharacter_) -
+    reinterpret_cast<char*>(&_impl_.maxplayer_)) + sizeof(_impl_.killercharacter_));
+  // @@protoc_insertion_point(copy_constructor:HProtocol.MatchReady)
 }
 
-inline void JoinServer::SharedCtor(
+inline void MatchReady::SharedCtor(
     ::_pb::Arena* arena, bool is_message_owned) {
   (void)arena;
   (void)is_message_owned;
   new (&_impl_) Impl_{
-      decltype(_impl_.playerip_){arena}
-    , decltype(_impl_.playercharacter_){arena}
-    , /*decltype(_impl_._playercharacter_cached_byte_size_)*/{0}
+      decltype(_impl_.survivorip_){arena}
+    , decltype(_impl_.survivorcharacter_){arena}
+    , /*decltype(_impl_._survivorcharacter_cached_byte_size_)*/{0}
     , decltype(_impl_.killerip_){}
+    , decltype(_impl_.maxplayer_){0u}
+    , decltype(_impl_.isserver_){0u}
+    , decltype(_impl_.killercharacter_){0u}
     , /*decltype(_impl_._cached_size_)*/{}
   };
   _impl_.killerip_.InitDefault();
@@ -561,8 +577,8 @@ inline void JoinServer::SharedCtor(
   #endif // PROTOBUF_FORCE_COPY_DEFAULT_STRING
 }
 
-JoinServer::~JoinServer() {
-  // @@protoc_insertion_point(destructor:HProtocol.JoinServer)
+MatchReady::~MatchReady() {
+  // @@protoc_insertion_point(destructor:HProtocol.MatchReady)
   if (auto *arena = _internal_metadata_.DeleteReturnArena<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>()) {
   (void)arena;
     return;
@@ -570,67 +586,94 @@ JoinServer::~JoinServer() {
   SharedDtor();
 }
 
-inline void JoinServer::SharedDtor() {
+inline void MatchReady::SharedDtor() {
   GOOGLE_DCHECK(GetArenaForAllocation() == nullptr);
-  _impl_.playerip_.~RepeatedPtrField();
-  _impl_.playercharacter_.~RepeatedField();
+  _impl_.survivorip_.~RepeatedPtrField();
+  _impl_.survivorcharacter_.~RepeatedField();
   _impl_.killerip_.Destroy();
 }
 
-void JoinServer::SetCachedSize(int size) const {
+void MatchReady::SetCachedSize(int size) const {
   _impl_._cached_size_.Set(size);
 }
 
-void JoinServer::Clear() {
-// @@protoc_insertion_point(message_clear_start:HProtocol.JoinServer)
+void MatchReady::Clear() {
+// @@protoc_insertion_point(message_clear_start:HProtocol.MatchReady)
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  _impl_.playerip_.Clear();
-  _impl_.playercharacter_.Clear();
+  _impl_.survivorip_.Clear();
+  _impl_.survivorcharacter_.Clear();
   _impl_.killerip_.ClearToEmpty();
+  ::memset(&_impl_.maxplayer_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&_impl_.killercharacter_) -
+      reinterpret_cast<char*>(&_impl_.maxplayer_)) + sizeof(_impl_.killercharacter_));
   _internal_metadata_.Clear<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>();
 }
 
-const char* JoinServer::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
+const char* MatchReady::_InternalParse(const char* ptr, ::_pbi::ParseContext* ctx) {
 #define CHK_(x) if (PROTOBUF_PREDICT_FALSE(!(x))) goto failure
   while (!ctx->Done(&ptr)) {
     uint32_t tag;
     ptr = ::_pbi::ReadTag(ptr, &tag);
     switch (tag >> 3) {
-      // string killerIP = 1;
+      // uint32 maxPlayer = 1;
       case 1:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 10)) {
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 8)) {
+          _impl_.maxplayer_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // uint32 isServer = 2;
+      case 2:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 16)) {
+          _impl_.isserver_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // string killerIP = 3;
+      case 3:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
           auto str = _internal_mutable_killerip();
           ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
           CHK_(ptr);
-          CHK_(::_pbi::VerifyUTF8(str, "HProtocol.JoinServer.killerIP"));
+          CHK_(::_pbi::VerifyUTF8(str, "HProtocol.MatchReady.killerIP"));
         } else
           goto handle_unusual;
         continue;
-      // repeated string playerIP = 2;
-      case 2:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 18)) {
+      // uint32 killerCharacter = 4;
+      case 4:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 32)) {
+          _impl_.killercharacter_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr);
+          CHK_(ptr);
+        } else
+          goto handle_unusual;
+        continue;
+      // repeated string survivorIP = 5;
+      case 5:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 42)) {
           ptr -= 1;
           do {
             ptr += 1;
-            auto str = _internal_add_playerip();
+            auto str = _internal_add_survivorip();
             ptr = ::_pbi::InlineGreedyStringParser(str, ptr, ctx);
             CHK_(ptr);
-            CHK_(::_pbi::VerifyUTF8(str, "HProtocol.JoinServer.playerIP"));
+            CHK_(::_pbi::VerifyUTF8(str, "HProtocol.MatchReady.survivorIP"));
             if (!ctx->DataAvailable(ptr)) break;
-          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<18>(ptr));
+          } while (::PROTOBUF_NAMESPACE_ID::internal::ExpectTag<42>(ptr));
         } else
           goto handle_unusual;
         continue;
-      // repeated uint32 playerCharacter = 3;
-      case 3:
-        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 26)) {
-          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(_internal_mutable_playercharacter(), ptr, ctx);
+      // repeated uint32 survivorCharacter = 6;
+      case 6:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<uint8_t>(tag) == 50)) {
+          ptr = ::PROTOBUF_NAMESPACE_ID::internal::PackedUInt32Parser(_internal_mutable_survivorcharacter(), ptr, ctx);
           CHK_(ptr);
-        } else if (static_cast<uint8_t>(tag) == 24) {
-          _internal_add_playercharacter(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr));
+        } else if (static_cast<uint8_t>(tag) == 48) {
+          _internal_add_survivorcharacter(::PROTOBUF_NAMESPACE_ID::internal::ReadVarint32(&ptr));
           CHK_(ptr);
         } else
           goto handle_unusual;
@@ -658,38 +701,56 @@ failure:
 #undef CHK_
 }
 
-uint8_t* JoinServer::_InternalSerialize(
+uint8_t* MatchReady::_InternalSerialize(
     uint8_t* target, ::PROTOBUF_NAMESPACE_ID::io::EpsCopyOutputStream* stream) const {
-  // @@protoc_insertion_point(serialize_to_array_start:HProtocol.JoinServer)
+  // @@protoc_insertion_point(serialize_to_array_start:HProtocol.MatchReady)
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string killerIP = 1;
+  // uint32 maxPlayer = 1;
+  if (this->_internal_maxplayer() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(1, this->_internal_maxplayer(), target);
+  }
+
+  // uint32 isServer = 2;
+  if (this->_internal_isserver() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(2, this->_internal_isserver(), target);
+  }
+
+  // string killerIP = 3;
   if (!this->_internal_killerip().empty()) {
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       this->_internal_killerip().data(), static_cast<int>(this->_internal_killerip().length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "HProtocol.JoinServer.killerIP");
+      "HProtocol.MatchReady.killerIP");
     target = stream->WriteStringMaybeAliased(
-        1, this->_internal_killerip(), target);
+        3, this->_internal_killerip(), target);
   }
 
-  // repeated string playerIP = 2;
-  for (int i = 0, n = this->_internal_playerip_size(); i < n; i++) {
-    const auto& s = this->_internal_playerip(i);
+  // uint32 killerCharacter = 4;
+  if (this->_internal_killercharacter() != 0) {
+    target = stream->EnsureSpace(target);
+    target = ::_pbi::WireFormatLite::WriteUInt32ToArray(4, this->_internal_killercharacter(), target);
+  }
+
+  // repeated string survivorIP = 5;
+  for (int i = 0, n = this->_internal_survivorip_size(); i < n; i++) {
+    const auto& s = this->_internal_survivorip(i);
     ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::VerifyUtf8String(
       s.data(), static_cast<int>(s.length()),
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::SERIALIZE,
-      "HProtocol.JoinServer.playerIP");
-    target = stream->WriteString(2, s, target);
+      "HProtocol.MatchReady.survivorIP");
+    target = stream->WriteString(5, s, target);
   }
 
-  // repeated uint32 playerCharacter = 3;
+  // repeated uint32 survivorCharacter = 6;
   {
-    int byte_size = _impl_._playercharacter_cached_byte_size_.load(std::memory_order_relaxed);
+    int byte_size = _impl_._survivorcharacter_cached_byte_size_.load(std::memory_order_relaxed);
     if (byte_size > 0) {
       target = stream->WriteUInt32Packed(
-          3, _internal_playercharacter(), byte_size, target);
+          6, _internal_survivorcharacter(), byte_size, target);
     }
   }
 
@@ -697,98 +758,128 @@ uint8_t* JoinServer::_InternalSerialize(
     target = ::_pbi::WireFormat::InternalSerializeUnknownFieldsToArray(
         _internal_metadata_.unknown_fields<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(::PROTOBUF_NAMESPACE_ID::UnknownFieldSet::default_instance), target, stream);
   }
-  // @@protoc_insertion_point(serialize_to_array_end:HProtocol.JoinServer)
+  // @@protoc_insertion_point(serialize_to_array_end:HProtocol.MatchReady)
   return target;
 }
 
-size_t JoinServer::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:HProtocol.JoinServer)
+size_t MatchReady::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:HProtocol.MatchReady)
   size_t total_size = 0;
 
   uint32_t cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated string playerIP = 2;
+  // repeated string survivorIP = 5;
   total_size += 1 *
-      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(_impl_.playerip_.size());
-  for (int i = 0, n = _impl_.playerip_.size(); i < n; i++) {
+      ::PROTOBUF_NAMESPACE_ID::internal::FromIntSize(_impl_.survivorip_.size());
+  for (int i = 0, n = _impl_.survivorip_.size(); i < n; i++) {
     total_size += ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
-      _impl_.playerip_.Get(i));
+      _impl_.survivorip_.Get(i));
   }
 
-  // repeated uint32 playerCharacter = 3;
+  // repeated uint32 survivorCharacter = 6;
   {
     size_t data_size = ::_pbi::WireFormatLite::
-      UInt32Size(this->_impl_.playercharacter_);
+      UInt32Size(this->_impl_.survivorcharacter_);
     if (data_size > 0) {
       total_size += 1 +
         ::_pbi::WireFormatLite::Int32Size(static_cast<int32_t>(data_size));
     }
     int cached_size = ::_pbi::ToCachedSize(data_size);
-    _impl_._playercharacter_cached_byte_size_.store(cached_size,
+    _impl_._survivorcharacter_cached_byte_size_.store(cached_size,
                                     std::memory_order_relaxed);
     total_size += data_size;
   }
 
-  // string killerIP = 1;
+  // string killerIP = 3;
   if (!this->_internal_killerip().empty()) {
     total_size += 1 +
       ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::StringSize(
         this->_internal_killerip());
   }
 
+  // uint32 maxPlayer = 1;
+  if (this->_internal_maxplayer() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_maxplayer());
+  }
+
+  // uint32 isServer = 2;
+  if (this->_internal_isserver() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_isserver());
+  }
+
+  // uint32 killerCharacter = 4;
+  if (this->_internal_killercharacter() != 0) {
+    total_size += ::_pbi::WireFormatLite::UInt32SizePlusOne(this->_internal_killercharacter());
+  }
+
   return MaybeComputeUnknownFieldsSize(total_size, &_impl_._cached_size_);
 }
 
-const ::PROTOBUF_NAMESPACE_ID::Message::ClassData JoinServer::_class_data_ = {
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData MatchReady::_class_data_ = {
     ::PROTOBUF_NAMESPACE_ID::Message::CopyWithSourceCheck,
-    JoinServer::MergeImpl
+    MatchReady::MergeImpl
 };
-const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*JoinServer::GetClassData() const { return &_class_data_; }
+const ::PROTOBUF_NAMESPACE_ID::Message::ClassData*MatchReady::GetClassData() const { return &_class_data_; }
 
 
-void JoinServer::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
-  auto* const _this = static_cast<JoinServer*>(&to_msg);
-  auto& from = static_cast<const JoinServer&>(from_msg);
-  // @@protoc_insertion_point(class_specific_merge_from_start:HProtocol.JoinServer)
+void MatchReady::MergeImpl(::PROTOBUF_NAMESPACE_ID::Message& to_msg, const ::PROTOBUF_NAMESPACE_ID::Message& from_msg) {
+  auto* const _this = static_cast<MatchReady*>(&to_msg);
+  auto& from = static_cast<const MatchReady&>(from_msg);
+  // @@protoc_insertion_point(class_specific_merge_from_start:HProtocol.MatchReady)
   GOOGLE_DCHECK_NE(&from, _this);
   uint32_t cached_has_bits = 0;
   (void) cached_has_bits;
 
-  _this->_impl_.playerip_.MergeFrom(from._impl_.playerip_);
-  _this->_impl_.playercharacter_.MergeFrom(from._impl_.playercharacter_);
+  _this->_impl_.survivorip_.MergeFrom(from._impl_.survivorip_);
+  _this->_impl_.survivorcharacter_.MergeFrom(from._impl_.survivorcharacter_);
   if (!from._internal_killerip().empty()) {
     _this->_internal_set_killerip(from._internal_killerip());
+  }
+  if (from._internal_maxplayer() != 0) {
+    _this->_internal_set_maxplayer(from._internal_maxplayer());
+  }
+  if (from._internal_isserver() != 0) {
+    _this->_internal_set_isserver(from._internal_isserver());
+  }
+  if (from._internal_killercharacter() != 0) {
+    _this->_internal_set_killercharacter(from._internal_killercharacter());
   }
   _this->_internal_metadata_.MergeFrom<::PROTOBUF_NAMESPACE_ID::UnknownFieldSet>(from._internal_metadata_);
 }
 
-void JoinServer::CopyFrom(const JoinServer& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:HProtocol.JoinServer)
+void MatchReady::CopyFrom(const MatchReady& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:HProtocol.MatchReady)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool JoinServer::IsInitialized() const {
+bool MatchReady::IsInitialized() const {
   return true;
 }
 
-void JoinServer::InternalSwap(JoinServer* other) {
+void MatchReady::InternalSwap(MatchReady* other) {
   using std::swap;
   auto* lhs_arena = GetArenaForAllocation();
   auto* rhs_arena = other->GetArenaForAllocation();
   _internal_metadata_.InternalSwap(&other->_internal_metadata_);
-  _impl_.playerip_.InternalSwap(&other->_impl_.playerip_);
-  _impl_.playercharacter_.InternalSwap(&other->_impl_.playercharacter_);
+  _impl_.survivorip_.InternalSwap(&other->_impl_.survivorip_);
+  _impl_.survivorcharacter_.InternalSwap(&other->_impl_.survivorcharacter_);
   ::PROTOBUF_NAMESPACE_ID::internal::ArenaStringPtr::InternalSwap(
       &_impl_.killerip_, lhs_arena,
       &other->_impl_.killerip_, rhs_arena
   );
+  ::PROTOBUF_NAMESPACE_ID::internal::memswap<
+      PROTOBUF_FIELD_OFFSET(MatchReady, _impl_.killercharacter_)
+      + sizeof(MatchReady::_impl_.killercharacter_)
+      - PROTOBUF_FIELD_OFFSET(MatchReady, _impl_.maxplayer_)>(
+          reinterpret_cast<char*>(&_impl_.maxplayer_),
+          reinterpret_cast<char*>(&other->_impl_.maxplayer_));
 }
 
-::PROTOBUF_NAMESPACE_ID::Metadata JoinServer::GetMetadata() const {
+::PROTOBUF_NAMESPACE_ID::Metadata MatchReady::GetMetadata() const {
   return ::_pbi::AssignDescriptors(
       &descriptor_table_Packet_2eproto_getter, &descriptor_table_Packet_2eproto_once,
       file_level_metadata_Packet_2eproto[2]);
@@ -805,9 +896,9 @@ template<> PROTOBUF_NOINLINE ::HProtocol::MatchPlayer*
 Arena::CreateMaybeMessage< ::HProtocol::MatchPlayer >(Arena* arena) {
   return Arena::CreateMessageInternal< ::HProtocol::MatchPlayer >(arena);
 }
-template<> PROTOBUF_NOINLINE ::HProtocol::JoinServer*
-Arena::CreateMaybeMessage< ::HProtocol::JoinServer >(Arena* arena) {
-  return Arena::CreateMessageInternal< ::HProtocol::JoinServer >(arena);
+template<> PROTOBUF_NOINLINE ::HProtocol::MatchReady*
+Arena::CreateMaybeMessage< ::HProtocol::MatchReady >(Arena* arena) {
+  return Arena::CreateMessageInternal< ::HProtocol::MatchReady >(arena);
 }
 PROTOBUF_NAMESPACE_CLOSE
 

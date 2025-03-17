@@ -22,10 +22,7 @@ public class DBDNetCore : ModuleRules
         PrivateDependencyModuleNames.AddRange(
             new string[]
             {
-                "CoreUObject",
-                "Engine",
-                "Slate",
-                "SlateCore",
+                "CoreUObject"
 				// ... add private dependencies that you statically link with here ...	
 			}
             );

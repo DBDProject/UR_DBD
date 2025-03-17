@@ -37,7 +37,6 @@ private:
 	void InitWinSock();
 	bool StartThread();
 	void StopThread();
-	void SendPacket(const HPACKET& packet);
 	FString GetLocalSubnet();
 
 public:
@@ -55,21 +54,13 @@ public:
 	UFUNCTION(BlueprintPure, Category = "DBDNet", meta = (DisplayName = "IsConnected"))
 	FORCEINLINE bool IsConnected() { return m_bIsConnected; }
 
-	UFUNCTION(BluePrintCallable, Category = "DBDNet")
-	bool SendSurvivorMatchRequest();
-
-	UFUNCTION(BluePrintCallable, Category = "DBDNet")
-	bool SendKillerMatchRequest();
-
-	UFUNCTION(BluePrintCallable, Category = "DBDNet")
-	bool SendChatMessage(const FString& message);
-
 	UFUNCTION(BlueprintCallable, Category = "DBDNet")
 	bool ConnectLocalServer(const int port);
 
 	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "GetPacketProcessor"))
 	UDBDPacketProcessor* GetPacketProcessor();
 
+	void SendPacket(const HPACKET& packet);
 	void AddPacket(const TSharedPtr<HPACKET> packet);
 	void ProcessPacket();
 	void PrintSockError(int errorCode);

@@ -23,10 +23,37 @@
  *
  */
 
- // Delegate declaration for network events
+USTRUCT(BlueprintType)
+struct FMatchInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadOnly)
+	uint8 maxPlayer;
+
+	UPROPERTY(BlueprintReadOnly)
+	uint8 isServer;
+
+	UPROPERTY(BlueprintReadOnly)
+	FString killerIP;
+
+	UPROPERTY(BlueprintReadOnly)
+	uint8 killerCharacterType;
+
+	UPROPERTY(BlueprintReadOnly)
+	TArray<FString> survivorIPs;
+
+	UPROPERTY(BlueprintReadOnly)
+	TArray<uint8> survivorCharacterTypes;
+};
+
+// Delegate declaration for network events
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FChatDelegate, const FString&, message);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSurvivorMatchRequest);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FKillerMatchRequest);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FMatchReady, const FMatchInfo&, matchInfo);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FSurvivorMatchACK);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FKillerMatchACK);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMatchCancelACK);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FMatchAbandoned);
 
 UCLASS()
 class DBDNETCORE_API UDBDPacketProcessor : public UObject
@@ -37,24 +64,52 @@ private:
 		TFunction<void(const TSharedPtr<HPACKET>&)>>
 		m_callback;
 
+	class UDBDNetManager* m_pNetManager;
+
 protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
 	FChatDelegate OnChatMessageReceived;
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
-	FSurvivorMatchRequest OnSurvivorMatchRequest;
+	FSurvivorMatchACK OnSurvivorMatchACK;
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
-	FKillerMatchRequest OnKillerMatchRequest;
+	FKillerMatchACK OnKillerMatchACK;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
+	FMatchCancelACK OnMatchCancelACK;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
+	FMatchReady OnMatchReady;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDNet")
+	FMatchAbandoned OnMatchAbandoned;
 
 private:
 	void ProcessChatMsg(const TSharedPtr<HPACKET>& packet);
 	void ProcessKillerMatchACK(const TSharedPtr<HPACKET>& packet);
 	void ProcessSurvivorMatchACK(const TSharedPtr<HPACKET>& packet);
+	void ProcessMatchCancelACK(const TSharedPtr<HPACKET>& packet);
+	void ProcessMatchReady(const TSharedPtr<HPACKET>& packet);
+	void ProcessMatchAbandoned(const TSharedPtr<HPACKET>& packet);
 
 public:
-	void Init();
+	void Init(class UDBDNetManager* netManager);
+	void Release();
+
 	void Process(const TSharedPtr<HPACKET>& packet);
+
+	UFUNCTION(BluePrintCallable, Category = "DBDNet")
+	void SendSurvivorMatchRequest(uint8 characterType);
+
+	UFUNCTION(BluePrintCallable, Category = "DBDNet")
+	void SendKillerMatchRequest(uint8 characterType);
+
+	UFUNCTION(BluePrintCallable, Category = "DBDNet")
+	void SendChatMessage(const FString& message);
+
+	UFUNCTION(BluePrintCallable, Category = "DBDNet")
+	void SendMatchCancel();
 
 	template <class T>
 	static bool SerializePacket(const HPACKET_TYPE packetType, const T& inSerializedData,
