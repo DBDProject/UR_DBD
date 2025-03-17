@@ -76,7 +76,7 @@ protected: // Repair
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
 
-protected: // Heal
+public: // Heal
 	void StartHeal_Local(AD1SurvivorBase* TargetSurvivor);
 	void StopHeal_Local(AD1SurvivorBase* TargetSurvivor);
 	UFUNCTION(Server, Reliable)

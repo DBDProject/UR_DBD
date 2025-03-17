@@ -31,6 +31,7 @@ enum class ESurvivorState : uint8
 	Crawl		UMETA(DisplayName = "Crawl"),     // 기절 상태 (살인마 공격 2회)
 	PickedUp	UMETA(DisplayName = "Picked Up"), // 킬러가 들고 있는 상태
 	Hooked		UMETA(DisplayName = "Hooked"),    // 갈고리 상태 (갈고리에 걸림)
+	Dying		UMETA(DisplayName = "Dying"),     // 사망 상태
 };
 
 UENUM(BlueprintType)
@@ -63,8 +64,7 @@ enum class EDraculaTransformationState : uint8
 {
 	Dracula UMETA(DisplayName = "Dracula"),
 	Wolf UMETA(DisplayName = "Wolf"),
-	Bat UMETA(DisplayName = "Bat"),
-	TransformMode UMETA(DisplayName = "Transform Mode")  // 변신 선택 모드
+	Bat UMETA(DisplayName = "Bat"), // 변신 선택 모드
 };
 
 UENUM(BlueprintType)

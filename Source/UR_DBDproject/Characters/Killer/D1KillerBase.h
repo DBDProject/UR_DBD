@@ -21,6 +21,13 @@ public:
 
 	virtual void HandleGameplayEvent(FGameplayTag EventTag) override;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TObjectPtr<class UD1KillerSet> KillerSet;
+
+	// 레플리케이션
+	UFUNCTION()
+	void OnRep_KillerSet();
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
@@ -82,8 +89,17 @@ protected:
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	class AD1SurvivorBase* CarriedSurvivor;
+
+	UPROPERTY()
+	EDraculaTransformationState PrevTransformState;
+	UPROPERTY()
+	EDraculaTransformationState CurrentTransformState;
+
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
+	bool bChargingSuccess = false;
 
 private:
 	UFUNCTION()
@@ -113,6 +129,14 @@ private:
 	void OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
@@ -123,6 +147,9 @@ public:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
 	UBoxComponent* WolfAttackCollision;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack")
+	UBoxComponent* PowerAttackCollision;
+
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetWolfMesh() const { return WolfMesh; }
@@ -132,6 +159,13 @@ public:
 	TObjectPtr<UCameraComponent> GetWolfCameraComponent() const { return WolfCameraComponent; }
 	TObjectPtr<UCameraComponent> GetBatCameraComponent() const { return BatCameraComponent; }
 
+	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
+	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
+	void SetPrevTransformState(EDraculaTransformationState state) { PrevTransformState = state; }
+	void SetCurrentTransformState(EDraculaTransformationState state) { CurrentTransformState = state; }
+
+	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) { CarriedSurvivor = survivor; }
+	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
@@ -145,5 +179,7 @@ public:
 	UD1AbilitySystemComponent* GetAbilitySystemComponent() const { return AbilitySystemComponent; }
 
 	bool GetbSurvivorHit() { return bSurvivorHit; }
-	bool SetbAttackSuccess(bool bValue) { return bAttackSuccess = bValue; }
+	void SetbAttackSuccess(bool bValue) { bAttackSuccess = bValue; }
+	void SetbChargingSuccess(bool bValue) {	bChargingSuccess = bValue; }
+
 };

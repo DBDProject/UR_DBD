@@ -13,7 +13,7 @@
 struct FInputActionValue;
 class UInputMappingContext;
 /**
- *
+ * 
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1KillerController : public APlayerController
@@ -33,12 +33,6 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TObjectPtr<class AD1KillerBase> D1Killer;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	TObjectPtr<class UD1KillerSet> KillerSet;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	class AD1SurvivorBase* CarriedSurvivor;
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> TPVAnimInstance;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
@@ -48,13 +42,16 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> BatAnimInstance;
 
+	bool bTransform = false;
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
 	void Input_LeftClick(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
+	void Input_RightClickRelease(const FInputActionValue& InputValue);
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_OnCtrlReleased(const FInputActionValue& InputValue);
+	void Input_Drop(const FInputActionValue& InputValue);
 
 	void HandleInteraction();
 
@@ -63,22 +60,22 @@ private:
 	UFUNCTION()
 	void RightClick_Transform();
 
+	float ChargeStartTime = 0.0f; 
+	bool bIsCharging = false; 
+	float ChargeDuration = 0.9f;   
+	FTimerHandle ChargeTimerHandle;
+	void CompleteCharge();
+
 	bool bIsCtrlPressed = false;
 	bool bIgnoreInputLook = false;
-
-	EDraculaTransformationState PrevTransformState;
-	EDraculaTransformationState CurrentTransformState;
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
 
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
 
-	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
-	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
+	void SetbTransform(bool state) { bTransform = state; }
 
-	void SetCarriedSurvivor(class AD1SurvivorBase* survivor) { CarriedSurvivor = survivor; }
-	class AD1SurvivorBase* GetCarriedSurvivor() { return CarriedSurvivor; }
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	UAbilitySystemComponent* ASC;

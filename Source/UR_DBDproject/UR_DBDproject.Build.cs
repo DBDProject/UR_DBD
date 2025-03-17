@@ -29,7 +29,7 @@ public class UR_DBDproject : ModuleRules
             "Niagara",
             "UMG"
     });
-
+        PublicDefinitions.Add("NOMINMAX");
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
     }
 }

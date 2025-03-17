@@ -2,7 +2,6 @@
 
 
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_PickUpSurvivor.h"
-#include "Animation/D1KillerBaseAnim.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 
 UD1GA_Dracula_PickUpSurvivor::UD1GA_Dracula_PickUpSurvivor(const FObjectInitializer& ObjectInitializer)
@@ -26,9 +25,6 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if (!HasAuthority(&ActivationInfo))
-		return;
 
 	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
 	KillerController = Cast<AD1KillerController>(Killer->GetController());
@@ -63,8 +59,13 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 		return;
 	}
 
-	Survivor->TakePickUpFromKiller(Killer);
-	KillerController->SetCarriedSurvivor(Survivor);
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_PickUpSurvivor(Killer);
+	}
+
+	//Survivor->TakePickUpFromKiller(Killer);
+	Killer->SetCarriedSurvivor(Survivor);
 
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);
@@ -88,6 +89,27 @@ void UD1GA_Dracula_PickUpSurvivor::OnPickUpMontageEnded(UAnimMontage* Montage, b
 
 	KillerController->SetIgnoreLookInput(false);
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
+}
+
+void UD1GA_Dracula_PickUpSurvivor::Local_PickUpSurvivor(AD1KillerBase* Player)
+{
+	if (!Player) return;
+
+	if (AD1SurvivorBase* Survivor = Player->GetDetectedCrawlSurvivor())
+	{
+		UD1KillerBaseAnim* TPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetCharacterMesh().Get()->GetAnimInstance());
+		UD1KillerBaseAnim* FPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetFPVMesh().Get()->GetAnimInstance());
+		TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
+		FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);
+
+		//Survivor->TakePickUpFromKiller(Player);
+		Survivor->TakePickUpFromKiller(Survivor);
+	}
+}
+
+void UD1GA_Dracula_PickUpSurvivor::Multicast_PickUpSurvivor_Implementation(AD1KillerBase* Player)
+{
+	Local_PickUpSurvivor(Player);
 }
 
 void UD1GA_Dracula_PickUpSurvivor::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

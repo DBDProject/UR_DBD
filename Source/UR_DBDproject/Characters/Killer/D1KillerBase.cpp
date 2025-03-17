@@ -22,6 +22,9 @@
 
 AD1KillerBase::AD1KillerBase()
 {
+	bReplicates = true;
+	bAlwaysRelevant = true;
+
 	CharacterMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("CharacterMesh"));
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> CharacterMeshAsset(
 		TEXT("/Script/Engine.SkeletalMesh'/Game/Art/Characters/Killer/Dracula/Meshes/Dracula/SKM_Dracula.SKM_Dracula'")
@@ -146,6 +149,13 @@ AD1KillerBase::AD1KillerBase()
 	WolfAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	WolfAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
+	PowerAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("PowerAttackCollision"));
+	PowerAttackCollision->SetupAttachment(CharacterMesh); // 메쉬에 부착
+	PowerAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
+	PowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	PowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	PowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
@@ -176,6 +186,14 @@ void AD1KillerBase::BeginPlay()
 		WolfAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerBegin);
 		WolfAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerEnd);
 	}
+
+	if (PowerAttackCollision)
+	{
+		PowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
+		PowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
+	}
+
+	CurrentTransformState = EDraculaTransformationState::Dracula;
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -195,9 +213,13 @@ void AD1KillerBase::InitAbilitySystem()
 		AbilitySystemComponent->InitAbilityActorInfo(PS, this);
 
 		AttributeSet = PS->GetD1KillerSet();
+		KillerSet = Cast<UD1KillerSet>(AttributeSet);
+		if (KillerSet)
+		{
+			GetCharacterMovement()->MaxWalkSpeed = KillerSet->GetWalkSpeed();
+		}
 	}
 }
-
 
 void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
 {
@@ -245,30 +267,25 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 			DetectedCrawlSurvivor = Survivor;
 		}
 	}
-
-	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
-		DetectedObject = OtherActor;
-		CurrentGenerator = Generator;
-	}
-
-	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
-		DetectedObject = OtherActor;
-		CurrentPallet = Pallet;
-	}
-
-
-	if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
+	else if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("범위 내 훅 감지"));
 		DetectedObject = OtherActor;
 		CurrentHook = Hook;
 	}
-
-	if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
+	else if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
+		DetectedObject = OtherActor;
+		CurrentGenerator = Generator;
+	}
+	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
+		DetectedObject = OtherActor;
+		CurrentPallet = Pallet;
+	}
+	else if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
 		DetectedObject = OtherActor;
@@ -321,7 +338,7 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
 		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
-
+		
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
@@ -390,7 +407,36 @@ void AD1KillerBase::OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* Overlapped
 	}
 }
 
+void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!PowerAttackCollision->IsActive())
+		return;
+
+	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Wolf Attack 적중: %s"), *OtherActor->GetName());
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
+			Survivor->TakeDamageFromKiller();
+		}
+	}
+}
+
+void AD1KillerBase::OnPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+}
+
 void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
 }
+
+void AD1KillerBase::OnRep_KillerSet()
+{
+	if (KillerSet)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = KillerSet->GetWalkSpeed();
+	}
+}
+
