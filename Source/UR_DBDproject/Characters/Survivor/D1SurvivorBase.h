@@ -37,6 +37,7 @@ public:
 	void SmoothCameraTransition(float DeltaTime);
 	void UpdateHealingProgress(float DeltaTime);
 	void UpdateCrawlBleedOut(float DeltaTime);
+	void UpdateHookBleedOut(float DeltaTime);
 
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
@@ -92,6 +93,8 @@ public:
 	void Multicast_UpdateHealingProgress(float NewProgress);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_UpdateCrawlBleedOut(float NewProgress);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateHookBleedOut(float NewProgress);
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelfRecovering(bool bNewState);
 
@@ -129,9 +132,21 @@ public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void StartOnHooked(class AD1Hook* Hook);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_AttachToHook(class AD1Hook* Hook);
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHookSkillCheckSuccess();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHookSkillCheckFail();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void AttemptEscape();
+	UFUNCTION(Server, Reliable)
+	void Server_AttemptEscape();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnEscapeSuccess();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnRescued();
@@ -140,11 +155,12 @@ protected:
 	void Die();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void DieFromBleedOut();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void DieFromEntity();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void RemoveFromGame();
 
-	void ApplyHookDamage();
 
 	// [[[[[[PROPERTY]]]]]]
 public:
@@ -158,8 +174,7 @@ public:
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
-
+	TObjectPtr<class UAnimMontage> RescueMontage; // 구출 몽타주
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -246,11 +261,18 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	int HookedCount = 0;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float HookBleedOutRate = 100.f / 120.f; // 갈고리 걸렸을 때 출혈 속도
+
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-	// 갈고리 데미지 타이머
-	FTimerHandle HookDamageTimer;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsHookSkillCheckEnable = false;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsHookSkillCheckFail = false;
+
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 	// 사망 처리 타이머
