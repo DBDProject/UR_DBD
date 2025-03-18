@@ -73,6 +73,12 @@ AD1SurvivorBase::AD1SurvivorBase()
 	{
 		RescueMontage = RescueMontageAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> EscapeMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_AttemptEscape.AM_Meg_AttemptEscape"));
+	if (EscapeMontageAsset.Succeeded())
+	{
+		EscapeMontage = EscapeMontageAsset.Object;
+	}
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -150,6 +156,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, HookHealth);
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckEnable);
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckFail);
+	DOREPLIFETIME(AD1SurvivorBase, EscapeGauge);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -349,6 +356,18 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 			PlayAnimMontage(RescueMontage, 1.0f, SectionName);
 		}
 	}
+
+	else if (Montage == EscapeMontage)
+	{
+		if (SectionName == "CancelAttempt")
+		{
+			StopAnimMontage(EscapeMontage);
+		}
+		else
+		{
+			PlayAnimMontage(EscapeMontage, 1.0f, SectionName);
+		}
+	}
 }
 void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
 {
@@ -444,6 +463,69 @@ void AD1SurvivorBase::OnHookSkillCheckFail()
 	}
 }
 
+void AD1SurvivorBase::StartEscapeAttempt()
+{
+	if (!HasAuthority())
+	{
+		Server_StartEscapeAttempt();
+		return;
+	}
+
+	// 탈출 애니메이션 실행 & 재생 시간 가져오기
+	if (EscapeMontage)
+	{
+		PlayMontage(EscapeMontage, "Attempt");
+		MaxEscapeGauge = EscapeMontage->GetPlayLength(); // 애니메이션 길이를 게이지 최대값으로 설정
+	}
+
+	EscapeGauge = 0.0f;
+	GetWorld()->GetTimerManager().SetTimer(EscapeGaugeTimer, this, &AD1SurvivorBase::IncreaseEscapeGauge, 0.1f, true);
+}
+
+void AD1SurvivorBase::CancelEscapeAttempt()
+{
+	if (EscapeGauge >= MaxEscapeGauge)	return;
+
+	if (!HasAuthority())
+	{
+		Server_CancelEscapeAttempt();
+		return;
+	}
+
+	EscapeGauge = 0.0f;
+	GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
+
+	// 애니메이션 취소
+	if (EscapeMontage)
+	{
+		PlayMontage(EscapeMontage, "CancelAttempt");
+	}
+}
+
+void AD1SurvivorBase::IncreaseEscapeGauge()
+{
+	if (!HasAuthority()) return;
+
+	EscapeGauge += 1.f; // 애니메이션 길이에 맞춰 0.1초씩 증가
+	UE_LOG(LogTemp, Warning, TEXT("EscapeGauge: %f / %f"), EscapeGauge, MaxEscapeGauge);
+
+	if (EscapeGauge >= MaxEscapeGauge)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
+		AttemptEscape();
+	}
+}
+
+void AD1SurvivorBase::Server_StartEscapeAttempt_Implementation()
+{
+	StartEscapeAttempt();
+}
+
+void AD1SurvivorBase::Server_CancelEscapeAttempt_Implementation()
+{
+	CancelEscapeAttempt();
+}
+
 void AD1SurvivorBase::AttemptEscape()
 {
 	if (!HasAuthority())
@@ -457,12 +539,15 @@ void AD1SurvivorBase::AttemptEscape()
 	if (EscapeChance <= 4.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Escape Success!"));
+		PlayMontage(EscapeMontage, "Free");
 		OnEscapeSuccess();
 		return;
 	}
 
 	// 탈출 실패 시 체력 16.66% 감소
+	PlayMontage(EscapeMontage, "Fail");
 	HookHealth -= (100.f / 6.f);
+	EscapeGauge = 0.0f;
 	UE_LOG(LogTemp, Warning, TEXT("Escape Failed! HookHealth: %f"), HookHealth);
 
 	if (HookHealth <= 0.0f)
@@ -479,7 +564,8 @@ void AD1SurvivorBase::Server_AttemptEscape_Implementation()
 void AD1SurvivorBase::OnEscapeSuccess()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Survivor Escaped from Hook!"));
-
+	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+	CurrentState = ESurvivorState::Injured;
 	// 갈고리에서 해제
 	//DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 	//CurrentState = ESurvivorState::Injured;

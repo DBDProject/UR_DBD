@@ -134,6 +134,10 @@ public: // 갈고리
 	void StartOnHooked(class AD1Hook* Hook);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_AttachToHook(class AD1Hook* Hook);
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void StartEscapeAttempt();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void CancelEscapeAttempt();
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
@@ -141,6 +145,12 @@ protected:
 	void OnHookSkillCheckSuccess();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHookSkillCheckFail();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void IncreaseEscapeGauge();
+	UFUNCTION(Server, Reliable)
+	void Server_StartEscapeAttempt();
+	UFUNCTION(Server, Reliable)
+	void Server_CancelEscapeAttempt();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void AttemptEscape();
 	UFUNCTION(Server, Reliable)
@@ -175,6 +185,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> RescueMontage; // 구출 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> EscapeMontage; // 탈출 몽타주
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -273,11 +286,18 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckFail = false;
 
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	float EscapeGauge = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float MaxEscapeGauge = 100.0f;
+
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 	// 사망 처리 타이머
 	FTimerHandle DeathRemoveTimer;
-
+	// 갈고리 탈출 게이지
+	FTimerHandle EscapeGaugeTimer;
 protected: // 탈출구
 	// 탈출구 열고 있는지
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
@@ -313,6 +333,7 @@ public:
 	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
 	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
 	void SetPrevReparing(bool state) { bPrevRepairing = state; }
+	float GetHookHealth() { return HookHealth; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };

@@ -231,6 +231,12 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		return;
 	}
 
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Hooked
+		&& D1Survivor->GetHookHealth() > 50.f)
+	{
+		D1Survivor->StartEscapeAttempt();
+		return;
+	}
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured || D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
 	{
 		// 발전기
@@ -279,6 +285,12 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 		}
 		return;
 	}
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Hooked
+		&& D1Survivor->GetHookHealth() > 50.f)
+	{
+		D1Survivor->CancelEscapeAttempt();
+	}
+
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		if (IsLocalController()) // 로컬에서 즉시 실행
