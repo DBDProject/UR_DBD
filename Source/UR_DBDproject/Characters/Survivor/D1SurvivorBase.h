@@ -139,6 +139,11 @@ protected:
 	
 public: // 갈고리
 	// 생존자 훅 처리 함수
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartEntityEvent(class AD1SurvivorBase* Player);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartEntityReaction();
+
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void StartOnHooked(class AD1Hook* Hook);
 	UFUNCTION(NetMulticast, Reliable)
@@ -198,6 +203,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> EscapeMontage; // 탈출 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> SpiderMontage; // 엔티티 몽타주
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -294,10 +302,10 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckEnable = false;
 
-	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckFail = false;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))

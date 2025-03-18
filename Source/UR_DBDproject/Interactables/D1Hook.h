@@ -16,11 +16,19 @@ public:
 protected:
     virtual void BeginPlay() override;
 
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 public:
     virtual void Tick(float DeltaTime) override;
 
-    // 엔티티 효과 업데이트 (Dissolve 및 Transform 적용)
-    void UpdateEntityEffect(float HookHealth);
+    void ActivateEntity();
+    void DeactivateEntity();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void StartDissolveEffect(class AD1SurvivorBase* Player);
+    void PlayEntityMontage(FName Section);
+private:
+    void UpdateDissolve();
 
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -38,7 +46,38 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")
     TObjectPtr<class USkeletalMeshComponent> EntityMesh;
 
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TObjectPtr<class UAnimMontage> EntityMontage; // 엔티티 몽타주
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Hook")
+    TWeakObjectPtr<class AD1SurvivorBase> InteractingPlayer;
+
+    UPROPERTY()
+    UMaterialInstanceDynamic* DynamicMat_Slot0;
+
+    UPROPERTY()
+    UMaterialInstanceDynamic* DynamicMat_Slot1;
+
+    UPROPERTY(Replicated)
+    float CurrentDissolveValue;
+
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Hook", meta = (AllowPrivateAccess = "true"))
+    bool bIsSkillCheckEnable = false;
+
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Hook", meta = (AllowPrivateAccess = "true"))
+    bool bIsSkillCheckFail = false;
+
+    UPROPERTY(Replicated)
+    bool bEntityVisible;
+
+    FTimerHandle DissolveTimer;
+
+    float DissolveStartTime;
+
 public:
     TObjectPtr<class USkeletalMeshComponent> GetHookMesh() { return HookMesh; }
     TObjectPtr<class USkeletalMeshComponent> GetEntityMesh() { return EntityMesh; }
+    void SetIsSkillCheckEnable(bool State) { bIsSkillCheckEnable = State; }
+    void SetIsSkillCheckFail(bool State) { bIsSkillCheckFail = State; }
+    bool GetEntityVisible() { return bEntityVisible; }
 };

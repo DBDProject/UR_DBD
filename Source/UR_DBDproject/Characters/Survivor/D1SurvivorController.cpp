@@ -824,7 +824,7 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 
 	if (AD1Hook* Hook = TargetSurvivor->GetCurrentHook())
 	{
-		Hook->GetEntityMesh()->SetVisibility(false);
+		Hook->DeactivateEntity();
 	}
 }
 

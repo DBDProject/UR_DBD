@@ -79,6 +79,12 @@ AD1SurvivorBase::AD1SurvivorBase()
 	{
 		EscapeMontage = EscapeMontageAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> SpiderMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Entity.AM_Meg_Entity"));
+	if (SpiderMontageAsset.Succeeded())
+	{
+		SpiderMontage = SpiderMontageAsset.Object;
+	}
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -245,14 +251,28 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
 	Multicast_UpdateHookBleedOut(HookHealth);
-	if (CurrentHook.IsValid())
-		CurrentHook->UpdateEntityEffect(HookHealth);
 	UE_LOG(LogTemp, Warning, TEXT("[갈고리][출혈] HP: %.2f%%"), HookHealth);
 
 	if (HookHealth <= 0.f)
 	{
 		// TEMP
 		DieFromEntity();
+		return;
+	}
+
+	if (HookHealth <= 50.f && CurrentHook.IsValid())
+	{
+		if (CurrentHook->GetEntityVisible() == false)
+		{
+			Multicast_StartEntityEvent(this);
+		}
+	}
+	if (HookHealth <= 45.f && bIsHookSkillCheckEnable == false)
+	{
+		if (CurrentHook.IsValid())
+		{
+			Multicast_StartEntityReaction();
+		}
 	}
 }
 
@@ -370,6 +390,14 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 			PlayAnimMontage(EscapeMontage, 1.0f, SectionName);
 		}
 	}
+
+	//else if (Montage == SpiderMontage)
+	//{
+	//	if (SectionName == "Reaction")
+	//	{
+	//		PlayAnimMontage(SpiderMontage, 1.0f, SectionName);
+	//	}
+	//}
 }
 void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
 {
@@ -378,6 +406,23 @@ void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, F
 void AD1SurvivorBase::Multicast_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
 {
 	PlayMontage_Local(Montage, SectionName);
+}
+
+void AD1SurvivorBase::Multicast_StartEntityEvent_Implementation(AD1SurvivorBase* Player)
+{
+	if (CurrentHook.IsValid())
+		CurrentHook->StartDissolveEffect(Player);
+}
+
+void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
+{
+	if (CurrentHook.IsValid())
+	{
+		PlayAnimMontage(SpiderMontage, 1.0f, "Reaction");
+		CurrentHook->PlayEntityMontage("Reaction");
+		bIsHookSkillCheckEnable = true;
+		CurrentHook->SetIsSkillCheckEnable(true);
+	}
 }
 
 void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
@@ -403,7 +448,6 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 		HookSocket);
 
 	CurrentHook = Hook;
-	CurrentHook->GetEntityMesh()->SetVisibility(true);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
@@ -421,12 +465,6 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 		}
 	}
 }
-
-void AD1SurvivorBase::OnRep_ChangeState()
-{
-	BP_OnHealthChanged();
-}
-
 
 void AD1SurvivorBase::OnHooked()
 {
@@ -446,11 +484,6 @@ void AD1SurvivorBase::OnHooked()
 		if (HookHealth > 50.f)
 			HookHealth = 50.0f;
 	}
-
-	if (HookHealth <= 50.f && bIsHookSkillCheckEnable == false)
-	{
-		bIsHookSkillCheckEnable = true;
-	}
 }
 
 void AD1SurvivorBase::OnHookSkillCheckSuccess()
@@ -461,6 +494,7 @@ void AD1SurvivorBase::OnHookSkillCheckSuccess()
 void AD1SurvivorBase::OnHookSkillCheckFail()
 {
 	bIsHookSkillCheckFail = true;
+	CurrentHook->SetIsSkillCheckFail(true);
 
 	HookHealth -= 5.0f;
 	// 애니메이션 (TODO)
@@ -1011,4 +1045,9 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
 		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
 	}
+}
+
+void AD1SurvivorBase::OnRep_ChangeState()
+{
+	BP_OnHealthChanged();
 }

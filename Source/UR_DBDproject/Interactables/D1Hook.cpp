@@ -4,6 +4,8 @@
 #include "Interactables/D1Hook.h"
 #include "Components/BoxComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -26,12 +28,43 @@ AD1Hook::AD1Hook()
 
     EntityMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EntityMesh"));
     EntityMesh->SetupAttachment(RootComponent);
+    EntityMesh->SetVisibility(false);
+
+    static ConstructorHelpers::FObjectFinder<UAnimMontage> EntityMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Entity.AM_Entity"));
+    if (EntityMontageAsset.Succeeded())
+    {
+        EntityMontage = EntityMontageAsset.Object;
+    }
 }
 
 void AD1Hook::BeginPlay()
 {
     Super::BeginPlay();
-    EntityMesh->SetVisibility(false);
+
+    if (EntityMesh)
+    {
+        DynamicMat_Slot1 = EntityMesh->CreateAndSetMaterialInstanceDynamic(1); // 슬롯 1번
+        DynamicMat_Slot0 = EntityMesh->CreateAndSetMaterialInstanceDynamic(0); // 슬롯 0번
+
+        if (DynamicMat_Slot1)
+        {
+            DynamicMat_Slot1->SetScalarParameterValue(FName("DissolveValue"), 0.0f);
+        }
+        if (DynamicMat_Slot0)
+        {
+            DynamicMat_Slot0->SetScalarParameterValue(FName("DissolveValue"), 0.0f);
+        }
+    }
+}
+
+void AD1Hook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+    DOREPLIFETIME(AD1Hook, CurrentDissolveValue);
+    DOREPLIFETIME(AD1Hook, bIsSkillCheckEnable);
+    DOREPLIFETIME(AD1Hook, bIsSkillCheckFail);
+    DOREPLIFETIME(AD1Hook, bEntityVisible);
 }
 
 void AD1Hook::Tick(float DeltaTime)
@@ -39,24 +72,70 @@ void AD1Hook::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-void AD1Hook::UpdateEntityEffect(float HookHealth)
+void AD1Hook::ActivateEntity()
+{
+    if (EntityMesh)
+    {
+        EntityMesh->SetVisibility(true);
+        bEntityVisible = true;
+    }
+}
+
+void AD1Hook::DeactivateEntity()
+{
+    if (EntityMesh)
+    {
+        EntityMesh->SetVisibility(false);
+        bEntityVisible = false;
+        InteractingPlayer = nullptr;
+    }
+}
+
+void AD1Hook::StartDissolveEffect_Implementation(AD1SurvivorBase* Player)
 {
     if (!EntityMesh) return;
 
-    // HookHealth 값에 따라 DissolveValue 계산
-    float DissolveValue = FMath::Clamp(1.0f - (HookHealth / 100.f), 0.0f, 1.0f);
-
-    // 두 개의 머티리얼 인스턴스에 같은 값 적용
-    UMaterialInstanceDynamic* DynamicMat1 = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);
-    UMaterialInstanceDynamic* DynamicMat2 = EntityMesh->CreateAndSetMaterialInstanceDynamic(1);
-
-    if (DynamicMat1)
+    if (!DynamicMat_Slot0)
     {
-        DynamicMat1->SetScalarParameterValue(FName("DissolveValue"), DissolveValue);
+        DynamicMat_Slot0 = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);
+    }
+    if (!DynamicMat_Slot1)
+    {
+        DynamicMat_Slot1 = EntityMesh->CreateAndSetMaterialInstanceDynamic(1);
     }
 
-    if (DynamicMat2)
+    if (DynamicMat_Slot0 && DynamicMat_Slot1)
     {
-        DynamicMat2->SetScalarParameterValue(FName("DissolveValue"), DissolveValue);
+        InteractingPlayer = Player;
+        ActivateEntity();
+        GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Hook::UpdateDissolve, 0.05f, true);
+        CurrentDissolveValue = 0.0f;
+        DissolveStartTime = GetWorld()->GetTimeSeconds();
     }
+}
+
+void AD1Hook::UpdateDissolve()
+{
+    if (!DynamicMat_Slot0 || !DynamicMat_Slot1) return;
+
+    float ElapsedTime = GetWorld()->GetTimeSeconds() - DissolveStartTime;
+    CurrentDissolveValue = FMath::Clamp(ElapsedTime / 3.0f, 0.0f, 1.0f);
+
+    if (DynamicMat_Slot0)
+        DynamicMat_Slot0->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (DynamicMat_Slot1)
+        DynamicMat_Slot1->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (CurrentDissolveValue >= 1.0f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
+    }
+}
+
+void AD1Hook::PlayEntityMontage(FName Section)
+{
+    if (!EntityMesh || !EntityMontage) return;
+    EntityMesh->GetAnimInstance()->Montage_Play(EntityMontage);
+    EntityMesh->GetAnimInstance()->Montage_JumpToSection(Section, EntityMontage);
 }
