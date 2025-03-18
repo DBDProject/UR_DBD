@@ -11,12 +11,15 @@
 /**
  *
  */
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChange, ESurvivorState,NewState);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 {
 	GENERATED_BODY()
-
+public:
+	UPROPERTY(BlueprintAssignable, Category = "State")
+	FOnStateChange OnChangePlayerState;
 public:
 	AD1SurvivorBase();
 
@@ -122,6 +125,12 @@ public:
 	void OnRep_UpdateMeshTransform();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_UpdateMeshTransform(FVector NewLocation, FRotator NewRotation);
+
+	UFUNCTION()
+	void OnRep_ChangeState();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "State")
+	void BP_OnHealthChanged();
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -139,6 +148,7 @@ public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void StartOnHooked(class AD1Hook* Hook);
+
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
@@ -215,7 +225,7 @@ protected:
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(ReplicatedUsing = OnRep_ChangeState, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESurvivorState CurrentState;
 
 protected: // 치료 기능
