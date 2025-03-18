@@ -119,12 +119,6 @@ public:
 	UFUNCTION()
 	void OnRep_SurvivorSet();
 
-	void ChangeMeshTransform(FVector NewLocation, FRotator NewRotation);
-	UFUNCTION()
-	void OnRep_UpdateMeshTransform();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateMeshTransform(FVector NewLocation, FRotator NewRotation);
-
 	UFUNCTION()
 	void OnRep_ChangeState();
 
