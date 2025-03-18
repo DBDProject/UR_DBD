@@ -30,6 +30,13 @@ private:
 	// 플레이어 위치 설정
 	void SetPlayerLocation();
 
+	// 일정 시간 이후 입력 잠금 해제
+	void OnInputUnlockTimer();
+
+	// 입력 잠금 상태 변경
+	UFUNCTION()
+	void OnRep_InputState();
+
 	// UI용 변수 바뀔 시 호출
 	UFUNCTION()
 	void OnRep_RepairedGenerators();
@@ -49,6 +56,11 @@ public:
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
 
+private:
+	FTimerHandle InputLockTimer;
+
+	UPROPERTY(ReplicatedUsing = OnRep_InputState)
+	bool bIsInputState = false;
 
 protected:
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트

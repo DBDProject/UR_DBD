@@ -41,7 +41,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	//GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
@@ -81,9 +81,9 @@ void AD1SurvivorBase::BeginPlay()
 	CurrentState = ESurvivorState::Healthy;
 
 	// TEST
-	CurrentState = ESurvivorState::Crawl;
+//	CurrentState = ESurvivorState::Crawl;
 	//HealingProgress = 90.f;
-	
+
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
@@ -292,7 +292,7 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 
 			PlayAnimMontage(Montage, 1.0f, SectionName);
 		}
-		
+
 	}
 	else if (Montage == HitMontage)
 	{
@@ -373,7 +373,7 @@ void AD1SurvivorBase::OnRescued()
 	{
 		CurrentState = ESurvivorState::Injured;
 
-		GetWorld()->GetTimerManager().ClearTimer(HookDamageTimer);		
+		GetWorld()->GetTimerManager().ClearTimer(HookDamageTimer);
 	}
 }
 
@@ -402,12 +402,12 @@ void AD1SurvivorBase::Die()
 
 	// 생존자 상태 변경
 	CurrentState = ESurvivorState::Dying;
-	
+
 	// 갈고리에 걸려있다면 타이머 제거
 	GetWorld()->GetTimerManager().ClearTimer(HookDamageTimer);
 
 	// 사망 애니메이션 (TODO)
-	
+
 	// 5초 후 사망 처리 (게임에서 제거)
 	GetWorld()->GetTimerManager().SetTimer(DeathRemoveTimer, this, &AD1SurvivorBase::RemoveFromGame, 5.0f, false);
 }
@@ -485,7 +485,7 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 
 	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
-		DetectedObject = OtherActor; 
+		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
 
@@ -531,29 +531,29 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 {
 	switch (CurrentState)
 	{
-		case ESurvivorState::Healthy:
-		{
+	case ESurvivorState::Healthy:
+	{
 
-			PlayMontage(HitMontage, "Hit_BK");
-			CurrentState = ESurvivorState::Injured;
-			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
-			break;
-		}
+		PlayMontage(HitMontage, "Hit_BK");
+		CurrentState = ESurvivorState::Injured;
+		UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
+		break;
+	}
 
 
-		case ESurvivorState::Injured:
-		{
-			PlayMontage(HitMontage, "BK");
-			CurrentState = ESurvivorState::Crawl;
-			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
-			break;
-		}
+	case ESurvivorState::Injured:
+	{
+		PlayMontage(HitMontage, "BK");
+		CurrentState = ESurvivorState::Crawl;
+		UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
+		break;
+	}
 
-		case ESurvivorState::Crawl:
-		{
-			UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
-			break;
-		}
+	case ESurvivorState::Crawl:
+	{
+		UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
+		break;
+	}
 
 	}
 }
@@ -653,7 +653,7 @@ void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
 
 	GetCharacterMovement()->DisableMovement();
 	Healer->SetIsHealing(true);
-	bIsBeingHealed = true;	
+	bIsBeingHealed = true;
 }
 
 void AD1SurvivorBase::StopBeingHealing_Local()

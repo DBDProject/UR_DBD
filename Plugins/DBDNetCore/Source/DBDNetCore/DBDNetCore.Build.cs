@@ -44,6 +44,8 @@ public class DBDNetCore : ModuleRules
 
             PublicSystemIncludePaths.Add(Path.Combine(ProtobufPath, "include"));
             PublicAdditionalLibraries.Add(Path.Combine(ProtobufPath, "lib", "libprotobuf.lib"));
+            PublicSystemLibraries.Add("iphlpapi.lib");
+            PublicSystemLibraries.Add("ws2_32.lib");
 
             //Unreal이 자동으로 DLL을 로드할 수 있도록 보장
 

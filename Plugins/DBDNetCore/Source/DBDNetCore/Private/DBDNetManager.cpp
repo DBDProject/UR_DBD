@@ -88,7 +88,7 @@ void UDBDNetManager::Release()
 		m_packetProcessor->ConditionalBeginDestroy();
 }
 
-bool UDBDNetManager::Connect(const FString& ip, const int port)
+bool UDBDNetManager::Connect(const FString& ip, const int port, int timeoutMs)
 {
 	// Set up the server address
 	SOCKADDR_IN stServerAddr;
@@ -100,10 +100,69 @@ bool UDBDNetManager::Connect(const FString& ip, const int port)
 	const char* ipAddress = TCHAR_TO_ANSI(*ip);
 	stServerAddr.sin_addr.s_addr = inet_addr(ipAddress);
 
-	// Connect to the server
-	int nRet = connect(m_socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
-	if (nRet == SOCKET_ERROR) {
+	// Set socket to non-blocking mode for timeout functionality
+	u_long nonBlocking = 1;
+	if (ioctlsocket(m_socket, FIONBIO, &nonBlocking) != 0) {
 		PrintSockError(WSAGetLastError());
+		return false;
+	}
+
+	// Attempt to connect (will return immediately in non-blocking mode)
+	int nRet = connect(m_socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+	if (nRet == SOCKET_ERROR)
+	{
+		int error = WSAGetLastError();
+		if (error != WSAEWOULDBLOCK)
+		{
+			PrintSockError(error);
+
+			// Set socket back to blocking mode
+			nonBlocking = 0;
+			ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+			return false;
+		}
+	}
+
+	// Use select to wait for connection with timeout
+	fd_set writefds, exceptfds;
+	FD_ZERO(&writefds);
+	FD_ZERO(&exceptfds);
+	FD_SET(m_socket, &writefds);
+	FD_SET(m_socket, &exceptfds);
+
+	// Set timeout
+	struct timeval timeout;
+	timeout.tv_sec = timeoutMs / 1000;
+	timeout.tv_usec = (timeoutMs % 1000) * 1000;
+
+	// Wait for socket to be ready
+	nRet = select(0, NULL, &writefds, &exceptfds, &timeout);
+
+	// Set socket back to blocking mode
+	nonBlocking = 0;
+	ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+
+	// Check select results
+	if (nRet == 0)
+	{
+		// Timeout occurred
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet]Connection to %s:%d timed out"), *ip, port);
+		return false;
+	}
+	else if (nRet == SOCKET_ERROR)
+	{
+		PrintSockError(WSAGetLastError());
+		return false;
+	}
+
+	// Check if connection succeeded
+	if (FD_ISSET(m_socket, &exceptfds))
+	{
+		// Connection failed
+		int error;
+		int errorSize = sizeof(error);
+		getsockopt(m_socket, SOL_SOCKET, SO_ERROR, (char*)&error, &errorSize);
+		PrintSockError(error);
 		return false;
 	}
 
@@ -132,107 +191,93 @@ void UDBDNetManager::Disconnect()
 
 bool UDBDNetManager::ConnectLocalServer(const int port)
 {
-	FString Subnet = GetLocalSubnet();
-	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Scanning subnet range: %s*"), *Subnet);
+	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Using ARP table to find local server"));
 
-	const int NUM_THREADS = 8;  // 병렬로 검사할 스레드 수
-	const int SCAN_TIMEOUT_MS = 100;  // 빠른 스캔을 위한 짧은 타임아웃
+	// Get ARP table entries instead of scanning the entire subnet
+	TArray<FString> ARPEntries = GetARPTable();
 
-	struct FScanResult
+	if (ARPEntries.Num() == 0)
 	{
-		FString IP;
-		bool bFound;
-		SOCKET Socket;
-	};
-
-	// 결과를 저장할 배열
-	TArray<FScanResult> Results;
-	Results.SetNum(NUM_THREADS);
-
-	// 각 스레드에서 사용할 소켓 생성
-	for (int i = 0; i < NUM_THREADS; ++i)
-	{
-		Results[i].bFound = false;
-		Results[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
-
-		if (Results[i].Socket == INVALID_SOCKET) {
-			PrintSockError(WSAGetLastError());
-			// 실패한 소켓 정리
-			for (int j = 0; j < i; ++j) {
-				closesocket(Results[j].Socket);
-			}
-			return false;
-		}
-
-		// 논블로킹 모드로 설정
-		u_long nonBlocking = 1;
-		ioctlsocket(Results[i].Socket, FIONBIO, &nonBlocking);
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No ARP entries found. Cannot detect servers."));
+		return false;
 	}
 
-	// 각 IP 범위를 병렬로 검사
-	int currentIP = 1;
-	bool bFoundAny = false;
+	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Found %d devices in ARP table"), ARPEntries.Num());
 
-	while (currentIP <= 255 && !bFoundAny)
+	// Connection timeout value
+	const int SCAN_TIMEOUT_MS = 100;
+
+	// Create socket for connections
+	m_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_socket == INVALID_SOCKET) {
+		PrintSockError(WSAGetLastError());
+		return false;
+	}
+
+	// Set socket to non-blocking mode for timeouts
+	u_long nonBlocking = 1;
+	ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+
+	// Try to connect to each IP in the ARP table
+	for (const FString& TargetIP : ARPEntries)
 	{
-		// 각 스레드에 검사할 IP 할당
-		for (int i = 0; i < NUM_THREADS && currentIP <= 255; ++i, ++currentIP)
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet] Trying IP from ARP: %s"), *TargetIP);
+
+		// Set up server address
+		SOCKADDR_IN stServerAddr;
+		ZeroMemory(&stServerAddr, sizeof(stServerAddr));
+		stServerAddr.sin_family = AF_INET;
+		stServerAddr.sin_port = htons(port);
+		stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*TargetIP));
+
+		// Try connection
+		int result = connect(m_socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+
+		// Check if connection is in progress (expected for non-blocking socket)
+		if (result == SOCKET_ERROR)
 		{
-			FString TargetIP = FString::Printf(TEXT("%s%d"), *Subnet, currentIP);
-			Results[i].IP = TargetIP;
-
-			// 소켓 주소 설정
-			SOCKADDR_IN stServerAddr;
-			ZeroMemory(&stServerAddr, sizeof(stServerAddr));
-			stServerAddr.sin_family = AF_INET;
-			stServerAddr.sin_port = htons(port);
-			stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*TargetIP));
-
-			// 연결 시도
-			connect(Results[i].Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+			int error = WSAGetLastError();
+			if (error != WSAEWOULDBLOCK)
+			{
+				// This IP failed, try next one
+				closesocket(m_socket);
+				m_socket = socket(AF_INET, SOCK_STREAM, 0);
+				if (m_socket == INVALID_SOCKET) {
+					PrintSockError(WSAGetLastError());
+					return false;
+				}
+				ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+				continue;
+			}
 		}
 
-		// 모든 소켓 확인
+		// Use select to wait for connection with timeout
 		fd_set writefds, exceptfds;
 		FD_ZERO(&writefds);
 		FD_ZERO(&exceptfds);
+		FD_SET(m_socket, &writefds);
+		FD_SET(m_socket, &exceptfds);
 
-		// 모든 소켓 추가
-		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
-		{
-			FD_SET(Results[i].Socket, &writefds);
-			FD_SET(Results[i].Socket, &exceptfds);
-		}
-
-		// 타임아웃 설정
+		// Set timeout
 		struct timeval timeout;
 		timeout.tv_sec = 0;
 		timeout.tv_usec = SCAN_TIMEOUT_MS * 1000;
 
-		// 모든 소켓에 대해 select 호출
-		select(0, NULL, &writefds, &exceptfds, &timeout);
-
-		// 결과 확인
-		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
+		// Check if socket is writable (connected)
+		if (select(0, NULL, &writefds, &exceptfds, &timeout) > 0)
 		{
-			if (FD_ISSET(Results[i].Socket, &writefds) && !FD_ISSET(Results[i].Socket, &exceptfds))
+			// Check if connection succeeded
+			if (FD_ISSET(m_socket, &writefds) && !FD_ISSET(m_socket, &exceptfds))
 			{
-				// 연결 성공
-				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s"), *Results[i].IP);
-				Results[i].bFound = true;
-				bFoundAny = true;
+				// Set back to blocking mode for normal operation
+				nonBlocking = 0;
+				ioctlsocket(m_socket, FIONBIO, &nonBlocking);
 
-				// 찾은 소켓 저장하고 다른 소켓은 닫기
-				m_socket = Results[i].Socket;
+				// Set TCP_NODELAY option
+				int option = TRUE;
+				setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
 
-				// 다른 소켓 정리
-				for (int j = 0; j < NUM_THREADS; ++j) {
-					if (j != i) {
-						closesocket(Results[j].Socket);
-					}
-				}
-
-				// 워커 스레드 시작
+				// Start worker thread
 				if (StartThread())
 				{
 					m_bIsConnected = true;
@@ -247,49 +292,33 @@ bool UDBDNetManager::ConnectLocalServer(const int port)
 			}
 		}
 
-		// 이번 배치에서 찾지 못한 경우 소켓 재설정
-		if (!bFoundAny)
-		{
-			for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
-			{
-				closesocket(Results[i].Socket);
-				Results[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
-
-				if (Results[i].Socket == INVALID_SOCKET) {
-					PrintSockError(WSAGetLastError());
-					continue;
-				}
-
-				// 논블로킹 모드로 설정
-				u_long nonBlocking = 1;
-				ioctlsocket(Results[i].Socket, FIONBIO, &nonBlocking);
-			}
-		}
-	}
-
-	// 서버를 찾지 못한 경우
-	if (!bFoundAny)
-	{
-		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No servers found on subnet: %s*"), *Subnet);
-
-		// 모든 소켓 정리
-		for (int i = 0; i < NUM_THREADS; ++i) {
-			closesocket(Results[i].Socket);
-		}
-
-		// 새로운 소켓 생성
+		// Connection failed or timed out, try next IP
+		closesocket(m_socket);
 		m_socket = socket(AF_INET, SOCK_STREAM, 0);
 		if (m_socket == INVALID_SOCKET) {
 			PrintSockError(WSAGetLastError());
+			return false;
 		}
-
-		// TCP_NODELAY 옵션 설정
-		int option = TRUE;
-		setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
+		ioctlsocket(m_socket, FIONBIO, &nonBlocking);
 	}
 
-	return bFoundAny;
+	// No servers found
+	UE_LOG(LogClass, Warning, TEXT("[DBDNet] No servers found on any ARP table entries"));
+
+	// Make sure we leave a valid socket
+	closesocket(m_socket);
+	m_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_socket == INVALID_SOCKET) {
+		PrintSockError(WSAGetLastError());
+	}
+
+	// Set TCP_NODELAY option for the new socket
+	int option = TRUE;
+	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
+
+	return false;
 }
+
 
 UDBDPacketProcessor* UDBDNetManager::GetPacketProcessor()
 {
@@ -343,6 +372,18 @@ void UDBDNetManager::SendPacket(const HPACKET& packet)
 	}
 }
 
+bool UDBDNetManager::IsSameSubnet(const FString& LocalSubnet, const FString& TargetIP)
+{
+	TArray<FString> TargetParts;
+	TargetIP.ParseIntoArray(TargetParts, TEXT("."));
+
+	if (TargetParts.Num() < 3)
+		return false; // 유효한 IP가 아닐 경우
+
+	// 서브넷 값과 타겟 IP의 앞 3옥텟 비교 (C 클래스 기준)
+	return TargetIP.StartsWith(LocalSubnet);
+}
+
 FString UDBDNetManager::GetLocalSubnet()
 {
 	char hostName[256];
@@ -386,6 +427,73 @@ FString UDBDNetManager::GetLocalSubnet()
 
 	return SubnetIP;
 }
+
+FString UDBDNetManager::GetLocalIP()
+{
+	char hostname[256];
+	gethostname(hostname, sizeof(hostname));
+
+	addrinfo hints = {}, * res;
+	hints.ai_family = AF_INET; // IPv4
+
+	if (getaddrinfo(hostname, NULL, &hints, &res) != 0)
+	{
+		return TEXT("Unknown");
+	}
+
+	sockaddr_in* addr = (sockaddr_in*)res->ai_addr;
+	FString LocalIP = FString(ANSI_TO_TCHAR(inet_ntoa(addr->sin_addr)));
+
+	freeaddrinfo(res);
+	return LocalIP;
+
+}
+
+TArray<FString> UDBDNetManager::GetARPTable()
+{
+	TArray<FString> ARPList;
+	MIB_IPNETTABLE* pIpNetTable = nullptr;
+	ULONG size = 0;
+
+	// 서브넷과 본인 IP를 한 번만 구함
+	FString LocalSubnet = GetLocalSubnet();
+	FString LocalIP = GetLocalIP();
+
+	// ARP 테이블 크기 확인
+	if (GetIpNetTable(nullptr, &size, 0) == ERROR_INSUFFICIENT_BUFFER)
+	{
+		pIpNetTable = (MIB_IPNETTABLE*)FMemory::Malloc(size);
+	}
+
+	if (!pIpNetTable) return ARPList;  // 메모리 할당 실패 시 반환
+
+	if (GetIpNetTable(pIpNetTable, &size, 0) == NO_ERROR)
+	{
+		for (DWORD i = 0; i < pIpNetTable->dwNumEntries; i++)
+		{
+			IN_ADDR ipAddr;
+			ipAddr.S_un.S_addr = pIpNetTable->table[i].dwAddr;
+			FString IPAddress = FString(ANSI_TO_TCHAR(inet_ntoa(ipAddr)));
+
+			// 미리 구한 서브넷 값과 비교
+			if (IsSameSubnet(LocalSubnet, IPAddress))
+			{
+				ARPList.Add(IPAddress);
+			}
+		}
+	}
+
+	FMemory::Free(pIpNetTable); // 메모리 해제
+
+	// 본인 IP가 리스트에 없으면 추가
+	if (!ARPList.Contains(LocalIP))
+	{
+		ARPList.Add(LocalIP);
+	}
+
+	return ARPList;
+}
+
 
 void UDBDNetManager::PrintSockError(int errorCode)
 {

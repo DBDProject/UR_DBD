@@ -13,11 +13,11 @@
 #include "CoreMinimal.h"
 #include <WinSock2.h>
 #include <WS2tcpip.h>
+#include <iphlpapi.h>  // Windows ARP 테이블 조회용
 #include "DBDProtocol.h"
 #include "UObject/NoExportTypes.h"
 #include "Packet.pb.h"
 #include "DBDPacketProcessor.generated.h"
-#pragma comment(lib, "ws2_32.lib")
 
 /**
  *

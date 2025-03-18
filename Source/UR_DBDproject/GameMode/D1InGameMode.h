@@ -29,30 +29,31 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "MaxPlayers"))
 	uint8 READY_PLAYER_COUNT = 2;
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
+	float INPUT_UNLOCK_TIME = 4.f;
+
 private:
 	APlayerController* CreateControllerForCharacterType(UPlayer* NewPlayer, ECharacterType CharType);
 
 	void ConfigureController(APlayerController* Controller, TSubclassOf<APlayerState> PSClass,
 		TSubclassOf<APawn> PawnClass);
 
+	FCharacterDataSet* GetCharacterData(ECharacterType CharacaterType);
+	FName GetEnumRowName(ECharacterType CharacterType);
+
 	void ReadyPlayer();
 
 public:
 	AD1InGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
-	FCharacterDataSet* GetCharacterData(ECharacterType CharacaterType);
-	FName GetEnumRowName(ECharacterType CharacterType);
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
-
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
 		FString& ErrorMessage) override;
-
 	virtual APlayerController* Login(UPlayer* NewPlayer, ENetRole InRemoteRole, const FString& Portal,
 		const FString& Options, const FUniqueNetIdRepl& UniqueId, FString& ErrorMessage) override;
-
 	virtual void PostLogin(APlayerController* NewPlayer) override;
-
 	virtual void Logout(AController* Exiting) override;
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 };

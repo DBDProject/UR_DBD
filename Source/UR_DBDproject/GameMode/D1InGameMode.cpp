@@ -46,7 +46,6 @@ APlayerController* AD1InGameMode::CreateControllerForCharacterType(UPlayer* NewP
 
 	NewController->SetPlayer(NewPlayer);
 	NewController->SetReplicates(true);
-	//NewController->DisableInput(NewController);
 	ConfigureController(NewController, CharacterData->PlayerStateClass, CharacterData->PawnClass);
 
 	return NewController;
@@ -69,8 +68,7 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 		NewPS->SetReplicates(true);
 	}
 
-
-	FVector SpawnLocation = FVector(0, 0, 5000);
+	FVector SpawnLocation = FVector(0, 0, 3000);
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 
 	FActorSpawnParameters SpawnParams;
@@ -129,7 +127,12 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 			m_dataTable = LoadObject<UDataTable>(nullptr, TEXT("DataTable'/Game/DBD/Data/CharacterDataTable.CharacterDataTable'"));
 		}
 
-		READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
+		uint8 player = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
+
+		if (player >= 2)
+			READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
+
+		UE_LOG(LogTemp, Warning, TEXT("현재 플레이어 매칭 수 : %d"), READY_PLAYER_COUNT);
 	}
 }
 

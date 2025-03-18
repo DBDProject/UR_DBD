@@ -65,23 +65,20 @@ void AD1NetGameMode::BeginPlay()
 
 void AD1NetGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Super::EndPlay(EndPlayReason);
 	GetWorld()->GetTimerManager().ClearTimer(m_gameTimerHandle);
 	m_pNetManager = nullptr;
+
+	Super::EndPlay(EndPlayReason);
 }
 
 void AD1NetGameMode::OnLevelLoadComplete()
 {
 	UE_LOG(LogTemp, Warning, TEXT("비동기 로딩 완료"));
 
-	// 기존 맵 메모리 정리
-	UGameplayStatics::UnloadStreamLevel(this, "PreviousMap", FLatentActionInfo(), false);
-	GEngine->ForceGarbageCollection(true);
 	bIsAsyncLoading = false;
-
-	// 비동기 로딩 완료 이벤트 브로드캐스트
 	OnAsyncLoadMapEnd.Broadcast();
 }
+
 
 void AD1NetGameMode::LoadAsyncGameMap(const FString& LevelName)
 {
@@ -105,8 +102,9 @@ void AD1NetGameMode::LoadAsyncGameMap(const FString& LevelName)
 	// 비동기 로딩 실행
 	OnAsyncLoadMapStart.Broadcast();
 	Streamable.RequestAsyncLoad(MapToLoad,
-		FStreamableDelegate::CreateUObject(this, &AD1NetGameMode::OnLevelLoadComplete), 70);
+		FStreamableDelegate::CreateUObject(this, &AD1NetGameMode::OnLevelLoadComplete), 75);
 
 	UE_LOG(LogTemp, Warning, TEXT("비동기 로딩 시작: '%s' 레벨을 로드 중..."), *LevelName);
 	bIsAsyncLoading = true;
 }
+
