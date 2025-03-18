@@ -1,6 +1,6 @@
 /*
 	Author : 변한빛
-	Last Update : 2025-03-16
+	Last Update : 2025-03-18
 	Description : DBD 네트워크 매니저 모든 소켓 네트워크 관련은 여기에 담겨져 있음
 */
 
@@ -37,7 +37,11 @@ private:
 	void InitWinSock();
 	bool StartThread();
 	void StopThread();
+
+	bool IsSameSubnet(const FString& LocalSubnet, const FString& TargetIP);
 	FString GetLocalSubnet();
+	FString GetLocalIP();
+	TArray<FString> GetARPTable();
 
 public:
 	UDBDNetManager(const FObjectInitializer& ObjectInitializer);
@@ -46,7 +50,7 @@ public:
 	void Release();
 
 	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "Connect"))
-	bool Connect(const FString& ip, const int port);
+	bool Connect(const FString& ip, const int port, int timeoutMs);
 
 	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "Disconnect"))
 	void Disconnect();

@@ -16,8 +16,6 @@ AD1GameState::AD1GameState()
 void AD1GameState::BeginPlay()
 {
 	Super::BeginPlay();
-
-	UE_LOG(LogTemp, Warning, TEXT("게임 상태 시작!"));
 }
 
 void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -26,27 +24,37 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
+	DOREPLIFETIME(AD1GameState, bIsInputState);
 }
 
 void AD1GameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
 
-	if (!HasAuthority())
-		return;
+	if (HasAuthority())
+	{
+		AD1InGameMode* GameMode = Cast<AD1InGameMode>(AuthorityGameMode);
+		// 게임 시작 시 발전기 수리해야할 개수 초기화
 
-	// 게임 시작 시 발전기 수리해야할 개수 초기화
-	RepairedGenerators = PlayerArray.Num();
+		RepairedGenerators = PlayerArray.Num();
 
-	if (GetNetMode() == NM_ListenServer)
-		OnRep_RepairedGenerators();
+		if (GetNetMode() == NM_ListenServer)
+			OnRep_RepairedGenerators();
 
-	UE_LOG(LogTemp, Warning, TEXT("게임 시작! 발전기 수리해야할 개수: %d"), RepairedGenerators);
-	FindPlayerSpawners();
-	FindExitGates();
-	SetPlayerLocation();
+		FindPlayerSpawners();
+		FindExitGates();
+		SetPlayerLocation();
 
-	// 게임 시작 델리게이트 호출
+		GetWorld()->GetTimerManager().SetTimer(InputLockTimer, this,
+			&AD1GameState::OnInputUnlockTimer, GameMode->INPUT_UNLOCK_TIME, false);
+
+		bIsInputState = true;
+		if (GetNetMode() == NM_ListenServer)
+			OnRep_InputState();
+
+		UE_LOG(LogTemp, Warning, TEXT("==============게임 시작!============="));
+	}
+
 	OnGameStart.Broadcast();
 }
 
@@ -95,8 +103,37 @@ void AD1GameState::SetPlayerLocation()
 		APawn* KillerCharacter = Cast<APawn>(KillerPlayerState->GetPawn());
 		if (KillerCharacter)
 		{
-			KillerCharacter->SetActorLocation(SelectedKillerSpawner->GetActorLocation());
-			UE_LOG(LogTemp, Warning, TEXT("서버 호스트를 킬러 스포너 위치에 배치: %s"), *SelectedKillerSpawner->GetName());
+			// 스포너 위치에서 지면까지 라인트레이스를 수행하여 정확한 지면 위치를 찾음
+			FVector SpawnerLocation = SelectedKillerSpawner->GetActorLocation();
+			FVector EndLocation = SpawnerLocation - FVector(0, 0, 10000); // 충분히 긴 거리로 아래 방향으로 트레이스
+
+			FHitResult HitResult;
+			FCollisionQueryParams QueryParams;
+			QueryParams.bTraceComplex = false;
+			QueryParams.AddIgnoredActor(KillerCharacter);
+
+			// 라인트레이스 수행
+			bool bHit = GetWorld()->LineTraceSingleByChannel(
+				HitResult,
+				SpawnerLocation,
+				EndLocation,
+				ECC_Visibility,
+				QueryParams
+			);
+
+			if (bHit)
+			{
+				// 지면 위치에 캐릭터를 배치하고, 약간의 오프셋을 추가하여 지면에 박히지 않도록 함
+				FVector GroundLocation = HitResult.Location + FVector(0, 0, 10.0f);
+				KillerCharacter->SetActorLocation(GroundLocation);
+				UE_LOG(LogTemp, Warning, TEXT("서버 호스트를 킬러 스포너 위치의 지면에 배치: %s"), *SelectedKillerSpawner->GetName());
+			}
+			else
+			{
+				// 지면을 찾지 못한 경우 원래 스포너 위치를 사용
+				KillerCharacter->SetActorLocation(SpawnerLocation);
+				UE_LOG(LogTemp, Warning, TEXT("서버 호스트를 킬러 스포너 위치에 배치: %s (지면 감지 실패)"), *SelectedKillerSpawner->GetName());
+			}
 		}
 	}
 
@@ -112,8 +149,37 @@ void AD1GameState::SetPlayerLocation()
 			APawn* SurvivorCharacter = Cast<APawn>(SurvivorPlayerState->GetPawn());
 			if (SurvivorCharacter)
 			{
-				SurvivorCharacter->SetActorLocation(SelectedSurvivorSpawner->GetActorLocation());
-				UE_LOG(LogTemp, Warning, TEXT("플레이어 %d번을 생존자 스포너에 배치: %s"), i, *SelectedSurvivorSpawner->GetName());
+				// 스포너 위치에서 지면까지 라인트레이스를 수행하여 정확한 지면 위치를 찾음
+				FVector SpawnerLocation = SelectedSurvivorSpawner->GetActorLocation();
+				FVector EndLocation = SpawnerLocation - FVector(0, 0, 10000); // 충분히 긴 거리로 아래 방향으로 트레이스
+
+				FHitResult HitResult;
+				FCollisionQueryParams QueryParams;
+				QueryParams.bTraceComplex = false;
+				QueryParams.AddIgnoredActor(SurvivorCharacter);
+
+				// 라인트레이스 수행
+				bool bHit = GetWorld()->LineTraceSingleByChannel(
+					HitResult,
+					SpawnerLocation,
+					EndLocation,
+					ECC_Visibility,
+					QueryParams
+				);
+
+				if (bHit)
+				{
+					// 지면 위치에 캐릭터를 배치하고, 약간의 오프셋을 추가하여 지면에 박히지 않도록 함
+					FVector GroundLocation = HitResult.Location + FVector(0, 0, 10.0f);
+					SurvivorCharacter->SetActorLocation(GroundLocation);
+					UE_LOG(LogTemp, Warning, TEXT("플레이어 %d번을 생존자 스포너 위치의 지면에 배치: %s"), i, *SelectedSurvivorSpawner->GetName());
+				}
+				else
+				{
+					// 지면을 찾지 못한 경우 원래 스포너 위치를 사용
+					SurvivorCharacter->SetActorLocation(SelectedSurvivorSpawner->GetActorLocation());
+					UE_LOG(LogTemp, Warning, TEXT("플레이어 %d번을 생존자 스포너에 배치: %s (지면 감지 실패)"), i, *SelectedSurvivorSpawner->GetName());
+				}
 			}
 
 			// 사용된 스포너 제거 (중복 방지)
@@ -122,6 +188,36 @@ void AD1GameState::SetPlayerLocation()
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("플레이어 위치 설정 완료!"));
+}
+
+
+void AD1GameState::OnInputUnlockTimer()
+{
+	if (!HasAuthority())
+		return;
+
+	bIsInputState = false;
+
+	if (GetNetMode() == NM_ListenServer)
+		OnRep_InputState();
+}
+
+void AD1GameState::OnRep_InputState()
+{
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (PC && PC->IsLocalController()) // 로컬 클라이언트만 적용
+	{
+		if (bIsInputState)
+		{
+			PC->DisableInput(PC);
+			UE_LOG(LogTemp, Warning, TEXT("클라이언트에서 입력 비활성화됨!"));
+		}
+		else
+		{
+			PC->EnableInput(PC);
+			UE_LOG(LogTemp, Warning, TEXT("클라이언트에서 입력 활성화됨!"));
+		}
+	}
 }
 
 void AD1GameState::OnRep_RepairedGenerators()
