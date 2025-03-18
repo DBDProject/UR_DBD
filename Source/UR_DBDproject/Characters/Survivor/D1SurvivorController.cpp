@@ -18,6 +18,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1ExitGate.h"
 #include "Net/UnrealNetwork.h"
+#include "Interactables/D1Hook.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -820,6 +821,11 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 	
 	D1Survivor->PlayMontage(D1Survivor->RescueMontage, "Rescue");
 	TargetSurvivor->PlayMontage(D1Survivor->RescueMontage, "BeingRescued");
+
+	if (AD1Hook* Hook = TargetSurvivor->GetCurrentHook())
+	{
+		Hook->GetEntityMesh()->SetVisibility(false);
+	}
 }
 
 void AD1SurvivorController::StopRescue_Local(AD1SurvivorBase* TargetSurvivor)

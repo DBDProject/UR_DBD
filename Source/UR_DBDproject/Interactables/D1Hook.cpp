@@ -31,12 +31,7 @@ AD1Hook::AD1Hook()
 void AD1Hook::BeginPlay()
 {
     Super::BeginPlay();
-
-    // 머티리얼 인스턴스 생성
-    if (EntityMesh && EntityDissolveMaterial)
-    {
-        EntityMesh->SetMaterial(0, EntityDissolveMaterial);
-    }
+    EntityMesh->SetVisibility(false);
 }
 
 void AD1Hook::Tick(float DeltaTime)
@@ -49,7 +44,7 @@ void AD1Hook::UpdateEntityEffect(float HookHealth)
     if (!EntityMesh) return;
 
     // HookHealth 값에 따라 DissolveValue 계산
-    float DissolveValue = FMath::Clamp(1.0f - (HookHealth / 50.0f), 0.0f, 1.0f);
+    float DissolveValue = FMath::Clamp(1.0f - (HookHealth / 100.f), 0.0f, 1.0f);
 
     // 두 개의 머티리얼 인스턴스에 같은 값 적용
     UMaterialInstanceDynamic* DynamicMat1 = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);

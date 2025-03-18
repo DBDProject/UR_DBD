@@ -281,6 +281,10 @@ protected: // 빈사 상태
 	float BleedOutRate = 100.f / 240.f; // 출혈 속도
 
 protected: // 갈고리
+	// 걸려있는 갈고리
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	TWeakObjectPtr<class AD1Hook> CurrentHook;
+
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	int HookedCount = 0;
 
@@ -329,6 +333,7 @@ public:
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }
 	AD1VaultObject* GetVaultTarget() const { return VaultTarget.IsValid() ? VaultTarget.Get() : nullptr; }
 	AD1Pallet* GetCurrentPallet() const { return CurrentPallet.IsValid() ? CurrentPallet.Get() : nullptr; }
+	AD1Hook* GetCurrentHook() const { return CurrentHook.IsValid() ? CurrentHook.Get() : nullptr; }
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
 

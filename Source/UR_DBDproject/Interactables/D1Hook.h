@@ -38,10 +38,7 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")
     TObjectPtr<class USkeletalMeshComponent> EntityMesh;
 
-    // 엔티티 머티리얼 인스턴스
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Hook")
-    TObjectPtr<class UMaterialInstance> EntityDissolveMaterial;
-
 public:
     TObjectPtr<class USkeletalMeshComponent> GetHookMesh() { return HookMesh; }
+    TObjectPtr<class USkeletalMeshComponent> GetEntityMesh() { return EntityMesh; }
 };

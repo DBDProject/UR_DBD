@@ -245,6 +245,8 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
 	Multicast_UpdateHookBleedOut(HookHealth);
+	if (CurrentHook.IsValid())
+		CurrentHook->UpdateEntityEffect(HookHealth);
 	UE_LOG(LogTemp, Warning, TEXT("[갈고리][출혈] HP: %.2f%%"), HookHealth);
 
 	if (HookHealth <= 0.f)
@@ -400,10 +402,12 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		HookSocket);
 
+	CurrentHook = Hook;
+	CurrentHook->GetEntityMesh()->SetVisibility(true);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
-
+	
 	if (HasAuthority())
 	{
 		OnHooked();
