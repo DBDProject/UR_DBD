@@ -37,6 +37,7 @@ public:
 	void SmoothCameraTransition(float DeltaTime);
 	void UpdateHealingProgress(float DeltaTime);
 	void UpdateCrawlBleedOut(float DeltaTime);
+	void UpdateHookBleedOut(float DeltaTime);
 
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
@@ -59,17 +60,13 @@ public:
 
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	//void TakePickUpFromKiller(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller(class AD1KillerBase* Killer);
 	UFUNCTION()
-	//void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Local(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
 	UFUNCTION(Server, Reliable)
-	//void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Server(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
 	UFUNCTION(NetMulticast, Reliable)
-	//void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
-	void TakePickUpFromKiller_Multicast(class AD1SurvivorBase* Killer);
+	void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
 
 	// 생존자 드랍 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -96,6 +93,8 @@ public:
 	void Multicast_UpdateHealingProgress(float NewProgress);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_UpdateCrawlBleedOut(float NewProgress);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_UpdateHookBleedOut(float NewProgress);
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelfRecovering(bool bNewState);
 
@@ -116,12 +115,6 @@ public:
 	// 레플리케이션
 	UFUNCTION()
 	void OnRep_SurvivorSet();
-
-	void ChangeMeshTransform(FVector NewLocation, FRotator NewRotation);
-	UFUNCTION()
-	void OnRep_UpdateMeshTransform();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateMeshTransform(FVector NewLocation, FRotator NewRotation);
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -139,9 +132,31 @@ public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void StartOnHooked(class AD1Hook* Hook);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_AttachToHook(class AD1Hook* Hook);
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void StartEscapeAttempt();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void CancelEscapeAttempt();
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHookSkillCheckSuccess();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnHookSkillCheckFail();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void IncreaseEscapeGauge();
+	UFUNCTION(Server, Reliable)
+	void Server_StartEscapeAttempt();
+	UFUNCTION(Server, Reliable)
+	void Server_CancelEscapeAttempt();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void AttemptEscape();
+	UFUNCTION(Server, Reliable)
+	void Server_AttemptEscape();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void OnEscapeSuccess();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnRescued();
@@ -150,11 +165,12 @@ protected:
 	void Die();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void DieFromBleedOut();
+	UFUNCTION(BlueprintCallable, Category = "Survivor")
+	void DieFromEntity();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void RemoveFromGame();
 
-	void ApplyHookDamage();
 
 	// [[[[[[PROPERTY]]]]]]
 public:
@@ -168,15 +184,11 @@ public:
 	TObjectPtr<class UAnimMontage> HitMontage; // 히트 몽타주
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
-	TObjectPtr<class UAnimMontage> PickUpMontage; // 픽업 몽타주
+	TObjectPtr<class UAnimMontage> RescueMontage; // 구출 몽타주
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> EscapeMontage; // 탈출 몽타주
 protected:
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
-	FVector MeshLocation;
-
-	UPROPERTY(ReplicatedUsing = OnRep_UpdateMeshTransform)
-	FRotator MeshRotation;
-
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;
@@ -262,16 +274,30 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	int HookedCount = 0;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float HookBleedOutRate = 100.f / 120.f; // 갈고리 걸렸을 때 출혈 속도
+
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-	// 갈고리 데미지 타이머
-	FTimerHandle HookDamageTimer;
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsHookSkillCheckEnable = false;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsHookSkillCheckFail = false;
+
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	float EscapeGauge = 0.f;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
+	float MaxEscapeGauge = 100.0f;
+
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 	// 사망 처리 타이머
 	FTimerHandle DeathRemoveTimer;
-
+	// 갈고리 탈출 게이지
+	FTimerHandle EscapeGaugeTimer;
 protected: // 탈출구
 	// 탈출구 열고 있는지
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
@@ -307,6 +333,7 @@ public:
 	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
 	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
 	void SetPrevReparing(bool state) { bPrevRepairing = state; }
+	float GetHookHealth() { return HookHealth; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
 	void SetInteractionPosition(EGeneratorInteractionPosition NewPosition) { InteractionPosition = NewPosition; };

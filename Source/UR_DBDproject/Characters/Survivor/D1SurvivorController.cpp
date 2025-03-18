@@ -28,8 +28,6 @@ void AD1SurvivorController::BeginPlay()
 {
 	Super::BeginPlay();
 
-	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter()); // 컨트롤러가 새로운 캐릭터를 제어할 때 갱신
-
 	if (const UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("InputData"))
 	{
 		if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(GetLocalPlayer()))
@@ -46,6 +44,8 @@ void AD1SurvivorController::BeginPlay()
 void AD1SurvivorController::OnPossess(APawn* InPawn)
 {
 	Super::OnPossess(InPawn);
+
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter()); // 컨트롤러가 새로운 캐릭터를 제어할 때 갱신
 	if (D1Survivor.IsValid())
 	{
 		D1Survivor.Get()->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
@@ -98,7 +98,7 @@ void AD1SurvivorController::SetupInputComponent()
 
 void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 {
-	//D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
 	if (!D1Survivor.IsValid())	return;
 	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) &&
 		!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && 
@@ -139,6 +139,8 @@ void AD1SurvivorController::Input_Look(const FInputActionValue& InputValue)
 
 void AD1SurvivorController::Input_StartRun()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
 	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && !(D1Survivor->GetSurvivorState() == ESurvivorState::Healthy))
 	{
@@ -156,6 +158,8 @@ void AD1SurvivorController::Input_StartRun()
 
 void AD1SurvivorController::Input_StopRun()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetSurvivoreSet()) return;
 
 	if (IsLocalController()) // 로컬에서 즉시 실행
@@ -169,6 +173,8 @@ void AD1SurvivorController::Input_StopRun()
 
 void AD1SurvivorController::Input_StartCrouch()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid()) return;
 	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && !(D1Survivor->GetSurvivorState() == ESurvivorState::Healthy))
 	{
@@ -191,6 +197,8 @@ void AD1SurvivorController::Input_StartCrouch()
 
 void AD1SurvivorController::Input_StopCrouch()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid()) return;
 
 	SetCreatureState(ECreatureState::None);
@@ -205,6 +213,8 @@ void AD1SurvivorController::Input_StopCrouch()
 
 void AD1SurvivorController::Input_StartInteract_LeftClick()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid()) return;
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
@@ -221,8 +231,15 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		return;
 	}
 
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Hooked
+		&& D1Survivor->GetHookHealth() > 50.f)
+	{
+		D1Survivor->StartEscapeAttempt();
+		return;
+	}
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured || D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
 	{
+		// 발전기
 		if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 		{
 			if (IsLocalController())
@@ -235,6 +252,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 			return;
 		}
 
+		// 치유
 		if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 		{
 			if (IsLocalController())
@@ -250,6 +268,8 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 
 void AD1SurvivorController::Input_StopInteract_LeftClick()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid()) return;
 
 
@@ -265,6 +285,12 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 		}
 		return;
 	}
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Hooked
+		&& D1Survivor->GetHookHealth() > 50.f)
+	{
+		D1Survivor->CancelEscapeAttempt();
+	}
+
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		if (IsLocalController()) // 로컬에서 즉시 실행
@@ -290,13 +316,15 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 void AD1SurvivorController::Input_StartInteract_Space()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
 	if (!D1Survivor.IsValid()) return;
 
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured || D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
 	{
-
+		// 창 파쿠르
 		if (AD1VaultObject* VaultTarget = Cast<AD1VaultObject>(D1Survivor.Get()->GetVaultTarget()))
 		{
 			// 현재 속도 가져오기
@@ -311,7 +339,7 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 			return;
 		}
-
+		// 판자
 		if (AD1Pallet* Pallet = Cast<AD1Pallet>(D1Survivor.Get()->GetCurrentPallet()))
 		{
 			if (Pallet->GetCurrentState() == EPalletState::Up)
@@ -329,10 +357,24 @@ void AD1SurvivorController::Input_StartInteract_Space()
 			}
 			return;
 		}
-
+		// 탈출구
 		if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 		{
 			StartExitOpening_Local();
+
+			return;
+		}
+		// 갈고리 구출
+		if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
+		{
+			if (TargetSurvivor->GetSurvivorState() != ESurvivorState::Hooked)
+				return;
+
+			if (IsLocalController())
+			{
+				StartRescue_Local(TargetSurvivor);
+			}
+			Server_StartRescue(TargetSurvivor);
 
 			return;
 		}
@@ -341,23 +383,42 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 void AD1SurvivorController::Input_StopInteract_Space()
 {
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
+	// 탈출구
 	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(D1Survivor.Get()->GetDetectedObject()))
 	{
 		StopExitOpening_Local();
 
 		return;
 	}
+
+	//// 갈고리 구출
+	//if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
+	//{
+	//	if (TargetSurvivor->GetSurvivorState() != ESurvivorState::Hooked)
+	//		return;
+
+	//	if (IsLocalController())
+	//	{
+	//		StopRescue_Local(TargetSurvivor);
+	//	}
+	//	Server_StopRescue(TargetSurvivor);
+
+	//	return;
+	//}
 }
 
 void AD1SurvivorController::Input_StartTestInput_1()
 {
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
-	D1Survivor->TakePickUpFromKiller(D1Survivor.Get());
+	SetControlRotation(FRotator(-90.f, 180.f, 0));
 }
 
 void AD1SurvivorController::StartRun_Local()
 {
+
 	if (!D1Survivor.IsValid()) return;
 
 	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Healthy)
@@ -740,6 +801,48 @@ void AD1SurvivorController::VaultPallet()
 
 	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
 	
+}
+
+void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
+{
+	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
+
+	if (TargetSurvivor->GetSurvivorState() != ESurvivorState::Hooked)	return;
+	
+	// 구출자 위치 조정
+	FVector RescueLocation = TargetSurvivor->GetActorLocation() + FVector(60.f, 0.f, 0.f);
+	D1Survivor->SetActorLocation(RescueLocation);
+	// 구출자 방향 조정
+	FRotator LookAtRotation = (TargetSurvivor->GetActorLocation() - D1Survivor->GetActorLocation()).Rotation();
+	LookAtRotation.Pitch = 0.0f;
+	LookAtRotation.Roll = 0.0f;
+	D1Survivor->SetActorRotation(LookAtRotation);
+	
+	D1Survivor->PlayMontage(D1Survivor->RescueMontage, "Rescue");
+	TargetSurvivor->PlayMontage(D1Survivor->RescueMontage, "BeingRescued");
+}
+
+void AD1SurvivorController::StopRescue_Local(AD1SurvivorBase* TargetSurvivor)
+{
+}
+
+void AD1SurvivorController::Server_StartRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	if (HasAuthority())
+		Multicast_StartRescue(TargetSurvivor);
+}
+
+void AD1SurvivorController::Server_StopRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+}
+
+void AD1SurvivorController::Multicast_StartRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
+	StartRescue_Local(TargetSurvivor);
+}
+
+void AD1SurvivorController::Multicast_StopRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+{
 }
 
 void AD1SurvivorController::EnableVaultAfterDrop()

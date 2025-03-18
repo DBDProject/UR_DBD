@@ -110,6 +110,19 @@ protected: // Pallet
 	void DropPallet();
 	UFUNCTION()
 	void VaultPallet();
+
+protected: // Rescue
+	void StartRescue_Local(AD1SurvivorBase* TargetSurvivor);
+	void StopRescue_Local(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(Server, Reliable)
+	void Server_StartRescue(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(Server, Reliable)
+	void Server_StopRescue(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartRescue(AD1SurvivorBase* TargetSurvivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopRescue(AD1SurvivorBase* TargetSurvivor);
+
 public:
 	UFUNCTION()
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
