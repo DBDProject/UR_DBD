@@ -81,7 +81,7 @@ void AD1SurvivorBase::BeginPlay()
 	CurrentState = ESurvivorState::Healthy;
 
 	// TEST
-	CurrentState = ESurvivorState::Crawl;
+	//CurrentState = ESurvivorState::Crawl;
 	//HealingProgress = 90.f;
 	
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
@@ -341,6 +341,12 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 
 	OnHooked();
 }
+
+void AD1SurvivorBase::OnRep_ChangeState()
+{
+	BP_OnHealthChanged();
+}
+
 
 void AD1SurvivorBase::OnHooked()
 {
