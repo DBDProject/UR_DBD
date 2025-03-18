@@ -418,6 +418,12 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	}
 }
 
+void AD1SurvivorBase::OnRep_ChangeState()
+{
+	BP_OnHealthChanged();
+}
+
+
 void AD1SurvivorBase::OnHooked()
 {
 	HookedCount++;
