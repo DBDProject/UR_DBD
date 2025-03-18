@@ -14,6 +14,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAsyncLoadMapStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnAsyncLoadMapEnd);
 
+
 UCLASS()
 class UR_DBDPROJECT_API AD1NetGameMode : public AGameModeBase
 {
@@ -26,6 +27,7 @@ private:
 	FString m_asyncLoadMapName;
 
 	bool bIsAsyncLoading = false;
+	bool bIsConnecting = false;
 
 protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
