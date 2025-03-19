@@ -142,6 +142,9 @@ public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StartEntityEvent(class AD1SurvivorBase* Player);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopEntityEvent();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StartEntityReaction();
 
@@ -183,6 +186,11 @@ protected:
 	void DieFromBleedOut();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void DieFromEntity();
+	void DieFromEntity_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_DieFromEntity();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_DieFromEntity();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void RemoveFromGame();
@@ -296,6 +304,9 @@ protected: // 갈고리
 	// 걸려있는 갈고리
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Hook> CurrentHook;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsCarryHook = false;
 
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	int HookedCount = 0;

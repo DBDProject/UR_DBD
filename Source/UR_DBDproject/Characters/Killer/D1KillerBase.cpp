@@ -166,8 +166,10 @@ void AD1KillerBase::BeginPlay()
 	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
-	if (Camera) Camera->Activate();
+	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
+	if (Camera) Camera->Deactivate();
+	//if (Camera) Camera->Activate();
 
 	if (InteractionBox)
 	{
