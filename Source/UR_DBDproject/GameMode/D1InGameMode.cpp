@@ -202,11 +202,10 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 	{
 		if (GetSurvivorInfo(NewPlayer->GetPlayerNetworkAddress(), playerInfo))
 		{
-			FServerSurvivorInfo NewSurvivorInfo;
-			NewSurvivorInfo.playerController = NewPlayer;
+			FSurvivorInfo NewSurvivorInfo;
 			NewSurvivorInfo.characterType = playerInfo.characterType;
 			NewSurvivorInfo.survivorState = ESurvivorState::Healthy;
-			gameState->AddSurvivorInfo(NewSurvivorInfo);
+			gameState->AddSurvivorInfo(NewPlayer, NewSurvivorInfo);
 			UE_LOG(LogTemp, Warning, TEXT("생존자 플레이어 추가!"));
 		}
 	}
@@ -218,10 +217,10 @@ void AD1InGameMode::Logout(AController* Exiting)
 {
 	AD1GameState* gameState = GetGameState<AD1GameState>();
 
-	if (IsValid(gameState))
-	{
-		gameState->Server_SetSurvivorState(Cast<APlayerController>(Exiting), ESurvivorState::Logout);
-	}
+	//if (IsValid(gameState))
+	//{
+	//	gameState->Server_SetSurvivorState(Cast<APlayerController>(Exiting), ESurvivorState::Logout);
+	//}
 
 	Super::Logout(Exiting);
 }

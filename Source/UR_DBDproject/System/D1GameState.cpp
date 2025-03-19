@@ -24,6 +24,7 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
+	DOREPLIFETIME(AD1GameState, SurvivorInfos);
 }
 
 void AD1GameState::HandleMatchHasStarted()
@@ -193,7 +194,6 @@ void AD1GameState::OnInputUnlockTimer()
 		return;
 
 	Multi_SetInputLock(false);
-	Multi_UpdateSurvivorStateUI(m_survivorInfos);
 }
 
 void AD1GameState::Multi_SetInputLock_Implementation(bool bIsLock)
@@ -226,16 +226,30 @@ void AD1GameState::OnRep_GeneratorCompleted()
 	OnGeneratorCompleted.Broadcast();
 }
 
-void AD1GameState::Multi_UpdateSurvivorStateUI_Implementation(const TArray<FServerSurvivorInfo>& SurvivorInfos)
+//void AD1GameState::Multi_UpdateSurvivorStateUI_Implementation(const FSurvivorInfo& survivorInfo,
+//	int32 playerIdx)
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("생존자 상태 업데이트! : %d %d"), survivorInfo.survivorState, playerIdx);
+//	OnSurvivorStateUpdated.Broadcast(survivorInfo, playerIdx);
+//}
+
+void AD1GameState::AddSurvivorInfo(APlayerController* Key, const FSurvivorInfo& SurvivorInfo)
 {
-	for (const FServerSurvivorInfo& survivorInfo : SurvivorInfos)
+	SurvivorIdxKey.Add(Key);
+	SurvivorInfos.Add(SurvivorInfo);
+}
+
+int32 AD1GameState::GetSurvivorIndex(APlayerController* Key)
+{
+	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
 	{
-		if (survivorInfo.playerController)
+		if (SurvivorIdxKey[i] == Key)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("생존자 상태 업데이트! : %d"), survivorInfo.survivorState);
+			return i;
 		}
 	}
-	OnSurvivorStateUpdated.Broadcast(SurvivorInfos);
+
+	return -1;
 }
 
 void AD1GameState::UpdateGeneratorState()
@@ -269,29 +283,24 @@ void AD1GameState::UpdateGeneratorState()
 	}
 }
 
-void AD1GameState::AddSurvivorInfo(const FServerSurvivorInfo& survivorInfo)
-{
-	m_survivorInfos.Add(survivorInfo);
-}
-
-void AD1GameState::Server_SetSurvivorState_Implementation(APlayerController* PlayerController, ESurvivorState newState)
-{
-	if (!PlayerController)
-		return;
-
-	for (auto& survivorInfo : m_survivorInfos)
-	{
-		if (survivorInfo.playerController == PlayerController)
-		{
-			survivorInfo.survivorState = newState;
-
-			if (newState == ESurvivorState::Logout)
-				survivorInfo.playerController = nullptr;
-
-			break;
-		}
-	}
-
-	Multi_UpdateSurvivorStateUI(m_survivorInfos);
-}
+//void AD1GameState::Server_SetSurvivorState_Implementation(APlayerController* PlayerController, ESurvivorState NewState)
+//{
+//	if (!PlayerController)
+//		return;
+//
+//	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
+//	{
+//		if (SurvivorIdxKey[i] == PlayerController)
+//		{
+//			SurvivorInfos[i].survivorState = NewState;
+//
+//			if (NewState == ESurvivorState::Logout)
+//				SurvivorIdxKey[i] = nullptr;
+//
+//			Multi_UpdateSurvivorStateUI(SurvivorInfos[i], i);
+//			break;
+//		}
+//	}
+//
+//}
 

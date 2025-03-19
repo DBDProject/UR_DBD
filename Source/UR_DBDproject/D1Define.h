@@ -121,20 +121,17 @@ struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 
 
 // 플레이어 인덱스를 관리하기 위한 구조체
 USTRUCT(BlueprintType)
-struct FServerSurvivorInfo
+struct FSurvivorInfo
 {
 	GENERATED_BODY()
 
-	UPROPERTY()
-	class APlayerController* playerController;
-
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	ECharacterType characterType;
 
-	UPROPERTY()
+	UPROPERTY(BlueprintReadWrite)
 	ESurvivorState survivorState;
 
-	FServerSurvivorInfo() : playerController(nullptr), characterType(ECharacterType::NONE), survivorState(ESurvivorState::Healthy) {}
+	FSurvivorInfo() : characterType(ECharacterType::NONE), survivorState(ESurvivorState::Healthy) {}
 };
 
 USTRUCT(BlueprintType)

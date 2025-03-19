@@ -181,12 +181,6 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	{
 		UpdateHookBleedOut(DeltaTime);
 	}
-
-	AD1GameState* GameState = GetWorld()->GetGameState<AD1GameState>();
-	if (GameState)
-	{
-		GameState->Server_SetSurvivorState(Cast<APlayerController>(GetController()), CurrentState);
-	}
 }
 
 // 웅크릴 때 카메라 보간

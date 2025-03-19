@@ -12,11 +12,11 @@
  *
  */
 
-DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSurvivorStateUpdated, TArray<FServerSurvivorInfo>, SurvivorInfo);
+//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSurvivorStateUpdated, FSurvivorInfo, survivorInfo, int32, playerIdx);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1GameState : public AGameState
@@ -45,7 +45,10 @@ private:
 	void OnRep_GeneratorCompleted();
 
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_UpdateSurvivorStateUI(const TArray<FServerSurvivorInfo>& SurvivorInfos);
+	void Multi_SetInputLock(bool bIsLock);
+
+	//UFUNCTION(NetMulticast, Reliable)
+	//void Multi_UpdateSurvivorStateUI(const FSurvivorInfo& SurvivorInfo, int32 PlayerIdx);
 
 protected:
 	virtual void BeginPlay() override;
@@ -58,18 +61,15 @@ public:
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
 
-	void AddSurvivorInfo(const FServerSurvivorInfo& survivorInfo);
+	void AddSurvivorInfo(APlayerController* Key, const FSurvivorInfo& SurvivorInfo);
 
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_SetInputLock(bool bIsLock);
-
-	UFUNCTION(Server, Reliable)
-	void Server_SetSurvivorState(APlayerController* PlayerController, ESurvivorState newState);
-
+	UFUNCTION(BlueprintCallable, Category = "DBDListen")
+	int32 GetSurvivorIndex(APlayerController* Key);
+	//UFUNCTION(Server, Reliable)
+	//void Server_SetSurvivorState(APlayerController* PlayerController, ESurvivorState NewState);
 
 private:
 	FTimerHandle InputLockTimer;
-	TArray<FServerSurvivorInfo> m_survivorInfos;
 
 protected:
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
@@ -85,8 +85,8 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnInputUnlock OnInputUnlock;
 
-	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
-	FOnSurvivorStateUpdated OnSurvivorStateUpdated;
+	//UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	//FOnSurvivorStateUpdated OnSurvivorStateUpdated;
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, Category = "DBDListen")
@@ -95,6 +95,13 @@ protected:
 	// 모든 발전기가 수리되었는지 여부
 	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted, BlueprintReadWrite, Category = "DBDListen")
 	bool bAllGeneratorsRepaired = false;
+
+	UPROPERTY()
+	TArray<APlayerController*> SurvivorIdxKey;
+
+	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
+	TArray<FSurvivorInfo> SurvivorInfos;
+
 
 	// 맵에 있는 탈출구들
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DBDListen")
@@ -111,7 +118,6 @@ protected:
 	// TODO : 남아있는 플레이어
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	int32 RemainingSurvivors;
-
 
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
