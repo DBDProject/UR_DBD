@@ -91,6 +91,7 @@ void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentState = ESurvivorState::Healthy;
+	PrevState = ESurvivorState::Healthy;
 
 	// TEST
 	//CurrentState = ESurvivorState::Crawl;
@@ -1050,4 +1051,6 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 void AD1SurvivorBase::OnRep_ChangeState()
 {
 	BP_OnHealthChanged();
+
+	PrevState = CurrentState;
 }

@@ -20,6 +20,7 @@ class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 public:
 	UPROPERTY(BlueprintAssignable, Category = "State")
 	FOnStateChange OnChangePlayerState;
+
 public:
 	AD1SurvivorBase();
 
@@ -247,6 +248,9 @@ protected:
 	// 생존자 상태 (건강, 부상, 기절)
 	UPROPERTY(ReplicatedUsing = OnRep_ChangeState, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESurvivorState CurrentState;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	ESurvivorState PrevState;
 
 protected: // 치료 기능
 	// 치료를 해주는 생존자
