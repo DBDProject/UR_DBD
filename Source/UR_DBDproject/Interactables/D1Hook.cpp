@@ -133,6 +133,47 @@ void AD1Hook::UpdateDissolve()
     }
 }
 
+void AD1Hook::StartDissolveDisappearEffect_Implementation()
+{
+    if (!EntityMesh) return;
+
+    if (!DynamicMat_Slot0)
+    {
+        DynamicMat_Slot0 = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);
+    }
+    if (!DynamicMat_Slot1)
+    {
+        DynamicMat_Slot1 = EntityMesh->CreateAndSetMaterialInstanceDynamic(1);
+    }
+
+    if (DynamicMat_Slot0 && DynamicMat_Slot1)
+    {
+        GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Hook::UpdateDissolveDisappear, 0.05f, true);
+        DissolveStartTime = GetWorld()->GetTimeSeconds();
+    }
+}
+
+void AD1Hook::UpdateDissolveDisappear()
+{
+    if (!DynamicMat_Slot0 || !DynamicMat_Slot1) return;
+
+    float ElapsedTime = GetWorld()->GetTimeSeconds() - DissolveStartTime;
+    CurrentDissolveValue = 1.0f - FMath::Clamp(ElapsedTime / 3.0f, 0.0f, 1.0f); // 거꾸로 줄어들도록 설정
+
+    if (DynamicMat_Slot0)
+        DynamicMat_Slot0->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (DynamicMat_Slot1)
+        DynamicMat_Slot1->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (CurrentDissolveValue <= 0.0f) // 완전히 사라지면 비활성화
+    {
+        GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
+        DeactivateEntity();
+        InteractingPlayer = nullptr;
+    }
+}
+
 void AD1Hook::PlayEntityMontage(FName Section)
 {
     if (!EntityMesh || !EntityMontage) return;

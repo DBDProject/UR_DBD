@@ -256,6 +256,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		// 치유
 		if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 		{
+			if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Injured || TargetSurvivor->GetSurvivorState() == ESurvivorState::Crawl)
 			if (IsLocalController())
 			{
 				StartHeal_Local(TargetSurvivor);
@@ -821,11 +822,6 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 	
 	D1Survivor->PlayMontage(D1Survivor->RescueMontage, "Rescue");
 	TargetSurvivor->PlayMontage(D1Survivor->RescueMontage, "BeingRescued");
-
-	if (AD1Hook* Hook = TargetSurvivor->GetCurrentHook())
-	{
-		Hook->DeactivateEntity();
-	}
 }
 
 void AD1SurvivorController::StopRescue_Local(AD1SurvivorBase* TargetSurvivor)

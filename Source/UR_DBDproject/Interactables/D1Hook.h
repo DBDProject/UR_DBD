@@ -27,9 +27,15 @@ public:
     UFUNCTION(NetMulticast, Reliable)
     void StartDissolveEffect(class AD1SurvivorBase* Player);
     void PlayEntityMontage(FName Section);
+
+    void RemoveFromGame();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void StartDissolveDisappearEffect(); // 엔티티가 점점 사라지는 함수
+
 private:
     void UpdateDissolve();
-
+    void UpdateDissolveDisappear();
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class USceneComponent> RootScene;
