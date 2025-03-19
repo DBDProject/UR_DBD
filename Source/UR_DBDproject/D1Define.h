@@ -32,6 +32,7 @@ enum class ESurvivorState : uint8
 	PickedUp	UMETA(DisplayName = "Picked Up"), // 킬러가 들고 있는 상태
 	Hooked		UMETA(DisplayName = "Hooked"),    // 갈고리 상태 (갈고리에 걸림)
 	Dying		UMETA(DisplayName = "Dying"),     // 사망 상태
+	Logout		UMETA(DisplayName = "Logout"),    // 로그아웃 상태
 };
 
 UENUM(BlueprintType)
@@ -116,6 +117,24 @@ struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 
 	bool isServer;
 
 	FServerInfo() : maxPlayer(0), isServer(false) {}
+};
+
+// 플레이어 인덱스를 관리하기 위한 구조체
+USTRUCT(BlueprintType)
+struct FServerSurvivorInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY()
+	class APlayerController* playerController;
+
+	UPROPERTY()
+	ECharacterType characterType;
+
+	UPROPERTY()
+	ESurvivorState survivorState;
+
+	FServerSurvivorInfo() : playerController(nullptr), characterType(ECharacterType::NONE), survivorState(ESurvivorState::Healthy) {}
 };
 
 USTRUCT(BlueprintType)

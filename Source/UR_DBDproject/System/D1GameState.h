@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/GameState.h"
 #include "GameMode/D1InGameMode.h"
+#include "D1Define.h"
 #include "D1GameState.generated.h"
 
 /**
@@ -13,7 +14,9 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnSurvivorStateUpdated, TArray<FServerSurvivorInfo>, SurvivorInfo);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1GameState : public AGameState
@@ -33,10 +36,6 @@ private:
 	// 일정 시간 이후 입력 잠금 해제
 	void OnInputUnlockTimer();
 
-	// 입력 잠금 상태 변경
-	UFUNCTION()
-	void OnRep_InputState();
-
 	// UI용 변수 바뀔 시 호출
 	UFUNCTION()
 	void OnRep_RepairedGenerators();
@@ -44,6 +43,9 @@ private:
 	// 발전기 수리 완료 시 호출
 	UFUNCTION()
 	void OnRep_GeneratorCompleted();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_UpdateSurvivorStateUI(const TArray<FServerSurvivorInfo>& SurvivorInfos);
 
 protected:
 	virtual void BeginPlay() override;
@@ -56,11 +58,18 @@ public:
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
 
+	void AddSurvivorInfo(const FServerSurvivorInfo& survivorInfo);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetInputLock(bool bIsLock);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetSurvivorState(APlayerController* PlayerController, ESurvivorState newState);
+
+
 private:
 	FTimerHandle InputLockTimer;
-
-	UPROPERTY(ReplicatedUsing = OnRep_InputState)
-	bool bIsInputState = false;
+	TArray<FServerSurvivorInfo> m_survivorInfos;
 
 protected:
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
@@ -72,6 +81,12 @@ protected:
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnGameStart OnGameStart;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnInputUnlock OnInputUnlock;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnSurvivorStateUpdated OnSurvivorStateUpdated;
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, Category = "DBDListen")
@@ -96,6 +111,7 @@ protected:
 	// TODO : 남아있는 플레이어
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	int32 RemainingSurvivors;
+
 
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")

@@ -9,6 +9,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/PlayerStart.h"
 #include "Kismet/GameplayStatics.h"
+#include "D1Define.h"
 #include "D1InGameMode.generated.h"
 
 /**
@@ -43,10 +44,11 @@ private:
 	FName GetEnumRowName(ECharacterType CharacterType);
 
 	void ReadyPlayer();
+	bool GetSurvivorInfo(const FString& playerIP, FPlayerInfo& outPlayerInfo);
+
 
 public:
 	AD1InGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
 
 	virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 	virtual void PreLogin(const FString& Options, const FString& Address, const FUniqueNetIdRepl& UniqueId,
