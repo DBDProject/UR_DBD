@@ -243,13 +243,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		// 발전기
 		if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 		{
-			if (IsLocalController())
-			{
-				StartRepair_Local();
-			}
-
-			Server_StartRepair();
-
+			D1Survivor->StartRepair();
 			return;
 		}
 
@@ -295,13 +289,7 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
-		if (IsLocalController()) // 로컬에서 즉시 실행
-		{
-			StopRepair_Local();
-		}
-
-		Server_StopRepair();
-
+		D1Survivor->StopRepair();
 		return;
 	}
 	if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
@@ -394,21 +382,6 @@ void AD1SurvivorController::Input_StopInteract_Space()
 
 		return;
 	}
-
-	//// 갈고리 구출
-	//if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
-	//{
-	//	if (TargetSurvivor->GetSurvivorState() != ESurvivorState::Hooked)
-	//		return;
-
-	//	if (IsLocalController())
-	//	{
-	//		StopRescue_Local(TargetSurvivor);
-	//	}
-	//	Server_StopRescue(TargetSurvivor);
-
-	//	return;
-	//}
 }
 
 void AD1SurvivorController::Input_StartTestInput_1()
@@ -416,6 +389,18 @@ void AD1SurvivorController::Input_StartTestInput_1()
 	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
 	SetControlRotation(FRotator(-90.f, 180.f, 0));
+}
+
+void AD1SurvivorController::RepairDelegate_Start()
+{
+	if (IsLocalPlayerController())
+		RepaireStartDelegate.Broadcast();
+}
+
+void AD1SurvivorController::RepairDelegate_End()
+{
+	if (IsLocalPlayerController())
+		RepaireEndDelegate.Broadcast();
 }
 
 void AD1SurvivorController::StartRun_Local()
@@ -477,77 +462,6 @@ void AD1SurvivorController::Multi_StopRun_Implementation()
 	if (IsLocalController()) return;
 
 	StopRun_Local();
-}
-
-
-void AD1SurvivorController::StartRepair_Local()
-{
-	if (!D1Survivor.IsValid() || !D1Survivor.Get()->GetCurrentGenerator()) return;
-
-	if (D1Survivor.Get()->GetCurrentGenerator()->GetIsRepairBlocked() ||
-		D1Survivor.Get()->GetCurrentGenerator()->GetRepairProgress() >= 100.f)
-		return;
-
-	D1Survivor.Get()->SetIsFail(false);
-
-	RepaireStartDelegate.Broadcast();
-
-	// 플레이어 위치 판별
-	EGeneratorInteractionPosition Position =
-		D1Survivor.Get()->GetCurrentGenerator()->FindInteractionPosition(D1Survivor.Get());
-
-	// 플레이어 위치 이동
-	MoveToGeneratorPosition(Position);
-
-	// 이동 입력 차단
-	D1Survivor.Get()->GetCharacterMovement()->DisableMovement();
-	D1Survivor.Get()->GetCharacterMovement()->StopMovementImmediately();
-
-	D1Survivor->SetInteractionPosition(Position);
-	D1Survivor.Get()->GetCurrentGenerator()->StartRepair(D1Survivor.Get(), Position);
-}
-
-void AD1SurvivorController::StopRepair_Local()
-{
-	if (!D1Survivor.IsValid() || !D1Survivor->GetCurrentGenerator()) return;
-
-	if (D1Survivor->GetCurrentGenerator()->GetIsFail()) return;
-
-	RepaireEndDelegate.Broadcast();
-	D1Survivor.Get()->SetPrevReparing(false);
-
-	D1Survivor->SetIsReparing(false);
-
-	// 이동 가능하게 변경
-	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	D1Survivor->GetCurrentGenerator()->StopRepair(D1Survivor.Get());
-}
-
-
-void AD1SurvivorController::Server_StartRepair_Implementation()
-{
-	if (HasAuthority())
-	{
-		Multi_StartRepair();
-	}
-}
-
-void AD1SurvivorController::Server_StopRepair_Implementation()
-{
-	if (HasAuthority())
-	{
-		Multi_StopRepair();
-	}
-}
-
-void AD1SurvivorController::Multi_StartRepair_Implementation()
-{
-	StartRepair_Local();
-}
-
-void AD1SurvivorController::Multi_StopRepair_Implementation()
-{
-	StopRepair_Local();
 }
 
 void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)

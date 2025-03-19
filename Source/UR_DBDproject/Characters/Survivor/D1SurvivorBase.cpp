@@ -276,6 +276,162 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	}
 }
 
+void AD1SurvivorBase::MoveToGeneratorPosition(EGeneratorInteractionPosition Position)
+{
+	if (!CurrentGenerator.IsValid()) return;
+
+	FVector GeneratorLocation = CurrentGenerator->GetActorLocation();
+	FVector ForwardVector = CurrentGenerator->GetActorForwardVector();
+	FVector RightVector = CurrentGenerator->GetActorRightVector();
+	FVector TargetLocation;
+
+	// 플레이어를 발전기 위치로 이동
+	switch (Position)
+	{
+	case EGeneratorInteractionPosition::Front:
+		TargetLocation = GeneratorLocation + ForwardVector * 100.f;
+		break;
+	case EGeneratorInteractionPosition::Back:
+		TargetLocation = GeneratorLocation - ForwardVector * 105.f;
+		break;
+	case EGeneratorInteractionPosition::Left:
+		TargetLocation = GeneratorLocation - RightVector * 80.f;
+		break;
+	case EGeneratorInteractionPosition::Right:
+		TargetLocation = GeneratorLocation + RightVector * 82.5f;
+		break;
+	default:
+		return;
+	}
+	TargetLocation.Z += 88.f;  // Z 값 증가
+
+	SetActorLocation(TargetLocation);
+
+	// 플레이어 방향을 발전기로 조정 (자동 회전)
+	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
+	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
+	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+	SetActorRotation(LookAtRotation);
+}
+
+void AD1SurvivorBase::StartRepair()
+{
+	if (GetController())
+	{
+		if (GetController()->IsLocalController())
+		{
+			StartRepair_Local();
+		}
+	}
+	Server_StartRepair();
+	
+}
+
+void AD1SurvivorBase::StopRepair()
+{
+	if (GetController())
+	{
+		if (GetController()->IsLocalController())
+		{
+			StartRepair_Local();
+		}
+	}
+	Server_StopRepair();
+}
+
+void AD1SurvivorBase::Server_RequestSkillCheckSuccess_Implementation(AD1Generator* Generator)
+{
+	if (Generator)
+	{
+		Generator->OnSkillCheckSuccess();
+	}
+}
+
+void AD1SurvivorBase::Server_RequestSkillCheckFail_Implementation(AD1Generator* Generator)
+{
+	if (Generator)
+	{
+		Generator->OnSkillCheckFail(this);
+	}
+}
+
+void AD1SurvivorBase::StartRepair_Local()
+{
+	if (!GetCurrentGenerator()) return;
+
+	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
+		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
+		return;
+
+	// 발전기 위치 판별
+	EGeneratorInteractionPosition Position = GetCurrentGenerator()->FindInteractionPosition(this);
+
+	// 이동
+	MoveToGeneratorPosition(Position);
+
+	// 이동 불가능 설정
+	GetCharacterMovement()->DisableMovement();
+	GetCharacterMovement()->StopMovementImmediately();
+
+	SetInteractionPosition(Position);
+	GetCurrentGenerator()->StartRepair(this, Position);
+
+	if (GetController())
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+			{
+				PC->RepairDelegate_Start();
+			}
+		}
+	}
+}
+
+void AD1SurvivorBase::StopRepair_Local()
+{
+	if (!GetCurrentGenerator()) return;
+
+	if (GetCurrentGenerator()->GetIsFail()) return;
+
+	SetPrevRepairing(false);
+	SetIsRepairing(false);
+
+	// 이동 가능 설정
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	GetCurrentGenerator()->StopRepair(this);
+
+	if (GetController())
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+			{
+				PC->RepairDelegate_End();
+			}
+		}
+	}
+}
+
+void AD1SurvivorBase::Server_StartRepair_Implementation()
+{
+	Multi_StartRepair();
+}
+
+void AD1SurvivorBase::Server_StopRepair_Implementation()
+{
+	Multi_StopRepair();
+}
+void AD1SurvivorBase::Multi_StartRepair_Implementation()
+{
+	StartRepair_Local();
+}
+
+void AD1SurvivorBase::Multi_StopRepair_Implementation()
+{
+	StopRepair_Local();
+}
+
 void AD1SurvivorBase::MoveToVaultStartPosition()
 {
 	if (!VaultTarget.IsValid())	return;
@@ -748,26 +904,22 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
 	}
-
-	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+	else if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("other survivor 감지"));
 		DetectedObject = OtherActor;
 	}
-
-	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
 		DetectedObject = OtherActor; 
 		CurrentPallet = Pallet;
 	}
-
-	if (OtherActor->ActorHasTag("Vaultable"))
+	else if (OtherActor->ActorHasTag("Vaultable"))
 	{
 		DetectedObject = OtherActor;
 		VaultTarget = Cast<AD1VaultObject>(OtherActor);
 	}
-
-	if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
+	else if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
 	{
 
 		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
@@ -784,13 +936,11 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 			Generator->StopRepair(this);
 			CurrentGenerator = nullptr;
 		}
-
-		if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
+		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
 		{
 			CurrentPallet = nullptr;
 		}
-
-		if (OtherActor->ActorHasTag("Vaultable"))
+		else if (OtherActor->ActorHasTag("Vaultable"))
 		{
 			VaultTarget = nullptr;
 		}

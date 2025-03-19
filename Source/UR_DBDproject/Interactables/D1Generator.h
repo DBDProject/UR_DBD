@@ -52,11 +52,6 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void StopRepair(class AD1SurvivorBase* Player);
 
-    UFUNCTION(Server, Reliable)
-    void Server_StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position);
-    UFUNCTION(Server, Reliable)
-    void Server_StopRepair(AD1SurvivorBase* Player);
-
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_SetRepairState(bool bRepairing, EGeneratorInteractionPosition Position);
     UFUNCTION(NetMulticast, Reliable)
@@ -67,14 +62,14 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Generator")
     void OnDamage();
 
-protected:
-    // 스킬 체크 대성공
+public: // 스킬 체크
     UFUNCTION(BlueprintCallable)
     void OnSkillCheckSuccess();
-
-    // 스킬 체크 실패
     UFUNCTION(BlueprintCallable)
     void OnSkillCheckFail(class AD1SurvivorBase* Player);
+protected:
+    UFUNCTION(NetMulticast, Reliable)
+    void Multi_OnSkillCheckFail(AD1SurvivorBase* Player);
 
     // 모든 플레이어의 수리를 중단
     UFUNCTION()
@@ -107,10 +102,6 @@ protected:
     // 발전기 메쉬
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
     TObjectPtr<class USkeletalMeshComponent> GeneratorMesh;
-
-    // 애님 인스턴스 캐싱
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator", meta = (AllowPrivateAccess = "true"))
-    TWeakObjectPtr<class UD1GeneratorAnim> CachedAnimInstance;
 
     // 발전기 수리중인지
     UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")

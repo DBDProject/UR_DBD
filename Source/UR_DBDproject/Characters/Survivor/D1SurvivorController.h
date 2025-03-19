@@ -8,7 +8,6 @@
 #include "D1SurvivorController.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepaireStart);
-
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FRepaireEnd);
 
 struct FInputActionValue;
@@ -50,7 +49,9 @@ private:
 	void Input_StopInteract_Space();
 	void Input_StartTestInput_1();
 
- 
+public: // Repair
+	void RepairDelegate_Start();
+	void RepairDelegate_End();
 protected: // Run
 	void StartRun_Local();
 	void StopRun_Local();
@@ -62,19 +63,6 @@ protected: // Run
 	void Multi_StartRun();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRun();
-
-
-protected: // Repair
-	void StartRepair_Local();
-	void StopRepair_Local();
-	UFUNCTION(Server, Reliable)
-	void Server_StartRepair();
-	UFUNCTION(Server, Reliable)
-	void Server_StopRepair();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_StartRepair();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_StopRepair();
 
 public: // Heal
 	void StartHeal_Local(AD1SurvivorBase* TargetSurvivor);

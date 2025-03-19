@@ -42,6 +42,7 @@ public:
 	void UpdateCrawlBleedOut(float DeltaTime);
 	void UpdateHookBleedOut(float DeltaTime);
 
+	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void MoveToVaultStartPosition();
 	void MoveToPalletStartPosition();
 	void MoveToExitGateStartPosition(class AD1ExitGate* Gate);
@@ -55,7 +56,26 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
+public: // 발전기 수리
+	UFUNCTION(BlueprintCallable)
+	void StartRepair();
+	UFUNCTION(BlueprintCallable)
+	void StopRepair();
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSkillCheckSuccess(class AD1Generator* Generator);
+	UFUNCTION(Server, Reliable)
+	void Server_RequestSkillCheckFail(class AD1Generator* Generator);
+protected:
+	void StartRepair_Local();
+	void StopRepair_Local();
+	UFUNCTION(Server, Reliable)
+	void Server_StartRepair();
+	UFUNCTION(Server, Reliable)
+	void Server_StopRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StartRepair();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_StopRepair();
 public:
 	// 생존자 데미지 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -359,14 +379,14 @@ public:
 	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
 
 	void SetIsFail(bool state) { bIsFail = state; }
-	void SetIsReparing(bool state) { bIsRepairing = state; }
 	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
 	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };
 	bool GetCanBeHealed() { return bCanBeHealed; }
 
 	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
 	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
-	void SetPrevReparing(bool state) { bPrevRepairing = state; }
+	void SetIsRepairing(bool state) { bIsRepairing = state; }
+	void SetPrevRepairing(bool state) { bPrevRepairing = state; }
 	float GetHookHealth() { return HookHealth; }
 
 	EGeneratorInteractionPosition GetInteractionPosition() { return InteractionPosition; }
