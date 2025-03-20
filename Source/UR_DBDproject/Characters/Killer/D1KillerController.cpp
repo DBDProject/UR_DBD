@@ -43,7 +43,7 @@ void AD1KillerController::BeginPlay()
 	{
 		TPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetCharacterMesh().Get()->GetAnimInstance());
 		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh().Get()->GetAnimInstance());
-		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
+		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetMesh()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
 		SetupInputComponent();
 	}
@@ -414,6 +414,7 @@ void AD1KillerController::HandleInteraction()
 
 	UE_LOG(LogTemp, Log, TEXT("✅ DetectedObject: %s, Class: %s"),
 		*DetectedObject->GetName(), *DetectedObject->GetClass()->GetName());
+
 
 	auto EnsureDraculaFormAndActivate = [&](FGameplayTag AbilityTag)
 		{

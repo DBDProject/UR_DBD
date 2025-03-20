@@ -43,7 +43,7 @@ void UD1GA_Wolf_Attack::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
 		return;
 	}
 	
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 	if (!WolfAnimInstance)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));
@@ -79,7 +79,7 @@ void UD1GA_Wolf_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupte
 	if (!Montage)
 		return;
 
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 
 	bAttackHit = Killer->GetbSurvivorHit();
 
@@ -110,7 +110,7 @@ void UD1GA_Wolf_Attack::OnInMontageEnded(UAnimMontage* Montage, bool bInterrupte
 
 void UD1GA_Wolf_Attack::Multicast_WolfAttack_Implementation(AD1KillerBase* Player, FName SectionName)
 {
-	UAnimInstance* WolfAnimInstance = Player->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_Attack.Get(), 1.0f);
 

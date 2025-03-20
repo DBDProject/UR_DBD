@@ -53,8 +53,8 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> FPVMesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
-	TObjectPtr<USkeletalMeshComponent> WolfMesh;
+	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
+	TObjectPtr<USkeletalMeshComponent> GetMesh();*/
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
@@ -165,7 +165,7 @@ public:
 
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
-	TObjectPtr<USkeletalMeshComponent> GetWolfMesh() const { return WolfMesh; }
+	//TObjectPtr<USkeletalMeshComponent> GetMesh() const { return GetMesh(); }
 	TObjectPtr<USkeletalMeshComponent> GetBatMesh() const { return BatMesh; }
 
 	TObjectPtr<UCameraComponent> GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
