@@ -51,7 +51,7 @@ void AD1GameState::HandleMatchHasStarted()
 
 	}
 
-	Multi_SetInputLock(true);
+	//Multi_SetInputLock(true);
 	OnGameStart.Broadcast();
 }
 
