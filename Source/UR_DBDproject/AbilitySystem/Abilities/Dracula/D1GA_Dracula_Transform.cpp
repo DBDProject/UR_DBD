@@ -161,6 +161,17 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			Killer->GetFPVMesh()->SetHiddenInGame(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(false);
 			Killer->GetBatMesh()->SetHiddenInGame(true);
+
+			Killer->GetCharacterMesh()->bPauseAnims = true;
+			Killer->GetFPVMesh()->bPauseAnims = true;
+			Killer->GetWolfMesh()->bPauseAnims = false;
+			Killer->GetBatMesh()->bPauseAnims = true;
+
+			Killer->GetCharacterMesh()->SetComponentTickEnabled(false);
+			Killer->GetFPVMesh()->SetComponentTickEnabled(false);
+			Killer->GetWolfMesh()->SetComponentTickEnabled(true);
+			Killer->GetBatMesh()->SetComponentTickEnabled(false);
+
 			Killer->SwitchCamera(EDraculaTransformationState::Wolf);
 
 			UE_LOG(LogTemp, Log, TEXT("🎬 Playing Wolf Transform Montage (OutDracula -> InWolf)"));
@@ -178,6 +189,17 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			Killer->GetFPVMesh()->SetHiddenInGame(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(false);
+
+			Killer->GetCharacterMesh()->bPauseAnims = true;
+			Killer->GetFPVMesh()->bPauseAnims = true;
+			Killer->GetWolfMesh()->bPauseAnims = true;
+			Killer->GetBatMesh()->bPauseAnims = false;
+
+			Killer->GetCharacterMesh()->SetComponentTickEnabled(false);
+			Killer->GetFPVMesh()->SetComponentTickEnabled(false);
+			Killer->GetWolfMesh()->SetComponentTickEnabled(false);
+			Killer->GetBatMesh()->SetComponentTickEnabled(true);
+
 			Killer->SwitchCamera(EDraculaTransformationState::Bat);
 
 			UE_LOG(LogTemp, Log, TEXT("🎬 Playing Bat Transform Montage (OutDracula -> InBat)"));
@@ -202,6 +224,17 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			Killer->GetFPVMesh()->SetOnlyOwnerSee(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(true);
+
+			Killer->GetCharacterMesh()->bPauseAnims = false;
+			Killer->GetFPVMesh()->bPauseAnims = false;
+			Killer->GetWolfMesh()->bPauseAnims = true;
+			Killer->GetBatMesh()->bPauseAnims = true;
+
+			Killer->GetCharacterMesh()->SetComponentTickEnabled(true);
+			Killer->GetFPVMesh()->SetComponentTickEnabled(true);
+			Killer->GetWolfMesh()->SetComponentTickEnabled(false);
+			Killer->GetBatMesh()->SetComponentTickEnabled(false);
+
 			Killer->SwitchCamera(EDraculaTransformationState::Dracula);
 
 			UE_LOG(LogTemp, Log, TEXT("🎬 Playing Dracula Transform Montage (OutWolf -> InDracula)"));
@@ -219,6 +252,17 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			Killer->GetFPVMesh()->SetHiddenInGame(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(false);
+
+			Killer->GetCharacterMesh()->bPauseAnims = true;
+			Killer->GetFPVMesh()->bPauseAnims = true;
+			Killer->GetWolfMesh()->bPauseAnims = true;
+			Killer->GetBatMesh()->bPauseAnims = false;
+
+			Killer->GetCharacterMesh()->SetComponentTickEnabled(false);
+			Killer->GetFPVMesh()->SetComponentTickEnabled(false);
+			Killer->GetWolfMesh()->SetComponentTickEnabled(false);
+			Killer->GetBatMesh()->SetComponentTickEnabled(true);
+
 			Killer->SwitchCamera(EDraculaTransformationState::Bat);
 
 			UE_LOG(LogTemp, Log, TEXT("🎬 Playing Bat Transform Montage (OutWolf -> InBat)"));
@@ -243,6 +287,17 @@ void UD1GA_Dracula_Transform::OnOutMontageEnded(UAnimMontage* Montage, bool bInt
 			Killer->GetFPVMesh()->SetOnlyOwnerSee(true);
 			Killer->GetWolfMesh()->SetHiddenInGame(true);
 			Killer->GetBatMesh()->SetHiddenInGame(true);
+
+			Killer->GetCharacterMesh()->bPauseAnims = false;
+			Killer->GetFPVMesh()->bPauseAnims = false;
+			Killer->GetWolfMesh()->bPauseAnims = true;
+			Killer->GetBatMesh()->bPauseAnims = true;
+
+			Killer->GetCharacterMesh()->SetComponentTickEnabled(true);
+			Killer->GetFPVMesh()->SetComponentTickEnabled(true);
+			Killer->GetWolfMesh()->SetComponentTickEnabled(false);
+			Killer->GetBatMesh()->SetComponentTickEnabled(false);
+
 			Killer->SwitchCamera(EDraculaTransformationState::Dracula);
 
 			UE_LOG(LogTemp, Log, TEXT("🎬 Playing Dracula Transform Montage (OutBat -> InDracula)"));
@@ -431,6 +486,16 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	Player->GetFPVMesh()->SetHiddenInGame(bDraculaVisible);
 	Player->GetWolfMesh()->SetHiddenInGame(bWolfVisible);
 	Player->GetBatMesh()->SetHiddenInGame(bBatVisible);
+
+	Killer->GetCharacterMesh()->bPauseAnims = bDraculaVisible;
+	Killer->GetFPVMesh()->bPauseAnims = bDraculaVisible;
+	Killer->GetWolfMesh()->bPauseAnims = bWolfVisible;
+	Killer->GetBatMesh()->bPauseAnims = bBatVisible;
+
+	Killer->GetCharacterMesh()->SetComponentTickEnabled(!bDraculaVisible);
+	Killer->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
+	Killer->GetWolfMesh()->SetComponentTickEnabled(!bWolfVisible);
+	Killer->GetBatMesh()->SetComponentTickEnabled(!bWolfVisible);
 }
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)

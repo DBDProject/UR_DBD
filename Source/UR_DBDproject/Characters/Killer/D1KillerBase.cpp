@@ -18,7 +18,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Animation/D1PalletAnim.h"
+#include "SkeletalMeshRestoreState.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -91,7 +91,10 @@ AD1KillerBase::AD1KillerBase()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load BatMesh asset!"));
 	}
-
+	{
+		GetMesh()->SetSkeletalMesh(WolfMeshAsset.Object);
+	}
+	
 	GetCapsuleComponent()->InitCapsuleSize(35.0f, 125.0f);
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
@@ -164,6 +167,13 @@ AD1KillerBase::AD1KillerBase()
 	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	CharacterMesh->bEnableUpdateRateOptimizations = false;
+	FPVMesh->bEnableUpdateRateOptimizations = false;
+	WolfMesh->bEnableUpdateRateOptimizations = false;
+	BatMesh->bEnableUpdateRateOptimizations = false;
+
 }
 
 void AD1KillerBase::BeginPlay()
