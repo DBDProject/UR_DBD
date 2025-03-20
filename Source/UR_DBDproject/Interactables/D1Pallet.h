@@ -75,9 +75,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	TObjectPtr<USceneComponent> InteractionPoint_Center;
 
+
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
 	void SetCurrentState(EPalletState State) { CurrentState = State; }
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Pallet")
+	bool bIsFalling = false;
+
+	void StartDropping();
+	void OnDropAnimationFinished();
+	FTimerHandle DropTimerHandle;
 
 	UFUNCTION(Server, Reliable)
 	void Server_SetControlRotation(class AD1CharacterBase* Player, FRotator LookAtRotation);

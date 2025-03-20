@@ -17,6 +17,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1ExitGate.h"
+#include "Characters/Killer/D1KillerBase.h"
 #include "Net/UnrealNetwork.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
@@ -694,6 +695,7 @@ void AD1SurvivorController::DropPallet_Local()
 	{
 		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
 		Pallet->SetCurrentState(EPalletState::Down);
+		Pallet->StartDropping();
 
 		bCanVaultAfterDrop = false;
 		GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);

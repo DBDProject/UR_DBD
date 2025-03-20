@@ -69,6 +69,9 @@ void UD1GA_Dracula_Hook::ActivateAbility(
 	MoveToHookLocation();
 	CarriedSurvivor->OnHooked(Hook);
 
+	TPVAnimInstance->SetIsCarryingSurvivor(false);
+	FPVAnimInstance->SetIsCarryingSurvivor(false);
+
 	TPVAnimInstance->Montage_Play(TPV_HookSurvivor.Get());
 	FPVAnimInstance->Montage_Play(FPV_HookSurvivor.Get());
 

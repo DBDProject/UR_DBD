@@ -142,8 +142,19 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 void AD1Pallet::OnDestroy()
 {
 	Destroy();
-	PalletMesh->SetHiddenInGame(true);
+
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Destroyed"));
+}
+
+void AD1Pallet::StartDropping()
+{
+	bIsFalling = true;
+	GetWorld()->GetTimerManager().SetTimer(DropTimerHandle, this, &AD1Pallet::OnDropAnimationFinished, 1.88f, false);
+}
+
+void AD1Pallet::OnDropAnimationFinished()
+{
+	bIsFalling = false;
 }
 
 void AD1Pallet::Server_SetControlRotation_Implementation(AD1CharacterBase* Player, FRotator LookAtRotation)

@@ -66,6 +66,8 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 
 	//Survivor->TakePickUpFromKiller(Killer);
 	Killer->SetCarriedSurvivor(Survivor);
+	TPVAnimInstance->SetIsCarryingSurvivor(true);
+	FPVAnimInstance->SetIsCarryingSurvivor(true);
 
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);

@@ -123,12 +123,3 @@ struct FCharacterDataSet : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APlayerState> PlayerStateClass;
 };
-
-UENUM(BlueprintType)
-enum class EAbilityInputID : uint8
-{
-	None UMETA(DisplayName = "None"),
-	Input_Action_RightClick UMETA(DisplayName = "Confirm"),
-	Cancel UMETA(DisplayName = "Cancel"),
-	RightClick   UMETA(DisplayName = "K_IA_RightClick")
-};

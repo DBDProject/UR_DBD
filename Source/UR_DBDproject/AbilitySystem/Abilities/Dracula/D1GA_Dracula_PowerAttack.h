@@ -20,6 +20,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
 	TSubclassOf<UGameplayEffect> CooldownEffect;
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	TSubclassOf<UGameplayEffect> WolfCooldownEffect;
+
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Charge")
+	TSubclassOf<UGameplayEffect> ChargeSlowEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cast")
+	TSubclassOf<UGameplayEffect> CastSlowEffect;*/
+
 protected:
 	virtual bool CanActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -53,15 +62,27 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> Wolf_PowerAttack;
 
-	FTimerHandle ChargeTimerHandle;
-
-	float ChargingStartTime = 0.0f;
-	float ChargeDuration = 0.9f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	EDraculaTransformationState CurrentTransformState;
 
 private:
 	void FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void WolfInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void WolfSwingMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void CompleteCharge();
 
+	bool bAttackHit = false;
+	float ChargingStartTime = 0.0f;
+	float ChargeDuration = 0.9f;
+	float WolfChargeDuration = 0.85f;
+	FTimerHandle ChargeTimerHandle;
 public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfPowerAttack(AD1KillerBase* Player, FName SectionName);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfPowerAttackLoop(AD1KillerBase* Player, FName SectionName);
 };
