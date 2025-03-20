@@ -173,10 +173,8 @@ void AD1KillerBase::BeginPlay()
 	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
 	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 	if (Camera) Camera->Deactivate();
-	//if (Camera) Camera->Activate();
 
 	if (InteractionBox)
 	{
@@ -208,23 +206,7 @@ void AD1KillerBase::BeginPlay()
 		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
-	if (GetCapsuleComponent())
-	{
-		GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapDropPalletBegin);
-		GetCapsuleComponent()->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapDropPalletEnd);
-	}
-
 	CurrentTransformState = EDraculaTransformationState::Dracula;
-}
-
-void AD1KillerBase::Tick(float DeltaTime)
-{
-	Super::Tick(DeltaTime);
-
-	if (CurrentPallet != nullptr)
-	{
-
-	}
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -489,34 +471,6 @@ void AD1KillerBase::OnWolfPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Ove
 
 void AD1KillerBase::OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-}
-
-void AD1KillerBase::OnOverlapDropPalletBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
-	{
-		if(Pallet->bIsFalling == true)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("다운 중 팔레트 감지"));
-			if (CurrentTransformState == EDraculaTransformationState::Dracula)
-			{
-				ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Stun);
-			}
-			else if (CurrentTransformState == EDraculaTransformationState::Wolf)
-			{
-				ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Stun);
-			}
-		}
-	}
-}
-
-void AD1KillerBase::OnOverlapDropPalletEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-}
-
-void AD1KillerBase::CheckOverlapPallet()
-{
-	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapDropPalletBegin);
 }
 
 void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)

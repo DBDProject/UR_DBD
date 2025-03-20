@@ -286,15 +286,18 @@ void AD1KillerController::Input_RightClick(const FInputActionValue& InputValue)
 		return;
 	}
 
-	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula ||
-		D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
+	if (!D1Killer->GetCarriedSurvivor())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
-		if (D1Killer->GetAbilitySystemComponent())
+		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula ||
+			D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 		{
-			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(RightClickAction);
+			UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
+			if (D1Killer->GetAbilitySystemComponent())
+			{
+				D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(RightClickAction);
+			}
+			return;
 		}
-		return;
 	}
 }
 
@@ -303,7 +306,6 @@ void AD1KillerController::Input_RightClickRelease(const FInputActionValue& Input
 	if (!D1Killer)
 		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("🛑 Power Attack Stopped!"));
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PowerAttack Release"));
@@ -412,23 +414,52 @@ void AD1KillerController::HandleInteraction()
 
 	UE_LOG(LogTemp, Log, TEXT("✅ DetectedObject: %s, Class: %s"),
 		*DetectedObject->GetName(), *DetectedObject->GetClass()->GetName());
+
+	auto EnsureDraculaFormAndActivate = [&](FGameplayTag AbilityTag)
+		{
+			if (D1Killer->GetCurrentTransformState() != EDraculaTransformationState::Dracula)
+			{
+				// 변신 후 어빌리티 실행
+				D1Killer->SetPrevTransformState(D1Killer->GetCurrentTransformState());
+				D1Killer->SetCurrentTransformState(EDraculaTransformationState::Dracula);
+				D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Transform);
+
+				// 변신이 완료될 때까지 딜레이를 준 후 어빌리티 실행
+				FTimerHandle TransformTimerHandle;
+				GetWorld()->GetTimerManager().SetTimer(TransformTimerHandle, [this, AbilityTag]()
+					{
+						if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
+						{
+							D1Killer->ActivateAbility(AbilityTag);
+						}
+					}, 1.25f, false);
+			}
+			else
+			{
+				D1Killer->ActivateAbility(AbilityTag);
+			}
+		};
+
 	if (D1Killer->GetCurrentHook() && D1Killer->GetCarriedSurvivor() != nullptr)
 	{
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_HookSurvivor);
 	}
 	else if (D1Killer->GetDetectedCrawlSurvivor() && D1Killer->GetCarriedSurvivor() == nullptr)
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
+		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
+		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
 	}
-	else if (D1Killer->GetCurrentPallet())
+	else if (D1Killer->GetCurrentPallet() && !D1Killer->GetCarriedSurvivor())
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
+		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
+		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
 	}
-	else if (D1Killer->GetCurrentGenerator())
+	else if (D1Killer->GetCurrentGenerator() && !D1Killer->GetCarriedSurvivor())
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
+		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
+		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
 	}
-	else if (D1Killer->GetVaultTarget())
+	else if (D1Killer->GetVaultTarget() && !D1Killer->GetCarriedSurvivor())
 	{
 		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 		{
@@ -440,4 +471,3 @@ void AD1KillerController::HandleInteraction()
 		}
 	}
 }
-

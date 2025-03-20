@@ -5,7 +5,7 @@
 
 UD1KillerSet::UD1KillerSet()
 {
-	InitWalkSpeed(460.0f);
+	InitWalkSpeed(600.0f);
 	InitHellFireChargingWalkSpeed(380.0f);
 	InitHellFireAfterShootingWalkSpeed(380.0f);
 	InitWolfRunSpeed(480.0f);

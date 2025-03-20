@@ -6,6 +6,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Characters/D1CharacterBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "Characters/Killer/D1KillerBase.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -25,6 +27,13 @@ AD1Pallet::AD1Pallet()
 	InteractionBox->SetBoxExtent(FVector(100.f, 100.f, 150.f)); // 기존보다 살짝 크게
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger")); // 오버랩 전용
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
+
+	// 오버랩 감지 박스 (Interaction Box)
+	StunBox = CreateDefaultSubobject<UBoxComponent>(TEXT("StunBox"));
+	StunBox->SetupAttachment(RootComponent);
+	StunBox->SetBoxExtent(FVector(100.f, 100.f, 100.f)); // 기존보다 살짝 크게
+	StunBox->SetCollisionProfileName(TEXT("Trigger")); // 오버랩 전용
+	StunBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
 	PalletMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PalletMesh"));
 	PalletMesh->SetupAttachment(RootComponent);
@@ -46,6 +55,11 @@ void AD1Pallet::BeginPlay()
 {
 	Super::BeginPlay();
 
+	if (StunBox)
+	{
+		StunBox->OnComponentBeginOverlap.AddDynamic(this, &AD1Pallet::OnOverlapDropPalletBegin);
+		StunBox->OnComponentEndOverlap.AddDynamic(this, &AD1Pallet::OnOverlapDropPalletEnd);
+	}
 }
 
 void AD1Pallet::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -117,7 +131,7 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 	}
 	else if (type == ECharacterType::DRACULA)
 	{
-		TargetLocation.Z += 50.f;
+		TargetLocation.Z += 30.f;
 
 		Player->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
@@ -146,17 +160,44 @@ void AD1Pallet::OnDestroy()
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Destroyed"));
 }
 
-void AD1Pallet::StartDropping()
+void AD1Pallet::StartDropping(AD1SurvivorBase* Player)
 {
-	bIsFalling = true;
-	GetWorld()->GetTimerManager().SetTimer(DropTimerHandle, this, &AD1Pallet::OnDropAnimationFinished, 1.88f, false);
+	if (!DeteactedKiller.IsValid()) return;
+
+	if (!HasAuthority())
+	{
+		Player->Server_StartDropping_Request(this);
+		return;
+	}
+
+	if (DeteactedKiller->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
+	{
+		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Stun);
+	}
+	if (DeteactedKiller->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
+	{
+		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Stun);
+	}
 }
 
-void AD1Pallet::OnDropAnimationFinished()
+void AD1Pallet::OnOverlapDropPalletBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+	bool bFromSweep, const FHitResult& SweepResult)
 {
-	bIsFalling = false;
+	if (AD1KillerBase* Killer = Cast<AD1KillerBase>(OtherActor))
+	{
+		DeteactedKiller = Killer;
+	}
 }
 
+void AD1Pallet::OnOverlapDropPalletEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	if (AD1KillerBase* Killer = Cast<AD1KillerBase>(OtherActor))
+	{
+		DeteactedKiller = nullptr;
+	}
+}
 void AD1Pallet::Server_SetControlRotation_Implementation(AD1CharacterBase* Player, FRotator LookAtRotation)
 {
 	if (!Player) return;

@@ -73,7 +73,7 @@ void UD1GA_Dracula_PowerAttack::ActivateAbility(
 		TPVAnimInstance->Montage_JumpToSection(FName("In"), TPV_PowerAttack.Get());
 		FPVAnimInstance->Montage_JumpToSection(FName("In"), FPV_PowerAttack.Get());
 
-		Killer->GetCharacterMovement()->MaxWalkSpeed = 380.0f;
+		Killer->GetCharacterMovement()->MaxWalkSpeed = 450.0f;
 
 		ChargingStartTime = GetWorld()->GetTimeSeconds();
 
@@ -140,7 +140,7 @@ void UD1GA_Dracula_PowerAttack::OnInputReleased(float TimeHeld)
 		UE_LOG(LogTemp, Warning, TEXT("🚨 차징 성공"));
 		TPVAnimInstance->Montage_JumpToSection(FName("Out"), TPV_PowerAttack.Get());
 		FPVAnimInstance->Montage_JumpToSection(FName("Out"), FPV_PowerAttack.Get());
-		Killer->GetCharacterMovement()->MaxWalkSpeed = 200.0f;
+		Killer->GetCharacterMovement()->MaxWalkSpeed = 250.0f;
 		if (HasAuthority(&CurrentActivationInfo))
 		{
 			Multicast_DraculaPowerAttack(Killer, FName("Out"));
@@ -290,6 +290,6 @@ void UD1GA_Dracula_PowerAttack::EndAbility(
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 
-	Killer->GetCharacterMovement()->MaxWalkSpeed = 460.0f;
+	Killer->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
 	UE_LOG(LogTemp, Log, TEXT("✅ Power Attack GAS END "));
 }
