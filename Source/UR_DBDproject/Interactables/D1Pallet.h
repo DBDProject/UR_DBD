@@ -48,6 +48,19 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnDestroy();
 
+public:
+	// 팔레트가 왼쪽에 있을 때 상호작용 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	TObjectPtr<USceneComponent> InteractionPoint_Left;
+
+	// 팔레트가 오른쪽에 있을 때 상호작용 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	TObjectPtr<USceneComponent> InteractionPoint_Right;
+
+	// 중간 지점
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	TObjectPtr<USceneComponent> InteractionPoint_Center;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<USceneComponent> RootScene;
@@ -67,17 +80,8 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletState CurrentState;
 
-	// 팔레트가 왼쪽에 있을 때 상호작용 지점
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	TObjectPtr<USceneComponent> InteractionPoint_Left;
-
-	// 팔레트가 오른쪽에 있을 때 상호작용 지점
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	TObjectPtr<USceneComponent> InteractionPoint_Right;
-
-	// 중간 지점
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	TObjectPtr<USceneComponent> InteractionPoint_Center;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	EPalletLocation CurrentLocation;
 
 	// 킬러감지
 	UPROPERTY()
@@ -94,6 +98,9 @@ protected:
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
 	void SetCurrentState(EPalletState State) { CurrentState = State; }
+
+	EPalletLocation GetCurrentLocation() { return CurrentLocation; }
+	void SetCurrentLocation(EPalletLocation State) { CurrentLocation = State; }
 
 
 	UFUNCTION()

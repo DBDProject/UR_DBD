@@ -666,9 +666,7 @@ void AD1SurvivorController::DropPallet()
 	FName SectionName;
 	if (CurrentSpeed < 300.f) // 서있거나 걷고있을 때
 	{
-
 		SectionName = (PalletLocation == EPalletLocation::LT) ? "StandPullDownLT" : "StandPullDownRT";
-
 	}
 	else
 	{
@@ -678,6 +676,7 @@ void AD1SurvivorController::DropPallet()
 		//SectionName = (PalletLocation == EPalletLocation::LT) ? "WalkPullDownLT" : "WalkPullDownRT";
 	}
 	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
+	Pallet->StartDropping(D1Survivor.Get());
 
 	bCanVaultAfterDrop = false;
 	GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
