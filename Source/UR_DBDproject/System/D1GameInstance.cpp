@@ -38,7 +38,7 @@ void UD1GameInstance::SetServerInfoForDebug()
 
 	m_serverInfo.killerInfo.characterType = ECharacterType::DRACULA;
 	m_serverInfo.killerInfo.userIP = FString(TEXT("127.0.0.1"));
-	m_serverInfo.maxPlayer = 0;
+	m_serverInfo.maxPlayer = 2;
 }
 
 void UD1GameInstance::SetServerInfo(const FMatchInfo& matchInfo)

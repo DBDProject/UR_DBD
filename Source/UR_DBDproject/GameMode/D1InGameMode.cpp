@@ -72,7 +72,7 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	FRotator SpawnRotation = FRotator::ZeroRotator;
 
 	FActorSpawnParameters SpawnParams;
-
+	SpawnParams.bNoFail = true;
 	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
 		PawnClass,
 		SpawnLocation,
@@ -105,6 +105,26 @@ void AD1InGameMode::ReadyPlayer()
 
 }
 
+bool AD1InGameMode::GetSurvivorInfo(const FString& playerIP, FPlayerInfo& outPlayerInfo)
+{
+	UD1GameInstance* gameInstance = GetGameInstance<UD1GameInstance>();
+
+	if (IsValid(gameInstance))
+	{
+		for (FPlayerInfo& playerInfo : gameInstance->m_serverInfo.survivorInfos)
+		{
+			if (playerInfo.userIP == playerIP)
+			{
+				outPlayerInfo.characterType = playerInfo.characterType;
+				outPlayerInfo.userIP = playerInfo.userIP;
+				return true;
+			}
+		}
+	}
+
+	return false;
+}
+
 FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
 {
 	const UEnum* EnumPtr = StaticEnum<ECharacterType>();
@@ -129,7 +149,7 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 
 		uint8 player = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 
-		if (player >= 2)
+		if (player > 2)
 			READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 
 		UE_LOG(LogTemp, Warning, TEXT("현재 플레이어 매칭 수 : %d"), READY_PLAYER_COUNT);
@@ -174,11 +194,34 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
+	AD1GameState* gameState = GetGameState<AD1GameState>();
+
+	FPlayerInfo playerInfo;
+
+	if (IsValid(gameState))
+	{
+		if (GetSurvivorInfo(NewPlayer->GetPlayerNetworkAddress(), playerInfo))
+		{
+			FSurvivorInfo NewSurvivorInfo;
+			NewSurvivorInfo.characterType = playerInfo.characterType;
+			NewSurvivorInfo.survivorState = ESurvivorState::Healthy;
+			gameState->AddSurvivorInfo(NewPlayer, NewSurvivorInfo);
+			UE_LOG(LogTemp, Warning, TEXT("생존자 플레이어 추가!"));
+		}
+	}
+
 	ReadyPlayer();
 }
 
 void AD1InGameMode::Logout(AController* Exiting)
 {
+	AD1GameState* gameState = GetGameState<AD1GameState>();
+
+	//if (IsValid(gameState))
+	//{
+	//	gameState->Server_SetSurvivorState(Cast<APlayerController>(Exiting), ESurvivorState::Logout);
+	//}
+
 	Super::Logout(Exiting);
 }
 

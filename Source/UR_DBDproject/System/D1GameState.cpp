@@ -24,18 +24,17 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
-	DOREPLIFETIME(AD1GameState, bIsInputState);
+	DOREPLIFETIME(AD1GameState, SurvivorInfos);
 }
 
 void AD1GameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
 
+	AD1InGameMode* GameMode = Cast<AD1InGameMode>(AuthorityGameMode);
+	// 게임 시작 시 발전기 수리해야할 개수 초기화
 	if (HasAuthority())
 	{
-		AD1InGameMode* GameMode = Cast<AD1InGameMode>(AuthorityGameMode);
-		// 게임 시작 시 발전기 수리해야할 개수 초기화
-
 		RepairedGenerators = PlayerArray.Num();
 
 		if (GetNetMode() == NM_ListenServer)
@@ -45,16 +44,14 @@ void AD1GameState::HandleMatchHasStarted()
 		FindExitGates();
 		SetPlayerLocation();
 
+		UE_LOG(LogTemp, Warning, TEXT("==============게임 시작!============="));
+
 		GetWorld()->GetTimerManager().SetTimer(InputLockTimer, this,
 			&AD1GameState::OnInputUnlockTimer, GameMode->INPUT_UNLOCK_TIME, false);
 
-		bIsInputState = true;
-		if (GetNetMode() == NM_ListenServer)
-			OnRep_InputState();
-
-		UE_LOG(LogTemp, Warning, TEXT("==============게임 시작!============="));
 	}
 
+	Multi_SetInputLock(true);
 	OnGameStart.Broadcast();
 }
 
@@ -196,18 +193,15 @@ void AD1GameState::OnInputUnlockTimer()
 	if (!HasAuthority())
 		return;
 
-	bIsInputState = false;
-
-	if (GetNetMode() == NM_ListenServer)
-		OnRep_InputState();
+	Multi_SetInputLock(false);
 }
 
-void AD1GameState::OnRep_InputState()
+void AD1GameState::Multi_SetInputLock_Implementation(bool bIsLock)
 {
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC && PC->IsLocalController()) // 로컬 클라이언트만 적용
+	if (PC->IsLocalController()) // 로컬 클라이언트만 적용
 	{
-		if (bIsInputState)
+		if (bIsLock)
 		{
 			PC->DisableInput(PC);
 			UE_LOG(LogTemp, Warning, TEXT("클라이언트에서 입력 비활성화됨!"));
@@ -216,6 +210,7 @@ void AD1GameState::OnRep_InputState()
 		{
 			PC->EnableInput(PC);
 			UE_LOG(LogTemp, Warning, TEXT("클라이언트에서 입력 활성화됨!"));
+			OnInputUnlock.Broadcast();
 		}
 	}
 }
@@ -229,6 +224,32 @@ void AD1GameState::OnRep_RepairedGenerators()
 void AD1GameState::OnRep_GeneratorCompleted()
 {
 	OnGeneratorCompleted.Broadcast();
+}
+
+//void AD1GameState::Multi_UpdateSurvivorStateUI_Implementation(const FSurvivorInfo& survivorInfo,
+//	int32 playerIdx)
+//{
+//	UE_LOG(LogTemp, Warning, TEXT("생존자 상태 업데이트! : %d %d"), survivorInfo.survivorState, playerIdx);
+//	OnSurvivorStateUpdated.Broadcast(survivorInfo, playerIdx);
+//}
+
+void AD1GameState::AddSurvivorInfo(APlayerController* Key, const FSurvivorInfo& SurvivorInfo)
+{
+	SurvivorIdxKey.Add(Key);
+	SurvivorInfos.Add(SurvivorInfo);
+}
+
+int32 AD1GameState::GetSurvivorIndex(APlayerController* Key)
+{
+	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
+	{
+		if (SurvivorIdxKey[i] == Key)
+		{
+			return i;
+		}
+	}
+
+	return -1;
 }
 
 void AD1GameState::UpdateGeneratorState()
@@ -261,4 +282,25 @@ void AD1GameState::UpdateGeneratorState()
 		}
 	}
 }
+
+//void AD1GameState::Server_SetSurvivorState_Implementation(APlayerController* PlayerController, ESurvivorState NewState)
+//{
+//	if (!PlayerController)
+//		return;
+//
+//	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
+//	{
+//		if (SurvivorIdxKey[i] == PlayerController)
+//		{
+//			SurvivorInfos[i].survivorState = NewState;
+//
+//			if (NewState == ESurvivorState::Logout)
+//				SurvivorIdxKey[i] = nullptr;
+//
+//			Multi_UpdateSurvivorStateUI(SurvivorInfos[i], i);
+//			break;
+//		}
+//	}
+//
+//}
 
