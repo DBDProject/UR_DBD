@@ -76,7 +76,7 @@ void UD1GA_Wolf_VaultWindow::OnEndMontage(UAnimMontage* Montage, bool bInterrupt
 	EndAbility(FGameplayAbilitySpecHandle(), nullptr, FGameplayAbilityActivationInfo(), true, false);
 }
 
-void UD1GA_Wolf_VaultWindow::Multicast_WolfVaultWindow(AD1KillerBase* Player)
+void UD1GA_Wolf_VaultWindow::Multicast_WolfVaultWindow_Implementation(AD1KillerBase* Player)
 {
 	Player->PlayAnimMontage(Wolf_VaultWindow, 1.0f);
 }
