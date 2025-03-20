@@ -85,6 +85,12 @@ AD1SurvivorBase::AD1SurvivorBase()
 	{
 		SpiderMontage = SpiderMontageAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> GeneratorMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Meg_Generator_Fail.AM_Meg_Generator_Fail"));
+	if (GeneratorMontageAsset.Succeeded())
+	{
+		S_GeneratorMontage = GeneratorMontageAsset.Object;
+	}
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -334,7 +340,7 @@ void AD1SurvivorBase::StopRepair()
 	{
 		if (GetController()->IsLocalController())
 		{
-			StartRepair_Local();
+			StopRepair_Local();
 		}
 	}
 	Server_StopRepair();
@@ -393,15 +399,16 @@ void AD1SurvivorBase::StopRepair_Local()
 {
 	if (!GetCurrentGenerator()) return;
 
-	if (GetCurrentGenerator()->GetIsFail()) return;
-
 	SetPrevRepairing(false);
 	SetIsRepairing(false);
 
-	// 이동 가능 설정
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	GetCurrentGenerator()->StopRepair(this);
+	if (GetCurrentGenerator()->GetIsFail() == false)
+	{
+		// 이동 가능 설정
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
 
+	GetCurrentGenerator()->StopRepair(this);
 	if (GetController())
 	{
 		if (GetController()->IsLocalPlayerController())

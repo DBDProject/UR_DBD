@@ -87,6 +87,9 @@ protected:
     UFUNCTION()
     void DamagePerSeconds();
 
+public:
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+    TObjectPtr<class UAnimMontage> G_GeneratorMontage; // 발전기 몽타주
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class USceneComponent> RootScene;

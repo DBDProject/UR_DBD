@@ -241,6 +241,9 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> SpiderMontage; // 엔티티 몽타주
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> S_GeneratorMontage; // 발전기 몽타주
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))

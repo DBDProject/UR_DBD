@@ -37,6 +37,13 @@ AD1Generator::AD1Generator()
     // 발전기 메쉬
     GeneratorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GeneratorMesh"));
     GeneratorMesh->SetupAttachment(RootComponent);
+
+    // 발전기 몽타주
+    static ConstructorHelpers::FObjectFinder<UAnimMontage> GeneratorMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Generator_Fail.AM_Generator_Fail"));
+    if (GeneratorMontageAsset.Succeeded())
+    {
+        G_GeneratorMontage = GeneratorMontageAsset.Object;
+    }
 }
 
 // Called when the game starts or when spawned
@@ -257,25 +264,20 @@ void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player
 {
     if (!Player) return;
 
+    GeneratorMesh->GetAnimInstance()->Montage_Play(G_GeneratorMontage);
+    Player->PlayAnimMontage(Player->S_GeneratorMontage, 1.0f);
     bIsFail = true;
     bIsRepairBlocked = true;
     Player->SetIsFail(true);
-    Player->SetIsRepairing(false);
-    Player->SetPrevRepairing(false);
-    StopRepair(Player);
-
-    if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
-    {
-        PC->RepairDelegate_End();
-    }
+    Player->StopRepair();
 
     RepairProgress -= 5.0f;
     if (RepairProgress < 0.0f) RepairProgress = 0.0f;
 
 
-    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 2초간 수리 불가"));
+    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 3초간 수리 불가"));
 
-    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 2.0f, false);
+    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 3.0f, false);
 }
 
 void AD1Generator::StopRepairAll()
