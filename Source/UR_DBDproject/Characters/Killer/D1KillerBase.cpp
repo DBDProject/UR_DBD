@@ -36,7 +36,6 @@ AD1KillerBase::AD1KillerBase()
 		CharacterMesh->SetupAttachment(GetCapsuleComponent());
 		CharacterMesh->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 		//CharacterMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
-		CharacterMesh->SetHiddenInGame(true);
 	}
 	else
 	{
@@ -53,7 +52,6 @@ AD1KillerBase::AD1KillerBase()
 		FPVMesh->SetOnlyOwnerSee(true);
 		FPVMesh->SetupAttachment(CharacterMesh);
 		//FPVMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
-		FPVMesh->SetHiddenInGame(true);
 	}
 	else
 	{
@@ -102,6 +100,7 @@ AD1KillerBase::AD1KillerBase()
 		GetMesh()->SetupAttachment(GetCapsuleComponent());
 		GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
 		GetMesh()->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+		GetMesh()->SetHiddenInGame(true);
 	}
 	
 	GetCapsuleComponent()->InitCapsuleSize(35.0f, 125.0f);
@@ -190,10 +189,20 @@ void AD1KillerBase::BeginPlay()
 	Super::BeginPlay();
 
 	// 카메라 활성화
-	if (WolfCameraComponent) WolfCameraComponent->Activate();
+	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 	if (Camera) Camera->Deactivate();
+
+	GetCharacterMesh()->bPauseAnims = false;
+	GetFPVMesh()->bPauseAnims = false;
+	GetMesh()->bPauseAnims = true;
+	GetBatMesh()->bPauseAnims = true;
+
+	GetCharacterMesh()->SetComponentTickEnabled(true);
+	GetFPVMesh()->SetComponentTickEnabled(true);
+	GetMesh()->SetComponentTickEnabled(false);
+	GetBatMesh()->SetComponentTickEnabled(false);
 
 	if (InteractionBox)
 	{
@@ -225,7 +234,7 @@ void AD1KillerBase::BeginPlay()
 		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
-	CurrentTransformState = EDraculaTransformationState::Wolf;
+	CurrentTransformState = EDraculaTransformationState::Dracula;
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
