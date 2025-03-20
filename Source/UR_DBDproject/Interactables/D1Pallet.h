@@ -48,23 +48,6 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void OnDestroy();
 
-protected:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	TObjectPtr<USceneComponent> RootScene;
-
-	// 상호작용 범위 콜라이더
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
-	TObjectPtr<class UBoxComponent> InteractionBox;
-
-	// 메쉬
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
-	TObjectPtr<class USkeletalMeshComponent> PalletMesh;
-
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	EPalletState CurrentState;
-
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
-	EPalletLocation CurrentLocation;
 public:
 	// 팔레트가 왼쪽에 있을 때 상호작용 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
@@ -78,12 +61,51 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	TObjectPtr<USceneComponent> InteractionPoint_Center;
 
+protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<USceneComponent> RootScene;
+
+	// 상호작용 범위 콜라이더
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
+	TObjectPtr<class UBoxComponent> InteractionBox;
+
+	// 스턴 범위 콜라이더
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
+	TObjectPtr<class UBoxComponent> StunBox;
+
+	// 메쉬
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Pallet")
+	TObjectPtr<class USkeletalMeshComponent> PalletMesh;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	EPalletState CurrentState;
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
+	EPalletLocation CurrentLocation;
+
+	// 킬러감지
+	UPROPERTY()
+	TWeakObjectPtr<class AD1KillerBase> DeteactedKiller;
+
+	UFUNCTION()
+	void OnOverlapDropPalletBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+		bool bFromSweep, const FHitResult& SweepResult);
+
+	UFUNCTION()
+	void OnOverlapDropPalletEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 public:
 	EPalletState GetCurrentState() { return CurrentState; }
 	void SetCurrentState(EPalletState State) { CurrentState = State; }
 
 	EPalletLocation GetCurrentLocation() { return CurrentLocation; }
 	void SetCurrentLocation(EPalletLocation State) { CurrentLocation = State; }
+
+
+	UFUNCTION()
+	void StartDropping(class AD1SurvivorBase* Player);
+
 	UFUNCTION(Server, Reliable)
 	void Server_SetControlRotation(class AD1CharacterBase* Player, FRotator LookAtRotation);
 };

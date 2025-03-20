@@ -59,6 +59,9 @@ void UD1GA_Dracula_DropSurvivor::ActivateAbility(const FGameplayAbilitySpecHandl
 		Multicast_DropSurvivor(Killer);
 	}
 
+	TPVAnimInstance->SetIsCarryingSurvivor(false);
+	FPVAnimInstance->SetIsCarryingSurvivor(false);
+
 	TPVAnimInstance->Montage_Play(TPV_DropSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_DropSurvivor.Get(), 1.0f);
 
@@ -79,6 +82,9 @@ void UD1GA_Dracula_DropSurvivor::Multicast_DropSurvivor_Implementation(AD1Killer
 
 	UD1KillerBaseAnim* TPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetCharacterMesh().Get()->GetAnimInstance());
 	UD1KillerBaseAnim* FPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetFPVMesh().Get()->GetAnimInstance());
+
+	TPVAnimInstance->SetIsCarryingSurvivor(false);
+	FPVAnimInstance->SetIsCarryingSurvivor(false);
 
 	TPVAnimInstance->Montage_Play(TPV_DropSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_DropSurvivor.Get(), 1.0f);

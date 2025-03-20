@@ -76,6 +76,11 @@ protected:
 	void Multi_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
+
+public:	// 판자
+	UFUNCTION(Server, Reliable)
+	void Server_StartDropping_Request(class AD1Pallet* Pallet);
+
 public:
 	// 생존자 데미지 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")

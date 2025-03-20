@@ -949,6 +949,11 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 	}
 }
 
+void AD1SurvivorBase::Server_StartDropping_Request_Implementation(AD1Pallet* Pallet)
+{
+	Pallet->StartDropping(this);
+}
+
 void AD1SurvivorBase::TakeDamageFromKiller()
 {
 	switch (CurrentState)

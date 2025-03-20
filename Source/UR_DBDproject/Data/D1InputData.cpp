@@ -4,7 +4,7 @@
 #include "Data/D1InputData.h"
 #include "D1LogChannels.h"
 
-const UInputAction* UD1InputData::FindInputActionByTag(const FGameplayTag& InputTag) const
+UInputAction* UD1InputData::FindInputActionByTag(const FGameplayTag& InputTag) const
 {
 	for (const FD1InputAction& Action : InputActions)
 	{

@@ -7,7 +7,6 @@
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
-#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Attack.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Camera/CameraComponent.h"
@@ -19,6 +18,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "Animation/D1PalletAnim.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -136,7 +136,7 @@ AD1KillerBase::AD1KillerBase()
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
 	AttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollision"));
-	AttackCollision->SetupAttachment(CharacterMesh, TEXT("joint_RingERT_01")); // 오른손에 부착
+	AttackCollision->SetupAttachment(CharacterMesh);
 	AttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
 	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -156,6 +156,13 @@ AD1KillerBase::AD1KillerBase()
 	PowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
+	WolfPowerAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfPowerAttackCollision"));
+	WolfPowerAttackCollision->SetupAttachment(WolfMesh); // 메쉬에 부착
+	WolfPowerAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
+	WolfPowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	WolfPowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
+	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 }
 
@@ -166,10 +173,8 @@ void AD1KillerBase::BeginPlay()
 	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
 	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 	if (Camera) Camera->Deactivate();
-	//if (Camera) Camera->Activate();
 
 	if (InteractionBox)
 	{
@@ -193,6 +198,12 @@ void AD1KillerBase::BeginPlay()
 	{
 		PowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
 		PowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
+	}
+
+	if (WolfPowerAttackCollision)
+	{
+		WolfPowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
+		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
@@ -221,6 +232,11 @@ void AD1KillerBase::InitAbilitySystem()
 			GetCharacterMovement()->MaxWalkSpeed = KillerSet->GetWalkSpeed();
 		}
 	}
+}
+
+void AD1KillerBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+	Super::SetupPlayerInputComponent(PlayerInputComponent);
 }
 
 void AD1KillerBase::HandleGameplayEvent(FGameplayTag EventTag)
@@ -414,18 +430,46 @@ void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Overlap
 	if (!PowerAttackCollision->IsActive())
 		return;
 
+	if (bAttackSuccess)
+		return;
+
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Wolf Attack 적중: %s"), *OtherActor->GetName());
+		UE_LOG(LogTemp, Log, TEXT("Power Attack 적중: %s"), *OtherActor->GetName());
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
+			UE_LOG(LogTemp, Warning, TEXT("Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
 			Survivor->TakeDamageFromKiller();
+			bAttackSuccess = true;
 		}
 	}
 }
 
 void AD1KillerBase::OnPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+}
+
+void AD1KillerBase::OnWolfPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	if (!WolfPowerAttackCollision->IsActive())
+		return;
+
+	if (bAttackSuccess)
+		return;
+
+	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
+	{
+		UE_LOG(LogTemp, Log, TEXT("Wolf Power Attack 적중: %s"), *OtherActor->GetName());
+		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Wolf Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
+			Survivor->TakeDamageFromKiller();
+			bAttackSuccess = true;
+		}
+	}
+}
+
+void AD1KillerBase::OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 }
 

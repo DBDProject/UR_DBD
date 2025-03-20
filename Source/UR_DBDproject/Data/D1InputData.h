@@ -29,7 +29,7 @@ class UR_DBDPROJECT_API UD1InputData : public UDataAsset
 	GENERATED_BODY()
 
 public:
-	const UInputAction* FindInputActionByTag(const FGameplayTag& InputTag) const;
+	UInputAction* FindInputActionByTag(const FGameplayTag& InputTag) const;
 
 public:
 	UPROPERTY(EditDefaultsOnly)
