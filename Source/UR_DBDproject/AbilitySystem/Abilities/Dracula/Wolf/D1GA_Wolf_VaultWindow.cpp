@@ -11,7 +11,7 @@ UD1GA_Wolf_VaultWindow::UD1GA_Wolf_VaultWindow(const FObjectInitializer& ObjectI
 
 bool UD1GA_Wolf_VaultWindow::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
-	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
+ 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
 		return false;
 	}
@@ -73,7 +73,7 @@ void UD1GA_Wolf_VaultWindow::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 
 void UD1GA_Wolf_VaultWindow::OnEndMontage(UAnimMontage* Montage, bool bInterrupted)
 {
-	EndAbility(FGameplayAbilitySpecHandle(), nullptr, FGameplayAbilityActivationInfo(), true, false);
+	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
 void UD1GA_Wolf_VaultWindow::Multicast_WolfVaultWindow_Implementation(AD1KillerBase* Player)
