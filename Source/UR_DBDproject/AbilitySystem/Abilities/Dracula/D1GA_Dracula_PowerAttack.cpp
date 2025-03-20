@@ -98,7 +98,7 @@ void UD1GA_Dracula_PowerAttack::ActivateAbility(
 			return;
 		}
 
-		UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+		UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 		if (!WolfAnimInstance)
 		{
 			UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));
@@ -176,7 +176,7 @@ void UD1GA_Dracula_PowerAttack::Multicast_DraculaPowerAttack_Implementation(AD1K
 
 void UD1GA_Dracula_PowerAttack::Multicast_WolfPowerAttack_Implementation(AD1KillerBase* Player, FName SectionName)
 {
-	UAnimInstance* WolfAnimInstance = Player->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 
@@ -185,7 +185,7 @@ void UD1GA_Dracula_PowerAttack::Multicast_WolfPowerAttack_Implementation(AD1Kill
 
 void UD1GA_Dracula_PowerAttack::CompleteCharge()
 {
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 
@@ -201,7 +201,7 @@ void UD1GA_Dracula_PowerAttack::WolfSwingMontageEnded(UAnimMontage* Montage, boo
 	if (!Montage)
 		return;
 
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 
 	bAttackHit = Killer->GetbSurvivorHit();
 
@@ -258,7 +258,7 @@ void UD1GA_Dracula_PowerAttack::FinalMontageEnded(UAnimMontage* Montage, bool bI
 
 void UD1GA_Dracula_PowerAttack::WolfInMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 
@@ -274,7 +274,7 @@ void UD1GA_Dracula_PowerAttack::WolfInMontageEnded(UAnimMontage* Montage, bool b
 
 void UD1GA_Dracula_PowerAttack::Multicast_WolfPowerAttackLoop_Implementation(AD1KillerBase* Player, FName SectionName)
 {
-	UAnimInstance* WolfAnimInstance = Player->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 

@@ -42,7 +42,7 @@ void UD1GA_Wolf_Stun::ActivateAbility(
 		return;
 	}
 
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 	if (!WolfAnimInstance)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));

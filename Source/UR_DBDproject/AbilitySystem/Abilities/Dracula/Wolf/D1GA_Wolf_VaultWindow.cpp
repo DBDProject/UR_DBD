@@ -49,7 +49,7 @@ void UD1GA_Wolf_VaultWindow::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		return;
 	}
 
-	UAnimInstance* WolfAnimInstance = Killer->GetWolfMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 	if (!WolfAnimInstance)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));
@@ -57,8 +57,14 @@ void UD1GA_Wolf_VaultWindow::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 		return;
 	}
 
+	if (HasAuthority(&ActivationInfo))
+	{
+		Multicast_WolfVaultWindow(Killer);
+	}
+
 	Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);
-	WolfAnimInstance->Montage_Play(Wolf_VaultWindow.Get());
+	//WolfAnimInstance->Montage_Play(Wolf_VaultWindow.Get());
+	Killer->PlayAnimMontage(Wolf_VaultWindow, 1.0f);
 
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &UD1GA_Wolf_VaultWindow::OnEndMontage);
@@ -68,6 +74,11 @@ void UD1GA_Wolf_VaultWindow::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 void UD1GA_Wolf_VaultWindow::OnEndMontage(UAnimMontage* Montage, bool bInterrupted)
 {
 	EndAbility(FGameplayAbilitySpecHandle(), nullptr, FGameplayAbilityActivationInfo(), true, false);
+}
+
+void UD1GA_Wolf_VaultWindow::Multicast_WolfVaultWindow(AD1KillerBase* Player)
+{
+	Player->PlayAnimMontage(Wolf_VaultWindow, 1.0f);
 }
 
 void UD1GA_Wolf_VaultWindow::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
