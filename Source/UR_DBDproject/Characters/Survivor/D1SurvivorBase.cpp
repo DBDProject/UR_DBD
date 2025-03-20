@@ -42,7 +42,8 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); 
+	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
@@ -102,7 +103,7 @@ void AD1SurvivorBase::BeginPlay()
 	// TEST
 	//CurrentState = ESurvivorState::Crawl;
 	//HealingProgress = 90.f;
-	
+
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
 	if (Controller)
 	{
@@ -299,7 +300,7 @@ void AD1SurvivorBase::MoveToGeneratorPosition(EGeneratorInteractionPosition Posi
 		TargetLocation = GeneratorLocation + ForwardVector * 100.f;
 		break;
 	case EGeneratorInteractionPosition::Back:
-		TargetLocation = GeneratorLocation - ForwardVector * 105.f;
+		TargetLocation = GeneratorLocation - ForwardVector * 110.f;
 		break;
 	case EGeneratorInteractionPosition::Left:
 		TargetLocation = GeneratorLocation - RightVector * 80.f;
@@ -331,7 +332,7 @@ void AD1SurvivorBase::StartRepair()
 		}
 	}
 	Server_StartRepair();
-	
+
 }
 
 void AD1SurvivorBase::StopRepair()
@@ -378,40 +379,24 @@ void AD1SurvivorBase::StartRepair_Local()
 
 	SetInteractionPosition(Position);
 	GetCurrentGenerator()->StartRepair(this, Position);
-
-	if (GetController())
-	{
-		if (GetController()->IsLocalPlayerController())
-		{
-			// 이동 불가능 설정
-			GetCharacterMovement()->DisableMovement();
-			GetCharacterMovement()->StopMovementImmediately();
-			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
-			{
-				PC->RepairDelegate_Start();
-			}
-		}
-	}
 }
 
 void AD1SurvivorBase::StopRepair_Local()
 {
 	if (!GetCurrentGenerator()) return;
-
-	SetPrevRepairing(false);
-	SetIsRepairing(false);
-
 	if (GetCurrentGenerator()->GetIsFail() == false)
 	{
+		// 이동 가능 설정
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	}
+	SetPrevRepairing(false);
+	SetIsRepairing(false);
 
 	GetCurrentGenerator()->StopRepair(this);
 	if (GetController())
 	{
 		if (GetController()->IsLocalPlayerController())
 		{
-			// 이동 가능 설정
-			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 			{
 				PC->RepairDelegate_End();
@@ -511,7 +496,7 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 
 			PlayAnimMontage(Montage, 1.0f, SectionName);
 		}
-		
+
 	}
 	else if (Montage == HitMontage)
 	{
@@ -609,7 +594,7 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 	if (HasAuthority())
 	{
 		Multicast_AttachToHook(Hook);
-		
+
 	}
 }
 
@@ -629,7 +614,7 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	
+
 	if (HasAuthority())
 	{
 		OnHooked();
@@ -642,12 +627,12 @@ void AD1SurvivorBase::OnHooked()
 	bIsCarryHook = true;
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
-	// 2번째 갈고리
-	if (HookedCount == 2)
-	{
-		if (HookHealth > 50.f)
-			HookHealth = 50.0f;
-	}
+		// 2번째 갈고리
+		if (HookedCount == 2)
+		{
+			if (HookHealth > 50.f)
+				HookHealth = 50.0f;
+		}
 }
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
@@ -794,7 +779,7 @@ void AD1SurvivorBase::Die()
 	CurrentState = ESurvivorState::Dying;
 
 	// 사망 애니메이션 (TODO)
-	
+
 	// 5초 후 사망 처리 (게임에서 제거)
 	GetWorld()->GetTimerManager().SetTimer(DeathRemoveTimer, this, &AD1SurvivorBase::RemoveFromGame, 10.0f, false);
 }
@@ -810,7 +795,7 @@ void AD1SurvivorBase::DieFromEntity()
 {
 	if (CurrentState == ESurvivorState::Dying) return; // 이미 사망한 상태면 실행 X
 
-	if (!HasAuthority()) 
+	if (!HasAuthority())
 	{
 		Server_DieFromEntity();
 		return;
@@ -919,7 +904,7 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	}
 	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
-		DetectedObject = OtherActor; 
+		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
 	else if (OtherActor->ActorHasTag("Vaultable"))
@@ -966,29 +951,29 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 {
 	switch (CurrentState)
 	{
-		case ESurvivorState::Healthy:
-		{
+	case ESurvivorState::Healthy:
+	{
 
-			PlayMontage(HitMontage, "Hit_BK");
-			CurrentState = ESurvivorState::Injured;
-			UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
-			break;
-		}
+		PlayMontage(HitMontage, "Hit_BK");
+		CurrentState = ESurvivorState::Injured;
+		UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
+		break;
+	}
 
 
-		case ESurvivorState::Injured:
-		{
-			PlayMontage(HitMontage, "BK");
-			CurrentState = ESurvivorState::Crawl;
-			UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
-			break;
-		}
+	case ESurvivorState::Injured:
+	{
+		PlayMontage(HitMontage, "BK");
+		CurrentState = ESurvivorState::Crawl;
+		UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
+		break;
+	}
 
-		case ESurvivorState::Crawl:
-		{
-			UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
-			break;
-		}
+	case ESurvivorState::Crawl:
+	{
+		UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
+		break;
+	}
 
 	}
 }
@@ -1018,7 +1003,7 @@ void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
 	FName AttachSocketName = "PickUpSurvivor"; // 살인자의 왼손 본
 	// 캐릭터를 본(소켓)에 부착
 	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
-	SetSurvivorState(ESurvivorState::PickedUp); 
+	SetSurvivorState(ESurvivorState::PickedUp);
 }
 
 void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
@@ -1069,27 +1054,15 @@ void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
 
 	HealingSource = Healer;
 
-	if (GetController())
-	{
-		if (GetController()->IsLocalPlayerController())
-		{
-			GetCharacterMovement()->DisableMovement();
-		}
-	}
+	GetCharacterMovement()->DisableMovement();
 	Healer->SetIsHealing(true);
-	bIsBeingHealed = true;	
+	bIsBeingHealed = true;
 }
 
 void AD1SurvivorBase::StopBeingHealing_Local()
 {
 	HealingSource = nullptr;
-	if (GetController())
-	{
-		if (GetController()->IsLocalPlayerController())
-		{
-			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-		}
-	}
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	bIsBeingHealed = false;
 }
 

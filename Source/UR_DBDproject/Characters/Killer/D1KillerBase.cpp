@@ -175,7 +175,8 @@ AD1KillerBase::AD1KillerBase()
 	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint); 
+	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
 	CharacterMesh->bEnableUpdateRateOptimizations = false;
 	FPVMesh->bEnableUpdateRateOptimizations = false;

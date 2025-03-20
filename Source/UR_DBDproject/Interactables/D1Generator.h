@@ -53,7 +53,7 @@ public:
     void StopRepair(class AD1SurvivorBase* Player);
 
     UFUNCTION(NetMulticast, Reliable)
-    void Multicast_SetRepairState(bool bRepairing, EGeneratorInteractionPosition Position);
+    void Multicast_SetRepairState(AD1SurvivorBase* Player, bool bRepairing, EGeneratorInteractionPosition Position);
     UFUNCTION(NetMulticast, Reliable)
     void Multicast_UpdateRepairProgress(float NewProgress);
     UFUNCTION(NetMulticast, Reliable)

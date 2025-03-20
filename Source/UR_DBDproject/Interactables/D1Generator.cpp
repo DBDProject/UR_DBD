@@ -167,7 +167,7 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
     }
 
     // 모든 클라이언트에 수리 상태 동기화
-    Multicast_SetRepairState(true, Position);
+    Multicast_SetRepairState(Player, true, Position);
 }
 
 void AD1Generator::StopRepair(AD1SurvivorBase* Player)
@@ -187,16 +187,23 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
     }
 }
 
-void AD1Generator::Multicast_SetRepairState_Implementation(bool bRepairing, EGeneratorInteractionPosition Position)
+void AD1Generator::Multicast_SetRepairState_Implementation(AD1SurvivorBase* Player, bool bRepairing, EGeneratorInteractionPosition Position)
 {
+    if (!Player || bIsRepairBlocked) return;
+
+    // 이동 불가능 설정
+    Player->GetCharacterMovement()->DisableMovement();
+    Player->GetCharacterMovement()->StopMovementImmediately();
+    Player->SetIsRepairing(true);
     bIsRepairing = true;
     InteractionPosition = Position;
 
-    for (AD1SurvivorBase* Player : RepairingPlayers)
+    if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
     {
-        if (!Player)    return;
-
-        Player->SetIsRepairing(true);
+        if (PC->IsLocalPlayerController())
+        {
+            PC->RepairDelegate_Start();          
+        }
     }
 }
 

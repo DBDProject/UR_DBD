@@ -103,7 +103,7 @@ void AD1SurvivorController::Input_Move(const FInputActionValue& InputValue)
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
 	if (!D1Survivor.IsValid())	return;
 	if (!(D1Survivor->GetSurvivorState() == ESurvivorState::Crawl) &&
-		!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) && 
+		!(D1Survivor->GetSurvivorState() == ESurvivorState::Injured) &&
 		!(D1Survivor->GetSurvivorState() == ESurvivorState::Healthy))
 	{
 		return;
@@ -252,10 +252,10 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		if (AD1SurvivorBase* TargetSurvivor = Cast<AD1SurvivorBase>(D1Survivor.Get()->GetDetectedObject()))
 		{
 			if (TargetSurvivor->GetSurvivorState() == ESurvivorState::Injured || TargetSurvivor->GetSurvivorState() == ESurvivorState::Crawl)
-			if (IsLocalController())
-			{
-				StartHeal_Local(TargetSurvivor);
-			}
+				if (IsLocalController())
+				{
+					StartHeal_Local(TargetSurvivor);
+				}
 			Server_StartHeal(TargetSurvivor);
 
 			return;
@@ -482,11 +482,7 @@ void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
 	D1Survivor->SetActorRotation(LookAtRotation);
 
 	D1Survivor->SetHealingTargetState(TargetSurvivor->GetSurvivorState());
-
-	if (IsLocalPlayerController())
-	{
-		D1Survivor->GetCharacterMovement()->DisableMovement();
-	}
+	D1Survivor->GetCharacterMovement()->DisableMovement();
 
 	TargetSurvivor->BeingHealing(D1Survivor.Get());
 }
@@ -496,14 +492,11 @@ void AD1SurvivorController::StopHeal_Local(AD1SurvivorBase* TargetSurvivor)
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
 	D1Survivor->SetIsHealing(false);
-	if (IsLocalPlayerController())
-	{
-		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	}
+	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	D1Survivor->SetHealingTargetState(ESurvivorState::None);
 
 	TargetSurvivor->StopBeingHealing();
-	
+
 }
 
 void AD1SurvivorController::Server_StartHeal_Implementation(AD1SurvivorBase* TargetSurvivor)
@@ -603,12 +596,10 @@ void AD1SurvivorController::Multicast_StartExitOpening_Implementation(AD1ExitGat
 {
 	if (!Gate || !D1Survivor.IsValid()) return;
 
-	if (IsLocalController())
-	{ 
-		// 이동 입력 차단
-		D1Survivor->GetCharacterMovement()->DisableMovement();
-		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
-	}
+	// 이동 입력 차단
+	D1Survivor->GetCharacterMovement()->DisableMovement();
+	D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+
 	// 플레이어 위치 이동
 	D1Survivor->MoveToExitGateStartPosition(Gate);
 	// 탈출구 열기 시작
@@ -620,11 +611,9 @@ void AD1SurvivorController::Multicast_StopExitOpening_Implementation(AD1ExitGate
 {
 	if (!Gate || !D1Survivor.IsValid()) return;
 
-	if (IsLocalController())
-	{
-		// 이동 가능하게 변경
-		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	}
+	// 이동 가능하게 변경
+	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
 	D1Survivor->SetIsExitGateOpening(false);
 	// 탈출구 닫기 실행
 	Gate->StopOpening();
@@ -690,7 +679,7 @@ void AD1SurvivorController::DropPallet()
 	Pallet->StartDropping(D1Survivor.Get());
 
 	bCanVaultAfterDrop = false;
-	GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
+	GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 0.5f, false);
 
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Drop"));
 }
@@ -727,7 +716,7 @@ void AD1SurvivorController::VaultPallet()
 	}
 
 	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
-	
+
 }
 
 void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
@@ -735,7 +724,7 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
 	if (TargetSurvivor->GetSurvivorState() != ESurvivorState::Hooked)	return;
-	
+
 	// 구출자 위치 조정
 	FVector RescueLocation = TargetSurvivor->GetActorLocation() + FVector(60.f, 0.f, 0.f);
 	D1Survivor->SetActorLocation(RescueLocation);
@@ -744,7 +733,7 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 	LookAtRotation.Pitch = 0.0f;
 	LookAtRotation.Roll = 0.0f;
 	D1Survivor->SetActorRotation(LookAtRotation);
-	
+
 	D1Survivor->PlayMontage(D1Survivor->RescueMontage, "Rescue");
 	TargetSurvivor->PlayMontage(D1Survivor->RescueMontage, "BeingRescued");
 }
