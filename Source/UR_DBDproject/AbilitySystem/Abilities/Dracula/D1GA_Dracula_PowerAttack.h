@@ -17,6 +17,18 @@ class UR_DBDPROJECT_API UD1GA_Dracula_PowerAttack : public UD1GameplayAbility
 public:
 	UD1GA_Dracula_PowerAttack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	TSubclassOf<UGameplayEffect> CooldownEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
+	TSubclassOf<UGameplayEffect> WolfCooldownEffect;
+
+	/*UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Charge")
+	TSubclassOf<UGameplayEffect> ChargeSlowEffect;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cast")
+	TSubclassOf<UGameplayEffect> CastSlowEffect;*/
+
 protected:
 	virtual bool CanActivateAbility(
 		const FGameplayAbilitySpecHandle Handle,
@@ -38,10 +50,8 @@ protected:
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
 
-	virtual void InputReleased(
-		const FGameplayAbilitySpecHandle Handle,
-		const FGameplayAbilityActorInfo* ActorInfo,
-		const FGameplayAbilityActivationInfo ActivationInfo) override;
+	UFUNCTION()
+	void OnInputReleased(float TimeHeld);
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> TPV_PowerAttack;
@@ -49,17 +59,30 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> FPV_PowerAttack;
 
-	FTimerHandle ChargeTimerHandle;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	TObjectPtr<class UAnimMontage> Wolf_PowerAttack;
 
-	float ChargeDuration = 0.9f;
-	bool bIsCharging = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
+	EDraculaTransformationState CurrentTransformState;
 
 private:
-	void LoopChargeSection(UAnimMontage* Montage, bool bInterrupted);
 	void FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void WolfInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void WolfSwingMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void CompleteCharge();
 
+	bool bAttackHit = false;
+	float ChargingStartTime = 0.0f;
+	float ChargeDuration = 0.9f;
+	float WolfChargeDuration = 0.85f;
+	FTimerHandle ChargeTimerHandle;
 public:
-	//UFUNCTION(NetMulticast, Reliable)
-	//void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfPowerAttack(AD1KillerBase* Player, FName SectionName);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfPowerAttackLoop(AD1KillerBase* Player, FName SectionName);
 };

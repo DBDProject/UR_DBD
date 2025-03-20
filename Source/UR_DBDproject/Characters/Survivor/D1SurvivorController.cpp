@@ -17,6 +17,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1ExitGate.h"
+#include "Characters/Killer/D1KillerBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1Hook.h"
 

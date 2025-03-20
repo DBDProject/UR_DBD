@@ -2,14 +2,14 @@
 
 
 #include "Characters/Killer/D1KillerController.h"
+#include "Characters/Killer/D1KillerBase.h"
+#include "Characters/Killer/D1KillerState.h"
 #include "Data/D1InputData.h"
 #include "System/D1AssetManager.h"
 #include "EnhancedInputSubsystems.h"
 #include "EnhancedInputComponent.h"
 #include "D1GameplayTags.h"
 #include "Kismet/KismetMathLibrary.h"
-#include "Characters/Killer/D1KillerBase.h"
-#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Animation/D1KillerBaseAnim.h"
 #include "AbilitySystem/Attributes/D1KillerSet.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -17,10 +17,7 @@
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
-#include "Interactables/D1Generator.h"
-#include "Interactables/D1VaultObject.h"
-#include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
-#include "AbilitySystemBlueprintLibrary.h"
+#include "AbilitySystem/D1AbilitySystemComponent.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -48,6 +45,7 @@ void AD1KillerController::BeginPlay()
 		FPVAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetFPVMesh().Get()->GetAnimInstance());
 		WolfAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetWolfMesh().Get()->GetAnimInstance());
 		BatAnimInstance = Cast<UD1KillerBaseAnim>(D1Killer->GetBatMesh().Get()->GetAnimInstance());
+		SetupInputComponent();
 	}
 }
 
@@ -55,7 +53,21 @@ void AD1KillerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 
-	if (const UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("KillerInputData"))
+	if (!D1Killer)
+	{
+		return;
+	}
+
+	UD1AbilitySystemComponent* AbilitySystemComponent = D1Killer->GetAbilitySystemComponent();
+	if (!AbilitySystemComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("❌ AbilitySystemComponent is NULL!"));
+		return;
+	}
+
+	AbilitySystemComponent->AddCharacterAbilities(D1Killer->StartupAbilities);
+
+	if (UD1InputData* InputData = UD1AssetManager::GetAssetByName<UD1InputData>("KillerInputData"))
 	{
 		UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(InputComponent);
 
@@ -66,23 +78,25 @@ void AD1KillerController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 
 		auto Attack1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Attack1);
-		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_LeftClick);
+		EnhancedInputComponent->BindAction(Attack1Action, ETriggerEvent::Started, this, &ThisClass::Input_LeftClick);
 
-		auto RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
-		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Triggered, this, &ThisClass::Input_RightClick);
+		RightClickAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_RightClick);
+		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Started, this, &ThisClass::Input_RightClick);
 		EnhancedInputComponent->BindAction(RightClickAction, ETriggerEvent::Completed, this, &ThisClass::Input_RightClickRelease);
+		AbilitySystemComponent->SetInputBinding(RightClickAction, D1GameplayTags::Killer_Ability_Dracula_PowerAttack);
 
 		auto Skill1Action = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Skill1); //Ctrl
-		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Triggered, this, &ThisClass::Input_Skill1);
+		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Started, this, &ThisClass::Input_Skill1);
 		EnhancedInputComponent->BindAction(Skill1Action, ETriggerEvent::Completed, this, &ThisClass::Input_OnCtrlReleased);
 
 		auto BreakAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_SpaceBar); //Spacebar
-		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Triggered, this, &ThisClass::HandleInteraction);
+		EnhancedInputComponent->BindAction(BreakAction, ETriggerEvent::Started, this, &ThisClass::HandleInteraction);
 
 		auto DropAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Drop); // R
-		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Triggered, this, &ThisClass::Input_Drop);
+		EnhancedInputComponent->BindAction(DropAction, ETriggerEvent::Started, this, &ThisClass::Input_Drop);
 
 	}
+
 }
 
 void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
@@ -95,6 +109,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->AttackCollision->SetActive(true);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_Attack_DetactEnd))
@@ -106,6 +121,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			D1Killer->SetbAttackSuccess(false);
 		}
+		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactStart))
@@ -116,6 +132,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->WolfAttackCollision->SetActive(true);
 			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactEnd))
@@ -127,6 +144,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			D1Killer->SetbAttackSuccess(false);
 		}
+		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_PowerAttack_DetactStart))
@@ -137,6 +155,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			D1Killer->PowerAttackCollision->SetActive(true);
 			D1Killer->PowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
+		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_PowerAttack_DetactEnd))
@@ -146,7 +165,42 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 			UE_LOG(LogTemp, Warning, TEXT("Killer_PowerAttack_DetactEnd"));
 			D1Killer->PowerAttackCollision->SetActive(false);
 			D1Killer->PowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			D1Killer->SetbAttackSuccess(false);
 		}
+		return;
+	}
+
+	if (EventTag == (D1GameplayTags::Killer_Wolf_PowerAttack_DetactStart))
+	{
+		if (D1Killer && D1Killer->WolfPowerAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_PowerAttack_DetactStart"));
+			D1Killer->WolfPowerAttackCollision->SetActive(true);
+			D1Killer->WolfPowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+		}
+		return;
+	}
+
+	if (EventTag == (D1GameplayTags::Killer_Wolf_PowerAttack_DetactEnd))
+	{
+		if (D1Killer && D1Killer->WolfPowerAttackCollision)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_PowerAttack_DetactEnd"));
+			D1Killer->WolfPowerAttackCollision->SetActive(false);
+			D1Killer->WolfPowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			D1Killer->SetbAttackSuccess(false);
+		}
+		return;
+	}
+
+	if (EventTag == (D1GameplayTags::Interactables_Pallet_DownStart))
+	{
+
+	}
+
+	if (EventTag == (D1GameplayTags::Interactables_Pallet_DownEnd))
+	{
+
 	}
 }
 
@@ -199,9 +253,18 @@ void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Attack"));
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Attack);
-		return;
+		if (D1Killer->GetCarriedSurvivor())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_CarryAttack);
+			return;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Attack);
+			return;
+		}
 	}
 
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
@@ -223,15 +286,14 @@ void AD1KillerController::Input_RightClick(const FInputActionValue& InputValue)
 		return;
 	}
 
-	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula ||
+		D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("PowerAttack"));
-		ChargeStartTime = GetWorld()->GetTimeSeconds();
-		bIsCharging = true;
-		GetWorld()->GetTimerManager().SetTimer(ChargeTimerHandle, this, &AD1KillerController::CompleteCharge, ChargeDuration, false);
-
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PowerAttack);
-		
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(RightClickAction);
+		}
 		return;
 	}
 }
@@ -241,14 +303,15 @@ void AD1KillerController::Input_RightClickRelease(const FInputActionValue& Input
 	if (!D1Killer)
 		return;
 
-	GetWorld()->GetTimerManager().ClearTimer(ChargeTimerHandle);
-	bIsCharging = false;
-}
-
-void AD1KillerController::CompleteCharge()
-{
-	if (bIsCharging)
+	UE_LOG(LogTemp, Warning, TEXT("🛑 Power Attack Stopped!"));
+	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("PowerAttack Release"));
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->OnAbilityInputReleased(RightClickAction);
+		}
+		return;
 	}
 }
 
@@ -270,7 +333,7 @@ void AD1KillerController::Input_Drop(const FInputActionValue& InputValue)
 	
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula && D1Killer->GetCarriedSurvivor() != nullptr)
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_DropSurvivor);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DropSurvivor);
 	}
 }
 
@@ -312,7 +375,7 @@ void AD1KillerController::LeftClick_Transform()
 			D1Killer->SetCurrentTransformState(EDraculaTransformationState::Dracula);
 		}
 		bTransform = true;
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Transform);
 	}
 }
 
@@ -336,7 +399,7 @@ void AD1KillerController::RightClick_Transform()
 			D1Killer->SetCurrentTransformState(EDraculaTransformationState::Wolf);
 		}
 		bTransform = true;
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Transform);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Transform);
 	}
 }
 
@@ -351,25 +414,25 @@ void AD1KillerController::HandleInteraction()
 		*DetectedObject->GetName(), *DetectedObject->GetClass()->GetName());
 	if (D1Killer->GetCurrentHook() && D1Killer->GetCarriedSurvivor() != nullptr)
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_HookSurvivor);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_HookSurvivor);
 	}
 	else if (D1Killer->GetDetectedCrawlSurvivor() && D1Killer->GetCarriedSurvivor() == nullptr)
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_PickUpSurvivor);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
 	}
 	else if (D1Killer->GetCurrentPallet())
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_DestroyPallet);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
 	}
 	else if (D1Killer->GetCurrentGenerator())
 	{
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_DamageGenerator);
+		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
 	}
 	else if (D1Killer->GetVaultTarget())
 	{
 		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 		{
-			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_VaultWindow);
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_VaultWindow);
 		}
 		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
 		{

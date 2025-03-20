@@ -12,6 +12,7 @@
 
 struct FInputActionValue;
 class UInputMappingContext;
+class UInputAction;
 /**
  * 
  */
@@ -42,7 +43,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "KDH", meta = (AllowPrivateAccess = "true"))
 	TWeakObjectPtr<class UD1KillerBaseAnim> BatAnimInstance;
 
-	bool bTransform = false;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UInputAction* RightClickAction;
+
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
@@ -60,14 +63,10 @@ private:
 	UFUNCTION()
 	void RightClick_Transform();
 
-	float ChargeStartTime = 0.0f; 
-	bool bIsCharging = false; 
-	float ChargeDuration = 0.9f;   
-	FTimerHandle ChargeTimerHandle;
-	void CompleteCharge();
-
 	bool bIsCtrlPressed = false;
 	bool bIgnoreInputLook = false;
+
+	bool bTransform = false;
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
@@ -75,9 +74,5 @@ public:
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
 
 	void SetbTransform(bool state) { bTransform = state; }
-
-protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
-	UAbilitySystemComponent* ASC;
 
 };
