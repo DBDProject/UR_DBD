@@ -20,6 +20,7 @@ class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 public:
 	UPROPERTY(BlueprintAssignable, Category = "State")
 	FOnStateChange OnChangePlayerState;
+
 public:
 	AD1SurvivorBase();
 
@@ -149,6 +150,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "State")
 	void BP_OnHealthChanged();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "State")
+	void BP_GetHook();
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -184,8 +188,6 @@ public: // 갈고리
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnHookSkillCheckSuccess();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHookSkillCheckFail();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -281,6 +283,9 @@ protected:
 	UPROPERTY(ReplicatedUsing = OnRep_ChangeState, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	ESurvivorState CurrentState;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
+	ESurvivorState PrevState;
+
 protected: // 치료 기능
 	// 치료를 해주는 생존자
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
@@ -338,7 +343,8 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckEnable = false;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))

@@ -76,6 +76,9 @@ protected:
     UPROPERTY(Replicated)
     bool bEntityVisible;
 
+    UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Hook")
+    bool bIsHooked = false;
+
     FTimerHandle DissolveTimer;
 
     float DissolveStartTime;
@@ -85,5 +88,6 @@ public:
     TObjectPtr<class USkeletalMeshComponent> GetEntityMesh() { return EntityMesh; }
     void SetIsSkillCheckEnable(bool State) { bIsSkillCheckEnable = State; }
     void SetIsSkillCheckFail(bool State) { bIsSkillCheckFail = State; }
+    void SetIsHooked(bool State) { bIsHooked = State; }
     bool GetEntityVisible() { return bEntityVisible; }
 };

@@ -91,6 +91,7 @@ void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentState = ESurvivorState::Healthy;
+	PrevState = ESurvivorState::Healthy;
 
 	// TEST
 	//CurrentState = ESurvivorState::Crawl;
@@ -588,6 +589,7 @@ void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
 		CurrentHook->PlayEntityMontage("Reaction");
 		bIsHookSkillCheckEnable = true;
 		CurrentHook->SetIsSkillCheckEnable(true);
+		BP_GetHook();
 	}
 }
 
@@ -601,6 +603,7 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 	if (HasAuthority())
 	{
 		Multicast_AttachToHook(Hook);
+		
 	}
 }
 
@@ -616,6 +619,8 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 		HookSocket);
 
 	CurrentHook = Hook;
+	CurrentHook->SetIsHooked(true);
+
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	
@@ -637,11 +642,6 @@ void AD1SurvivorBase::OnHooked()
 		if (HookHealth > 50.f)
 			HookHealth = 50.0f;
 	}
-}
-
-void AD1SurvivorBase::OnHookSkillCheckSuccess()
-{
-	UE_LOG(LogTemp, Warning, TEXT("스킬 체크 성공!"));
 }
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
@@ -758,6 +758,7 @@ void AD1SurvivorBase::OnEscapeSuccess()
 
 		Multicast_StopEntityEvent();
 
+		CurrentHook->SetIsHooked(false);
 		CurrentHook = nullptr;
 	}
 }
@@ -771,6 +772,7 @@ void AD1SurvivorBase::OnRescued()
 
 		Multicast_StopEntityEvent();
 
+		CurrentHook->SetIsHooked(false);
 		CurrentHook = nullptr;
 	}
 }
@@ -835,8 +837,8 @@ void AD1SurvivorBase::DieFromEntity_Local()
 	{
 		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
 		CurrentHook->PlayEntityMontage("Sacrifice");
-		bIsHookSkillCheckEnable = true;
-		CurrentHook->SetIsSkillCheckEnable(true);
+		bIsHookSkillCheckEnable = false;
+		CurrentHook->SetIsSkillCheckEnable(false);
 	}
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
@@ -1233,4 +1235,6 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 void AD1SurvivorBase::OnRep_ChangeState()
 {
 	BP_OnHealthChanged();
+
+	PrevState = CurrentState;
 }
