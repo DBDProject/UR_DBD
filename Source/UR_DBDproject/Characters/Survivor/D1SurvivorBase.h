@@ -49,6 +49,10 @@ public:
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+public:	// 판자
+	UFUNCTION(Server, Reliable)
+	void Server_StartDropping_Request(class AD1Pallet* Pallet);
+
 public:
 	// 생존자 데미지 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")

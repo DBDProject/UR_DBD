@@ -2,6 +2,7 @@
 
 
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Stun.h"
+#include "Interactables/D1Pallet.h"
 
 UD1GA_Dracula_Stun::UD1GA_Dracula_Stun(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -74,8 +75,14 @@ void UD1GA_Dracula_Stun::OnEndMontage(UAnimMontage* Montage, bool bInterrupted)
 
 void UD1GA_Dracula_Stun::Multicast_DraculaStun_Implementation(AD1KillerBase* Player)
 {
-	UAnimInstance* TPVAnimInstance = Killer->GetCharacterMesh()->GetAnimInstance();
-	UAnimInstance* FPVAnimInstance = Killer->GetFPVMesh()->GetAnimInstance();
+	AD1Pallet* Pallet = Player->GetCurrentPallet();
+
+	EPalletLocation Location = Pallet->FindClosestInteractionPoint(Player);
+
+	Pallet->MovePlayerToInteractionPoint(Player, ECharacterType::DRACULA);
+
+	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
 
 	TPVAnimInstance->Montage_Play(TPV_Stun.Get());
 	FPVAnimInstance->Montage_Play(FPV_Stun.Get());

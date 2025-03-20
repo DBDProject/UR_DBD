@@ -695,7 +695,7 @@ void AD1SurvivorController::DropPallet_Local()
 	{
 		D1Survivor->PlayAnimMontage(PalletMontage, 1.0f, SectionName);
 		Pallet->SetCurrentState(EPalletState::Down);
-		Pallet->StartDropping();
+		Pallet->StartDropping(D1Survivor.Get());
 
 		bCanVaultAfterDrop = false;
 		GetWorld()->GetTimerManager().SetTimer(VaultCooldownTimer, this, &AD1SurvivorController::EnableVaultAfterDrop, 1.0f, false);
