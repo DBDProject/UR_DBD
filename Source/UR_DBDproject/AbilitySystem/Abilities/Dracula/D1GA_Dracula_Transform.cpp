@@ -487,15 +487,15 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	Player->GetMesh()->SetHiddenInGame(bWolfVisible);
 	Player->GetBatMesh()->SetHiddenInGame(bBatVisible);
 
-	Killer->GetCharacterMesh()->bPauseAnims = bDraculaVisible;
-	Killer->GetFPVMesh()->bPauseAnims = bDraculaVisible;
-	Killer->GetMesh()->bPauseAnims = bWolfVisible;
-	Killer->GetBatMesh()->bPauseAnims = bBatVisible;
+	Player->GetCharacterMesh()->bPauseAnims = bDraculaVisible;
+	Player->GetFPVMesh()->bPauseAnims = bDraculaVisible;
+	Player->GetMesh()->bPauseAnims = bWolfVisible;
+	Player->GetBatMesh()->bPauseAnims = bBatVisible;
 
-	Killer->GetCharacterMesh()->SetComponentTickEnabled(!bDraculaVisible);
-	Killer->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
-	Killer->GetMesh()->SetComponentTickEnabled(!bWolfVisible);
-	Killer->GetBatMesh()->SetComponentTickEnabled(!bWolfVisible);
+	Player->GetCharacterMesh()->SetComponentTickEnabled(!bDraculaVisible);
+	Player->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
+	Player->GetMesh()->SetComponentTickEnabled(!bWolfVisible);
+	Player->GetBatMesh()->SetComponentTickEnabled(!bWolfVisible);
 }
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
