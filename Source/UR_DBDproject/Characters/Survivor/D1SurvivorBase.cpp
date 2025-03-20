@@ -376,10 +376,6 @@ void AD1SurvivorBase::StartRepair_Local()
 	// 이동
 	MoveToGeneratorPosition(Position);
 
-	// 이동 불가능 설정
-	GetCharacterMovement()->DisableMovement();
-	GetCharacterMovement()->StopMovementImmediately();
-
 	SetInteractionPosition(Position);
 	GetCurrentGenerator()->StartRepair(this, Position);
 
@@ -387,6 +383,9 @@ void AD1SurvivorBase::StartRepair_Local()
 	{
 		if (GetController()->IsLocalPlayerController())
 		{
+			// 이동 불가능 설정
+			GetCharacterMovement()->DisableMovement();
+			GetCharacterMovement()->StopMovementImmediately();
 			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 			{
 				PC->RepairDelegate_Start();
@@ -404,8 +403,6 @@ void AD1SurvivorBase::StopRepair_Local()
 
 	if (GetCurrentGenerator()->GetIsFail() == false)
 	{
-		// 이동 가능 설정
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	}
 
 	GetCurrentGenerator()->StopRepair(this);
@@ -413,6 +410,8 @@ void AD1SurvivorBase::StopRepair_Local()
 	{
 		if (GetController()->IsLocalPlayerController())
 		{
+			// 이동 가능 설정
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 			if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 			{
 				PC->RepairDelegate_End();
@@ -1070,7 +1069,13 @@ void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
 
 	HealingSource = Healer;
 
-	GetCharacterMovement()->DisableMovement();
+	if (GetController())
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			GetCharacterMovement()->DisableMovement();
+		}
+	}
 	Healer->SetIsHealing(true);
 	bIsBeingHealed = true;	
 }
@@ -1078,7 +1083,13 @@ void AD1SurvivorBase::BeingHealing_Local(AD1SurvivorBase* Healer)
 void AD1SurvivorBase::StopBeingHealing_Local()
 {
 	HealingSource = nullptr;
-	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	if (GetController())
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+		}
+	}
 	bIsBeingHealed = false;
 }
 

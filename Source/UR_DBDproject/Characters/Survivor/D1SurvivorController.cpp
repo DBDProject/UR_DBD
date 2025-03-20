@@ -482,7 +482,11 @@ void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
 	D1Survivor->SetActorRotation(LookAtRotation);
 
 	D1Survivor->SetHealingTargetState(TargetSurvivor->GetSurvivorState());
-	D1Survivor->GetCharacterMovement()->DisableMovement();
+
+	if (IsLocalPlayerController())
+	{
+		D1Survivor->GetCharacterMovement()->DisableMovement();
+	}
 
 	TargetSurvivor->BeingHealing(D1Survivor.Get());
 }
@@ -492,7 +496,10 @@ void AD1SurvivorController::StopHeal_Local(AD1SurvivorBase* TargetSurvivor)
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
 	D1Survivor->SetIsHealing(false);
-	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	if (IsLocalPlayerController())
+	{
+		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
 	D1Survivor->SetHealingTargetState(ESurvivorState::None);
 
 	TargetSurvivor->StopBeingHealing();
@@ -596,10 +603,12 @@ void AD1SurvivorController::Multicast_StartExitOpening_Implementation(AD1ExitGat
 {
 	if (!Gate || !D1Survivor.IsValid()) return;
 
-	// 이동 입력 차단
-	D1Survivor->GetCharacterMovement()->DisableMovement();
-	D1Survivor->GetCharacterMovement()->StopMovementImmediately();
-
+	if (IsLocalController())
+	{ 
+		// 이동 입력 차단
+		D1Survivor->GetCharacterMovement()->DisableMovement();
+		D1Survivor->GetCharacterMovement()->StopMovementImmediately();
+	}
 	// 플레이어 위치 이동
 	D1Survivor->MoveToExitGateStartPosition(Gate);
 	// 탈출구 열기 시작
@@ -611,9 +620,11 @@ void AD1SurvivorController::Multicast_StopExitOpening_Implementation(AD1ExitGate
 {
 	if (!Gate || !D1Survivor.IsValid()) return;
 
-	// 이동 가능하게 변경
-	D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-
+	if (IsLocalController())
+	{
+		// 이동 가능하게 변경
+		D1Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
 	D1Survivor->SetIsExitGateOpening(false);
 	// 탈출구 닫기 실행
 	Gate->StopOpening();
