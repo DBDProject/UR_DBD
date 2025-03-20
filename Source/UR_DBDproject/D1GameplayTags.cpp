@@ -38,6 +38,8 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Dracula_DropSurvivor, "Killer.Ability.Dracula.DropSurvivor");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Dracula_PowerAttack, "Killer.Ability.Dracula.PowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Dracula_Stun, "Killer.Ability.Dracula.Stun");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Dracula_CarryAttack, "Killer.Ability.Dracula.CarryAttack");
+
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Attack, "Killer.Ability.Wolf.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_PowerAttack, "Killer.Ability.Wolf.PowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_VaultWindow, "Killer.Ability.Wolf.VaultWindow");

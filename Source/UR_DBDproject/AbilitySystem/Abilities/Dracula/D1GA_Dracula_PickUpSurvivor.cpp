@@ -100,6 +100,9 @@ void UD1GA_Dracula_PickUpSurvivor::Multicast_PickUpSurvivor_Implementation(AD1Ki
 	UD1KillerBaseAnim* TPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetCharacterMesh().Get()->GetAnimInstance());
 	UD1KillerBaseAnim* FPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetFPVMesh().Get()->GetAnimInstance());
 
+	TPVAnimInstance->SetIsCarryingSurvivor(true);
+	FPVAnimInstance->SetIsCarryingSurvivor(true);
+
 	TPVAnimInstance->Montage_Play(TPV_PickUpSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_PickUpSurvivor.Get(), 1.0f);
 

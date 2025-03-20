@@ -115,6 +115,9 @@ void UD1GA_Dracula_Hook::Multicast_HookSurvivor_Implementation(AD1KillerBase* Pl
 	UD1KillerBaseAnim* TPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetCharacterMesh().Get()->GetAnimInstance());
 	UD1KillerBaseAnim* FPVAnimInstance = Cast<UD1KillerBaseAnim>(Player->GetFPVMesh().Get()->GetAnimInstance());
 
+	TPVAnimInstance->SetIsCarryingSurvivor(false);
+	FPVAnimInstance->SetIsCarryingSurvivor(false);
+
 	TPVAnimInstance->Montage_Play(TPV_HookSurvivor.Get(), 1.0f);
 	FPVAnimInstance->Montage_Play(FPV_HookSurvivor.Get(), 1.0f);
 }

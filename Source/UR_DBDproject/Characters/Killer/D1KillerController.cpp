@@ -253,9 +253,18 @@ void AD1KillerController::Input_LeftClick(const FInputActionValue& InputValue)
 
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Attack"));
-		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Attack);
-		return;
+		if (D1Killer->GetCarriedSurvivor())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_CarryAttack);
+			return;
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Attack"));
+			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_Attack);
+			return;
+		}
 	}
 
 	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)

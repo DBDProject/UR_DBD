@@ -39,10 +39,12 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_VaultWindow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_DropSurvivor);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_PowerAttack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_Stun);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_CarryAttack);
+
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_PowerAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_VaultWindow);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Dracula_Stun);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Stun);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Effect_Cooldown_DraculaPowerAttack);
