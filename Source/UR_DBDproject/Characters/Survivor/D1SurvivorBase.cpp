@@ -1007,28 +1007,20 @@ void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 물리 시뮬레이션 중지
 	GetMesh()->SetSimulatePhysics(false);
-	FName AttachSocketName = "joint_CarryLT_01"; // 살인자의 왼손 본
+	FName AttachSocketName = "PickUpSurvivor"; // 살인자의 왼손 본
 	// 캐릭터를 본(소켓)에 부착
 	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
-	SetSurvivorState(ESurvivorState::PickedUp);
+	SetSurvivorState(ESurvivorState::PickedUp); 
 }
 
 void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
 {
-	if (!Killer) return;
-
-	if (HasAuthority())
-	{
-		TakePickUpFromKiller_Multicast(Killer);
-	}
+	TakePickUpFromKiller_Multicast(Killer);
 }
 
 void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1KillerBase* Killer)
 {
-	if (!Killer) return;
-
 	TakePickUpFromKiller_Local(Killer);
-
 }
 
 void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
