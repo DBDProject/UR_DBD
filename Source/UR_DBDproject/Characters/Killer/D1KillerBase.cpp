@@ -18,7 +18,7 @@
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
-#include "Animation/D1PalletAnim.h"
+#include "SkeletalMeshRestoreState.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -36,6 +36,7 @@ AD1KillerBase::AD1KillerBase()
 		CharacterMesh->SetupAttachment(GetCapsuleComponent());
 		CharacterMesh->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 		//CharacterMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+		CharacterMesh->SetHiddenInGame(true);
 	}
 	else
 	{
@@ -52,28 +53,29 @@ AD1KillerBase::AD1KillerBase()
 		FPVMesh->SetOnlyOwnerSee(true);
 		FPVMesh->SetupAttachment(CharacterMesh);
 		//FPVMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+		FPVMesh->SetHiddenInGame(true);
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load FPVMesh asset!"));
 	}
 
-	WolfMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("WolfMesh"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> WolfMeshAsset(
+	/*GetMesh() = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GetMesh()"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> GetMesh()Asset(
 		TEXT("/Script/Engine.SkeletalMesh'/Game/Art/Characters/Killer/Dracula/Meshes/Wolf/SKM_Wolf.SKM_Wolf'")
 	);
-	if (WolfMeshAsset.Succeeded())
+	if (GetMesh()Asset.Succeeded())
 	{
-		WolfMesh->SetSkeletalMesh(WolfMeshAsset.Object);
-		WolfMesh->SetupAttachment(GetCapsuleComponent());
-		WolfMesh->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-		WolfMesh->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
-		WolfMesh->SetHiddenInGame(true);
-	}
-	else
+		GetMesh()->SetSkeletalMesh(GetMesh()Asset.Object);
+		GetMesh()->SetupAttachment(GetCapsuleComponent());
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+		GetMesh()->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+		GetMesh()->SetHiddenInGame(true);
+	}*/
+	/*else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load WolfMesh asset!"));
-	}
+		UE_LOG(LogTemp, Warning, TEXT("Failed to load GetMesh() asset!"));
+	}*/
 
 	BatMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BatMesh"));
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BatMeshAsset(
@@ -92,6 +94,16 @@ AD1KillerBase::AD1KillerBase()
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load BatMesh asset!"));
 	}
 
+	{
+		static ConstructorHelpers::FObjectFinder<USkeletalMesh> WolfAsset(
+			TEXT("/Script/Engine.SkeletalMesh'/Game/Art/Characters/Killer/Dracula/Meshes/Wolf/SKM_Wolf.SKM_Wolf'")
+		);
+		GetMesh()->SetSkeletalMesh(WolfAsset.Object);
+		GetMesh()->SetupAttachment(GetCapsuleComponent());
+		GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
+		GetMesh()->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
+	}
+	
 	GetCapsuleComponent()->InitCapsuleSize(35.0f, 125.0f);
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
@@ -112,7 +124,7 @@ AD1KillerBase::AD1KillerBase()
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
 
 	WolfCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("WolfCamera"));
-	WolfCameraComponent->SetupAttachment(WolfMesh);
+	WolfCameraComponent->SetupAttachment(GetMesh());
 	WolfCameraComponent->SetRelativeLocationAndRotation(FVector(0.f, -160.f, 140.0f), FRotator(0.0f, 90.0f, 0.0f)); // Position the camera
 	WolfCameraComponent->bUsePawnControlRotation = true;
 	WolfCameraComponent->Deactivate();
@@ -143,7 +155,7 @@ AD1KillerBase::AD1KillerBase()
 	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	WolfAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfAttackCollision"));
-	WolfAttackCollision->SetupAttachment(WolfMesh, TEXT("AttackCollision")); // 메쉬에 부착
+	WolfAttackCollision->SetupAttachment(GetMesh(), TEXT("AttackCollision")); // 메쉬에 부착
 	WolfAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
 	WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	WolfAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
@@ -157,13 +169,20 @@ AD1KillerBase::AD1KillerBase()
 	PowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	WolfPowerAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfPowerAttackCollision"));
-	WolfPowerAttackCollision->SetupAttachment(WolfMesh); // 메쉬에 부착
+	WolfPowerAttackCollision->SetupAttachment(GetMesh()); // 메쉬에 부착
 	WolfPowerAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
 	WolfPowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 	WolfPowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+
+	CharacterMesh->bEnableUpdateRateOptimizations = false;
+	FPVMesh->bEnableUpdateRateOptimizations = false;
+	GetMesh()->bEnableUpdateRateOptimizations = false;
+	BatMesh->bEnableUpdateRateOptimizations = false;
+
 }
 
 void AD1KillerBase::BeginPlay()
@@ -171,7 +190,7 @@ void AD1KillerBase::BeginPlay()
 	Super::BeginPlay();
 
 	// 카메라 활성화
-	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
+	if (WolfCameraComponent) WolfCameraComponent->Activate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
 	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
 	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
@@ -208,7 +227,7 @@ void AD1KillerBase::BeginPlay()
 		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
-	CurrentTransformState = EDraculaTransformationState::Dracula;
+	CurrentTransformState = EDraculaTransformationState::Wolf;
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)

@@ -45,4 +45,8 @@ protected:
 private:
 	void OnEndMontage(UAnimMontage* Montage, bool bInterrupted);
 	AD1VaultObject* VaultObj = nullptr;
+
+public:
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfVaultWindow(AD1KillerBase* Player);
 };
