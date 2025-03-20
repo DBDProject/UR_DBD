@@ -145,6 +145,9 @@ public:
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "State")
 	void BP_OnHealthChanged();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "State")
+	void BP_GetHook();
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -180,8 +183,6 @@ public: // 갈고리
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnHookSkillCheckSuccess();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHookSkillCheckFail();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -337,7 +338,8 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckEnable = false;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, Category = "Survivor", meta = (AllowPrivateAccess = "true"))

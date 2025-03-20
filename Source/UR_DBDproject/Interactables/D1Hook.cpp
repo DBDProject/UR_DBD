@@ -65,6 +65,7 @@ void AD1Hook::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeP
     DOREPLIFETIME(AD1Hook, bIsSkillCheckEnable);
     DOREPLIFETIME(AD1Hook, bIsSkillCheckFail);
     DOREPLIFETIME(AD1Hook, bEntityVisible);
+    DOREPLIFETIME(AD1Hook, bIsHooked);
 }
 
 void AD1Hook::Tick(float DeltaTime)
