@@ -43,7 +43,15 @@ AD1Generator::AD1Generator()
 void AD1Generator::BeginPlay()
 {
 	Super::BeginPlay();
-    CachedAnimInstance = Cast<UD1GeneratorAnim>(GeneratorMesh->GetAnimInstance());
+
+    if (HasAuthority())
+    {
+        APlayerController* PC = GetWorld()->GetFirstPlayerController();
+        if (PC)
+        {
+            SetOwner(PC);
+        }
+    }
 }
 
 void AD1Generator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -140,16 +148,8 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
         return;
     }
 
-    if(!HasAuthority())
+    if (!HasAuthority())
     {
-        // 처음 수리하는 플레이어의 컨트롤러를 발전기의 Owner로 설정
-        if (GetOwner() == nullptr)
-        {
-            SetOwner(Player->GetController());
-        }
-
-        // 클라이언트에서 서버에 요청
-        Server_StartRepair(Player, Position);
         return;
     }
 
@@ -167,8 +167,6 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
 {
     if (!HasAuthority())
     {
-        // 클라이언트에서 서버에 요청
-        Server_StopRepair(Player);
         return;
     }
     auto Position = Player->GetInteractionPosition();
@@ -178,19 +176,8 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
     if (RepairingPlayers.Num() == 0)
     {
         bIsRepairing = false;
-        SetOwner(nullptr);
         UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
     }
-}
-
-void AD1Generator::Server_StartRepair_Implementation(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position)
-{
-    StartRepair(Player, Position);
-}
-
-void AD1Generator::Server_StopRepair_Implementation(AD1SurvivorBase* Player)
-{
-    StopRepair(Player);
 }
 
 void AD1Generator::Multicast_SetRepairState_Implementation(bool bRepairing, EGeneratorInteractionPosition Position)
@@ -202,9 +189,8 @@ void AD1Generator::Multicast_SetRepairState_Implementation(bool bRepairing, EGen
     {
         if (!Player)    return;
 
-        Player->SetIsReparing(true);
+        Player->SetIsRepairing(true);
     }
-
 }
 
 void AD1Generator::Multicast_UpdateRepairProgress_Implementation(float NewProgress)
@@ -246,20 +232,45 @@ void AD1Generator::DamagePerSeconds()
 
 void AD1Generator::OnSkillCheckSuccess()
 {
+    if (!HasAuthority())
+    {
+        if (RepairingPlayers.Num() == 0) return;
+
+        RepairingPlayers[0]->Server_RequestSkillCheckSuccess(this);
+        return;
+    }
     RepairProgress += 1.0f;
-    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 대성공!"));
 }
 
 void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 {
+    if (!HasAuthority())
+    {
+        Player->Server_RequestSkillCheckFail(this);
+        return;
+    }
+
+    Multi_OnSkillCheckFail(Player);
+}
+
+void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player)
+{
+    if (!Player) return;
+
     bIsFail = true;
+    bIsRepairBlocked = true;
     Player->SetIsFail(true);
+    Player->SetIsRepairing(false);
+    Player->SetPrevRepairing(false);
+    StopRepair(Player);
+
+    if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+    {
+        PC->RepairDelegate_End();
+    }
 
     RepairProgress -= 5.0f;
     if (RepairProgress < 0.0f) RepairProgress = 0.0f;
-
-    bIsRepairBlocked = true;
-    StopRepair(Player);
 
 
     UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 2초간 수리 불가"));
@@ -286,7 +297,7 @@ void AD1Generator::Multicast_StopRepairAll_Implementation()
     {
         if (Player)
         {
-            Player->SetIsReparing(false);
+            Player->SetIsRepairing(false);
             Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
         }
     }
@@ -297,7 +308,6 @@ void AD1Generator::Multicast_StopRepairAll_Implementation()
 void AD1Generator::EnableRepair()
 {
     bIsRepairBlocked = false; // 수리 차단 해제
-    bIsFail = false;
     UE_LOG(LogTemp, Warning, TEXT("수리 가능 상태로 복구됨"));
 }
 
