@@ -34,7 +34,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
 	SpringArm->SetupAttachment(GetCapsuleComponent());
-	SpringArm->TargetArmLength = 200.f;
 	SpringArm->bUsePawnControlRotation = true;				// 플레이어가 아니라 컨트롤러 회전을 따름
 
 	Camera = CreateDefaultSubobject<UCameraComponent>("Camera");
@@ -105,10 +104,10 @@ void AD1SurvivorBase::BeginPlay()
 	//HealingProgress = 90.f;
 
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
-	if (Controller)
-	{
-		Controller->SetControlRotation(FRotator(-45, 0, 0));
-	}
+	//if (Controller)
+	//{
+	//	Controller->SetControlRotation(FRotator(-45, 0, 0));
+	//}
 
 	if (InteractionBox)
 	{
@@ -259,6 +258,7 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 {
 	if (CurrentState != ESurvivorState::Hooked) return;
 
+	//HookHealth -= HookBleedOutRate * DeltaTime;
 	HookHealth -= HookBleedOutRate * DeltaTime;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
@@ -626,6 +626,7 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 
 void AD1SurvivorBase::OnHooked()
 {
+	//HookedCount++;
 	HookedCount++;
 	bIsCarryHook = true;
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
@@ -722,7 +723,8 @@ void AD1SurvivorBase::AttemptEscape()
 
 	// 4% 확률로 탈출 성공
 	float EscapeChance = FMath::RandRange(0.f, 100.f);
-	if (EscapeChance <= 99.f)
+	//if (EscapeChance <= 99.f)
+	if (EscapeChance <= 4.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Escape Success!"));
 		PlayMontage(EscapeMontage, "Free");
