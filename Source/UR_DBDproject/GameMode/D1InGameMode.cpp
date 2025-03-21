@@ -178,12 +178,17 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (IsValid(gameInstance))
 	{
+		// 아이피로 매칭해서 플레이어 인덱스를 게임 인스터스에 있는 서바이버 데이터와 동기화
 		for (int32 i = 0; i < gameInstance->m_serverInfo.survivorInfos.Num(); i++)
 		{
 			if (gameInstance->m_serverInfo.survivorInfos[i].userIP ==
 				NewPlayer->GetPlayerNetworkAddress())
 			{
-				Cast<AD1SurvivorBase>(NewPlayer->GetPawn())->PlayerIndex = i;
+				AD1SurvivorBase* survivor = Cast<AD1SurvivorBase>(NewPlayer->GetPawn());
+
+				if (IsValid(survivor))
+					survivor->PlayerIndex = i;
+
 				break;
 			}
 		}
@@ -196,10 +201,11 @@ void AD1InGameMode::Logout(AController* Exiting)
 {
 	AD1GameState* gameState = GetGameState<AD1GameState>();
 
-	//if (IsValid(gameState))
-	//{
-	//	gameState->Server_SetSurvivorState(Cast<APlayerController>(Exiting), ESurvivorState::Logout);
-	//}
+	if (IsValid(gameState))
+	{
+		AD1SurvivorBase* survivor = Cast<AD1SurvivorBase>(Exiting->GetPawn());
+		survivor->SetSurvivorState(ESurvivorState::Logout);
+	}
 
 	Super::Logout(Exiting);
 }

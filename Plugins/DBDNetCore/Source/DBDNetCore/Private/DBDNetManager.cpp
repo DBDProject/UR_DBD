@@ -187,246 +187,163 @@ void UDBDNetManager::Disconnect()
 	}
 }
 
-bool UDBDNetManager::ConnectLocalServer(const int port)
+bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 {
-	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Using multi-socket scan to find local server"));
+	// 로컬 서버를 찾기 위해 ARP 테이블을 검사
+	TArray<FString> ARPList = GetARPTable();
 
-	// ARP 테이블 항목 가져오기
-	TArray<FString> ARPEntries = GetARPTable();
+	const int NUM_THREADS = 8;  // 병렬로 검사할 스레드 수
+	const int SCAN_TIMEOUT_MS = timeoutMs;  // 빠른 스캔을 위한 짧은 타임아웃
 
-	if (ARPEntries.Num() == 0)
+	struct FScanResult
 	{
-		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No ARP entries found. Cannot detect servers."));
-		return false;
-	}
+		FString IP;
+		bool bFound;
+		SOCKET Socket;
+	};
 
-	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Found %d devices in ARP table"), ARPEntries.Num());
+	// 결과를 저장할 배열
+	TArray<FScanResult> Results;
+	Results.SetNum(NUM_THREADS);
 
-	// 병렬 스캔 설정
-	const int MAX_SOCKETS = FMath::Min(8, ARPEntries.Num());  // 최대 8개 소켓 사용
-	const int SCAN_TIMEOUT_MS = 100;  // 타임아웃 시간 (밀리초)
-
-	// 스캔 정보 배열 초기화
-	TArray<FScanInfo> ScanInfos;
-	ScanInfos.SetNum(MAX_SOCKETS);
-
-	// 소켓 생성 및 비동기 모드 설정
-	for (int i = 0; i < MAX_SOCKETS; i++)
+	// 각 스레드에서 사용할 소켓 생성
+	for (int i = 0; i < NUM_THREADS; ++i)
 	{
-		ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
-		ScanInfos[i].IsActive = false;
+		Results[i].bFound = false;
+		Results[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
 
-		if (ScanInfos[i].Socket == INVALID_SOCKET)
-		{
+		if (Results[i].Socket == INVALID_SOCKET) {
 			PrintSockError(WSAGetLastError());
-
-			// 이전에 생성된 소켓 정리
-			for (int j = 0; j < i; j++)
-			{
-				if (ScanInfos[j].Socket != INVALID_SOCKET)
-				{
-					closesocket(ScanInfos[j].Socket);
-				}
+			// 실패한 소켓 정리
+			for (int j = 0; j < i; ++j) {
+				closesocket(Results[j].Socket);
 			}
 			return false;
 		}
 
-		// 논블로킹 모드 설정
+		// 논블로킹 모드로 설정
 		u_long nonBlocking = 1;
-		ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
+		ioctlsocket(Results[i].Socket, FIONBIO, &nonBlocking);
 	}
 
-	int currentEntryIndex = 0;    // 현재 검사할 ARP 항목 인덱스
-	bool bFoundServer = false;    // 서버 발견 여부
-	int foundSocketIndex = -1;    // 서버를 발견한 소켓 인덱스
-	double startTime = FPlatformTime::Seconds();  // 시작 시간
-	const double MAX_SCAN_TIME = 3.0; // 최대 스캔 시간 (초)
+	// 각 IP 범위를 병렬로 검사
+	int currentIP = 0;
+	bool bFoundAny = false;
 
-	// 모든 IP를 검사하거나 서버를 찾을 때까지 반복
-	while ((currentEntryIndex < ARPEntries.Num() || ContainsActiveSocket(ScanInfos)) &&
-		!bFoundServer &&
-		(FPlatformTime::Seconds() - startTime < MAX_SCAN_TIME))
+	while (currentIP <= ARPList.Num() && !bFoundAny)
 	{
-		// 비활성 소켓에 새 IP 할당
-		for (int i = 0; i < MAX_SOCKETS && currentEntryIndex < ARPEntries.Num(); i++)
+		// 각 스레드에 검사할 IP 할당
+		for (int i = 0; i < NUM_THREADS && currentIP <= ARPList.Num(); ++i, ++currentIP)
 		{
-			if (!ScanInfos[i].IsActive && ScanInfos[i].Socket != INVALID_SOCKET)
-			{
-				// 새 IP 할당
-				ScanInfos[i].IP = ARPEntries[currentEntryIndex++];
-				ScanInfos[i].IsActive = true;
+			Results[i].IP = ARPList[currentIP];
 
-				// 연결 시도
-				SOCKADDR_IN stServerAddr;
-				ZeroMemory(&stServerAddr, sizeof(stServerAddr));
-				stServerAddr.sin_family = AF_INET;
-				stServerAddr.sin_port = htons(port);
-				stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*ScanInfos[i].IP));
+			// 소켓 주소 설정
+			SOCKADDR_IN stServerAddr;
+			ZeroMemory(&stServerAddr, sizeof(stServerAddr));
+			stServerAddr.sin_family = AF_INET;
+			stServerAddr.sin_port = htons(port);
+			stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*ARPList[currentIP]));
 
-				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Socket %d trying IP: %s"), i, *ScanInfos[i].IP);
-
-				int result = connect(ScanInfos[i].Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
-
-				// 연결 에러 확인
-				if (result == SOCKET_ERROR)
-				{
-					int error = WSAGetLastError();
-					if (error != WSAEWOULDBLOCK)
-					{
-						// 연결 실패, 소켓 재설정
-						closesocket(ScanInfos[i].Socket);
-						ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
-						if (ScanInfos[i].Socket != INVALID_SOCKET)
-						{
-							u_long nonBlocking = 1;
-							ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
-						}
-						ScanInfos[i].IsActive = false;
-					}
-				}
-			}
+			// 연결 시도
+			connect(Results[i].Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
 		}
 
-		// 모든 활성 소켓 상태 확인
+		// 모든 소켓 확인
 		fd_set writefds, exceptfds;
 		FD_ZERO(&writefds);
 		FD_ZERO(&exceptfds);
 
-		// 활성 소켓만 fd_set에 추가
-		bool hasActiveSockets = false;
-		for (int i = 0; i < MAX_SOCKETS; i++)
+		// 모든 소켓 추가
+		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
 		{
-			if (ScanInfos[i].IsActive && ScanInfos[i].Socket != INVALID_SOCKET)
-			{
-				FD_SET(ScanInfos[i].Socket, &writefds);
-				FD_SET(ScanInfos[i].Socket, &exceptfds);
-				hasActiveSockets = true;
-			}
+			FD_SET(Results[i].Socket, &writefds);
+			FD_SET(Results[i].Socket, &exceptfds);
 		}
 
-		// 활성 소켓이 있으면 select 호출
-		if (hasActiveSockets)
+		// 타임아웃 설정
+		struct timeval timeout;
+		timeout.tv_sec = timeoutMs / 1000;
+		timeout.tv_usec = (timeoutMs % 1000) * 1000;
+
+		// 모든 소켓에 대해 select 호출
+		select(0, NULL, &writefds, &exceptfds, &timeout);
+
+		// 결과 확인
+		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= ARPList.Num(); ++i)
 		{
-			// 타임아웃 설정
-			struct timeval timeout;
-			timeout.tv_sec = 0;
-			timeout.tv_usec = SCAN_TIMEOUT_MS * 1000;
-
-			// 소켓 상태 확인
-			int selectResult = select(0, NULL, &writefds, &exceptfds, &timeout);
-
-			if (selectResult > 0)
+			if (FD_ISSET(Results[i].Socket, &writefds) && !FD_ISSET(Results[i].Socket, &exceptfds))
 			{
-				// 각 소켓의 상태 확인
-				for (int i = 0; i < MAX_SOCKETS; i++)
-				{
-					if (!ScanInfos[i].IsActive || ScanInfos[i].Socket == INVALID_SOCKET)
-						continue;
+				// 연결 성공
+				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s"), *Results[i].IP);
+				Results[i].bFound = true;
+				bFoundAny = true;
 
-					// 연결 성공 확인
-					if (FD_ISSET(ScanInfos[i].Socket, &writefds) && !FD_ISSET(ScanInfos[i].Socket, &exceptfds))
-					{
-						// 서버 발견!
-						bFoundServer = true;
-						foundSocketIndex = i;
-						UE_LOG(LogClass, Warning, TEXT("[DBDNet] Server found at %s"), *ScanInfos[i].IP);
-						break;
-					}
-					else if (FD_ISSET(ScanInfos[i].Socket, &writefds) || FD_ISSET(ScanInfos[i].Socket, &exceptfds))
-					{
-						// 연결 실패 또는 완료
-						closesocket(ScanInfos[i].Socket);
-						ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
-						if (ScanInfos[i].Socket != INVALID_SOCKET)
-						{
-							u_long nonBlocking = 1;
-							ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
-						}
-						ScanInfos[i].IsActive = false;
+				// 찾은 소켓 저장하고 다른 소켓은 닫기
+				m_socket = Results[i].Socket;
+
+				// 다른 소켓 정리
+				for (int j = 0; j < NUM_THREADS; ++j) {
+					if (j != i) {
+						closesocket(Results[j].Socket);
 					}
 				}
-			}
-			else if (selectResult == SOCKET_ERROR)
-			{
-				// select 에러
-				PrintSockError(WSAGetLastError());
+
+				// 워커 스레드 시작
+				if (StartThread())
+				{
+					m_bIsConnected = true;
+					return true;
+				}
+				else
+				{
+					UE_LOG(LogClass, Error, TEXT("[DBDNet] Failed to start worker thread"));
+					Disconnect();
+					return false;
+				}
 			}
 		}
 
-		// CPU 부하 감소를 위한 짧은 대기
-		FPlatformProcess::Sleep(0.01f);
+		// 이번 배치에서 찾지 못한 경우 소켓 재설정
+		if (!bFoundAny)
+		{
+			for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
+			{
+				closesocket(Results[i].Socket);
+				Results[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
+
+				if (Results[i].Socket == INVALID_SOCKET) {
+					PrintSockError(WSAGetLastError());
+					continue;
+				}
+
+				// 논블로킹 모드로 설정
+				u_long nonBlocking = 1;
+				ioctlsocket(Results[i].Socket, FIONBIO, &nonBlocking);
+			}
+		}
 	}
 
-	// 시간 초과 확인
-	if (FPlatformTime::Seconds() - startTime >= MAX_SCAN_TIME)
+	// 서버를 찾지 못한 경우
+	if (!bFoundAny)
 	{
-		UE_LOG(LogClass, Warning, TEXT("[DBDNet] Scan timed out after %f seconds"), MAX_SCAN_TIME);
-	}
+		// 모든 소켓 정리
+		for (int i = 0; i < NUM_THREADS; ++i) {
+			closesocket(Results[i].Socket);
+		}
 
-	// 서버를 찾았을 경우
-	if (bFoundServer && foundSocketIndex >= 0)
-	{
-		// 찾은 소켓을 m_socket으로 설정하고 나머지는 정리
-		m_socket = ScanInfos[foundSocketIndex].Socket;
-
-		// 소켓을 블로킹 모드로 되돌림
-		u_long nonBlocking = 0;
-		ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+		// 새로운 소켓 생성
+		m_socket = socket(AF_INET, SOCK_STREAM, 0);
+		if (m_socket == INVALID_SOCKET) {
+			PrintSockError(WSAGetLastError());
+		}
 
 		// TCP_NODELAY 옵션 설정
 		int option = TRUE;
 		setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
-
-		// 나머지 소켓 정리
-		for (int i = 0; i < MAX_SOCKETS; i++)
-		{
-			if (i != foundSocketIndex && ScanInfos[i].Socket != INVALID_SOCKET)
-			{
-				closesocket(ScanInfos[i].Socket);
-			}
-		}
-
-		// 워커 스레드 시작
-		if (StartThread())
-		{
-			m_bIsConnected = true;
-			return true;
-		}
-		else
-		{
-			UE_LOG(LogClass, Error, TEXT("[DBDNet] Failed to start worker thread"));
-			Disconnect();
-			return false;
-		}
-	}
-	else
-	{
-		// 서버를 찾지 못했을 경우 - 모든 소켓 정리
-		for (int i = 0; i < MAX_SOCKETS; i++)
-		{
-			if (ScanInfos[i].Socket != INVALID_SOCKET)
-			{
-				closesocket(ScanInfos[i].Socket);
-			}
-		}
-
-		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No servers found"));
 	}
 
-	return false;
+	return bFoundAny;
 }
-
-// 활성 소켓이 있는지 확인하는 헬퍼 함수
-bool UDBDNetManager::ContainsActiveSocket(const TArray<FScanInfo>& ScanInfos)
-{
-	for (const FScanInfo& Info : ScanInfos)
-	{
-		if (Info.IsActive)
-			return true;
-	}
-	return false;
-}
-
 
 UDBDPacketProcessor* UDBDNetManager::GetPacketProcessor()
 {

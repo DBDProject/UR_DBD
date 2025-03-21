@@ -39,19 +39,29 @@ void AD1GameState::HandleMatchHasStarted()
 		if (GetNetMode() == NM_ListenServer)
 			OnRep_RepairedGenerators();
 
-		FindPlayerSpawners();
-		FindExitGates();
 		SetPlayerLocation();
-
-		UE_LOG(LogTemp, Warning, TEXT("==============게임 시작!============="));
 
 		GetWorld()->GetTimerManager().SetTimer(InputLockTimer, this,
 			&AD1GameState::OnInputUnlockTimer, GameMode->INPUT_UNLOCK_TIME, false);
 
 	}
 
-	Multi_SetInputLock(true);
+	UE_LOG(LogTemp, Warning, TEXT("게임 시작!"));
 	OnGameStart.Broadcast();
+}
+
+void AD1GameState::HandleMatchIsWaitingToStart()
+{
+	Super::HandleMatchIsWaitingToStart();
+
+	if (HasAuthority())
+	{
+		FindPlayerSpawners();
+		FindExitGates();
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("게임 대기 중!"));
+	Multi_SetInputLock(true);
 }
 
 void AD1GameState::HandleMatchHasEnded()
@@ -59,13 +69,6 @@ void AD1GameState::HandleMatchHasEnded()
 	Super::HandleMatchHasEnded();
 
 	OnGameEnd.Broadcast();
-}
-
-void AD1GameState::HandleMatchIsWaitingToStart()
-{
-	Super::HandleMatchIsWaitingToStart();
-
-	UE_LOG(LogTemp, Warning, TEXT("==============게임 대기 중!============="));
 }
 
 void AD1GameState::FindExitGates()
