@@ -11,7 +11,7 @@
 /**
  *
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChange, ESurvivorState,NewState);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChange, ESurvivorState, NewState);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
@@ -117,7 +117,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_BeingHealing(AD1SurvivorBase* Healer);
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_StopBeingHealing();    
+	void Multicast_StopBeingHealing();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_UpdateHealingProgress(float NewProgress);
 	UFUNCTION(NetMulticast, Reliable)
@@ -156,7 +156,7 @@ public:
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
-protected: 
+protected:
 	void PlayMontage_Local(UAnimMontage* Montage, FName SectionName);
 	UFUNCTION(Server, Reliable)
 	void Server_PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -165,7 +165,7 @@ protected:
 
 	UFUNCTION(Server, Reliable)
 	void Server_UpdatePalletLocation(AD1Pallet* Pallet, EPalletLocation PalletLocation);
-	
+
 public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(NetMulticast, Reliable)
@@ -244,6 +244,10 @@ public:
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> S_GeneratorMontage; // 발전기 몽타주
+
+	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Survivor")  // 플레이어 인덱스 (0~3)
+		int32 PlayerIndex = -1;
+
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
