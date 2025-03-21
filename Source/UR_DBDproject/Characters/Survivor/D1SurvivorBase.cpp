@@ -42,7 +42,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); 
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
@@ -172,6 +172,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckEnable);
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckFail);
 	DOREPLIFETIME(AD1SurvivorBase, EscapeGauge);
+	DOREPLIFETIME(AD1SurvivorBase, PlayerIndex);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -195,6 +196,8 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	{
 		UpdateHookBleedOut(DeltaTime);
 	}
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 인덱스 : %d"), PlayerIndex);
 }
 
 // 웅크릴 때 카메라 보간

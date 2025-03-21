@@ -3,6 +3,7 @@
 
 #include "GameMode/D1InGameMode.h"
 #include "System/D1GameState.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 
 AD1InGameMode::AD1InGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -102,27 +103,6 @@ void AD1InGameMode::ReadyPlayer()
 	{
 		StartMatch();
 	}
-
-}
-
-bool AD1InGameMode::GetSurvivorInfo(const FString& playerIP, FPlayerInfo& outPlayerInfo)
-{
-	UD1GameInstance* gameInstance = GetGameInstance<UD1GameInstance>();
-
-	if (IsValid(gameInstance))
-	{
-		for (FPlayerInfo& playerInfo : gameInstance->m_serverInfo.survivorInfos)
-		{
-			if (playerInfo.userIP == playerIP)
-			{
-				outPlayerInfo.characterType = playerInfo.characterType;
-				outPlayerInfo.userIP = playerInfo.userIP;
-				return true;
-			}
-		}
-	}
-
-	return false;
 }
 
 FName AD1InGameMode::GetEnumRowName(ECharacterType CharacterType)
@@ -194,19 +174,18 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	AD1GameState* gameState = GetGameState<AD1GameState>();
+	UD1GameInstance* gameInstance = GetGameInstance<UD1GameInstance>();
 
-	FPlayerInfo playerInfo;
-
-	if (IsValid(gameState))
+	if (IsValid(gameInstance))
 	{
-		if (GetSurvivorInfo(NewPlayer->GetPlayerNetworkAddress(), playerInfo))
+		for (int32 i = 0; i < gameInstance->m_serverInfo.survivorInfos.Num(); i++)
 		{
-			FSurvivorInfo NewSurvivorInfo;
-			NewSurvivorInfo.characterType = playerInfo.characterType;
-			NewSurvivorInfo.survivorState = ESurvivorState::Healthy;
-			gameState->AddSurvivorInfo(NewPlayer, NewSurvivorInfo);
-			UE_LOG(LogTemp, Warning, TEXT("생존자 플레이어 추가!"));
+			if (gameInstance->m_serverInfo.survivorInfos[i].userIP ==
+				NewPlayer->GetPlayerNetworkAddress())
+			{
+				Cast<AD1SurvivorBase>(NewPlayer->GetPawn())->PlayerIndex = i;
+				break;
+			}
 		}
 	}
 

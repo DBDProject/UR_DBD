@@ -15,8 +15,8 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameEnd);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
-//DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSurvivorStateUpdated, FSurvivorInfo, survivorInfo, int32, playerIdx);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1GameState : public AGameState
@@ -47,26 +47,18 @@ private:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetInputLock(bool bIsLock);
 
-	//UFUNCTION(NetMulticast, Reliable)
-	//void Multi_UpdateSurvivorStateUI(const FSurvivorInfo& SurvivorInfo, int32 PlayerIdx);
-
 protected:
 	virtual void BeginPlay() override;
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	virtual void HandleMatchHasStarted() override;
+	virtual void HandleMatchHasEnded() override;
+	virtual void HandleMatchIsWaitingToStart() override;
 
 public:
 	AD1GameState();
 
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
-
-	void AddSurvivorInfo(APlayerController* Key, const FSurvivorInfo& SurvivorInfo);
-
-	UFUNCTION(BlueprintCallable, Category = "DBDListen")
-	int32 GetSurvivorIndex(APlayerController* Key);
-	//UFUNCTION(Server, Reliable)
-	//void Server_SetSurvivorState(APlayerController* PlayerController, ESurvivorState NewState);
 
 private:
 	FTimerHandle InputLockTimer;
@@ -85,8 +77,8 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnInputUnlock OnInputUnlock;
 
-	//UPROPERTY(BlueprintAssignable, Category = "DBDListen")
-	//FOnSurvivorStateUpdated OnSurvivorStateUpdated;
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGameEnd OnGameEnd;
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, Category = "DBDListen")
@@ -95,13 +87,6 @@ protected:
 	// 모든 발전기가 수리되었는지 여부
 	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted, BlueprintReadWrite, Category = "DBDListen")
 	bool bAllGeneratorsRepaired = false;
-
-	UPROPERTY()
-	TArray<APlayerController*> SurvivorIdxKey;
-
-	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
-	TArray<FSurvivorInfo> SurvivorInfos;
-
 
 	// 맵에 있는 탈출구들
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DBDListen")

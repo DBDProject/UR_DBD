@@ -44,8 +44,6 @@ private:
 	FName GetEnumRowName(ECharacterType CharacterType);
 
 	void ReadyPlayer();
-	bool GetSurvivorInfo(const FString& playerIP, FPlayerInfo& outPlayerInfo);
-
 
 public:
 	AD1InGameMode(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());

@@ -24,7 +24,6 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
-	DOREPLIFETIME(AD1GameState, SurvivorInfos);
 }
 
 void AD1GameState::HandleMatchHasStarted()
@@ -53,6 +52,20 @@ void AD1GameState::HandleMatchHasStarted()
 
 	Multi_SetInputLock(true);
 	OnGameStart.Broadcast();
+}
+
+void AD1GameState::HandleMatchHasEnded()
+{
+	Super::HandleMatchHasEnded();
+
+	OnGameEnd.Broadcast();
+}
+
+void AD1GameState::HandleMatchIsWaitingToStart()
+{
+	Super::HandleMatchIsWaitingToStart();
+
+	UE_LOG(LogTemp, Warning, TEXT("==============게임 대기 중!============="));
 }
 
 void AD1GameState::FindExitGates()
@@ -226,31 +239,6 @@ void AD1GameState::OnRep_GeneratorCompleted()
 	OnGeneratorCompleted.Broadcast();
 }
 
-//void AD1GameState::Multi_UpdateSurvivorStateUI_Implementation(const FSurvivorInfo& survivorInfo,
-//	int32 playerIdx)
-//{
-//	UE_LOG(LogTemp, Warning, TEXT("생존자 상태 업데이트! : %d %d"), survivorInfo.survivorState, playerIdx);
-//	OnSurvivorStateUpdated.Broadcast(survivorInfo, playerIdx);
-//}
-
-void AD1GameState::AddSurvivorInfo(APlayerController* Key, const FSurvivorInfo& SurvivorInfo)
-{
-	SurvivorIdxKey.Add(Key);
-	SurvivorInfos.Add(SurvivorInfo);
-}
-
-int32 AD1GameState::GetSurvivorIndex(APlayerController* Key)
-{
-	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
-	{
-		if (SurvivorIdxKey[i] == Key)
-		{
-			return i;
-		}
-	}
-
-	return -1;
-}
 
 void AD1GameState::UpdateGeneratorState()
 {
@@ -282,25 +270,4 @@ void AD1GameState::UpdateGeneratorState()
 		}
 	}
 }
-
-//void AD1GameState::Server_SetSurvivorState_Implementation(APlayerController* PlayerController, ESurvivorState NewState)
-//{
-//	if (!PlayerController)
-//		return;
-//
-//	for (int32 i = 0; i < SurvivorIdxKey.Num(); i++)
-//	{
-//		if (SurvivorIdxKey[i] == PlayerController)
-//		{
-//			SurvivorInfos[i].survivorState = NewState;
-//
-//			if (NewState == ESurvivorState::Logout)
-//				SurvivorIdxKey[i] = nullptr;
-//
-//			Multi_UpdateSurvivorStateUI(SurvivorInfos[i], i);
-//			break;
-//		}
-//	}
-//
-//}
 
