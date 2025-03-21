@@ -115,10 +115,7 @@ bool UDBDNetManager::Connect(const FString& ip, const int port, int timeoutMs)
 		if (error != WSAEWOULDBLOCK)
 		{
 			PrintSockError(error);
-
-			// Set socket back to blocking mode
-			nonBlocking = 0;
-			ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+			closesocket(m_socket);
 			return false;
 		}
 	}
@@ -163,6 +160,7 @@ bool UDBDNetManager::Connect(const FString& ip, const int port, int timeoutMs)
 		int errorSize = sizeof(error);
 		getsockopt(m_socket, SOL_SOCKET, SO_ERROR, (char*)&error, &errorSize);
 		PrintSockError(error);
+		closesocket(m_socket);
 		return false;
 	}
 
@@ -191,9 +189,9 @@ void UDBDNetManager::Disconnect()
 
 bool UDBDNetManager::ConnectLocalServer(const int port)
 {
-	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Using ARP table to find local server"));
+	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Using multi-socket scan to find local server"));
 
-	// Get ARP table entries instead of scanning the entire subnet
+	// ARP 테이블 항목 가져오기
 	TArray<FString> ARPEntries = GetARPTable();
 
 	if (ARPEntries.Num() == 0)
@@ -204,118 +202,228 @@ bool UDBDNetManager::ConnectLocalServer(const int port)
 
 	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Found %d devices in ARP table"), ARPEntries.Num());
 
-	// Connection timeout value
-	const int SCAN_TIMEOUT_MS = 100;
+	// 병렬 스캔 설정
+	const int MAX_SOCKETS = FMath::Min(8, ARPEntries.Num());  // 최대 8개 소켓 사용
+	const int SCAN_TIMEOUT_MS = 100;  // 타임아웃 시간 (밀리초)
 
-	// Create socket for connections
-	m_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_socket == INVALID_SOCKET) {
-		PrintSockError(WSAGetLastError());
-		return false;
+	// 스캔 정보 배열 초기화
+	TArray<FScanInfo> ScanInfos;
+	ScanInfos.SetNum(MAX_SOCKETS);
+
+	// 소켓 생성 및 비동기 모드 설정
+	for (int i = 0; i < MAX_SOCKETS; i++)
+	{
+		ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
+		ScanInfos[i].IsActive = false;
+
+		if (ScanInfos[i].Socket == INVALID_SOCKET)
+		{
+			PrintSockError(WSAGetLastError());
+
+			// 이전에 생성된 소켓 정리
+			for (int j = 0; j < i; j++)
+			{
+				if (ScanInfos[j].Socket != INVALID_SOCKET)
+				{
+					closesocket(ScanInfos[j].Socket);
+				}
+			}
+			return false;
+		}
+
+		// 논블로킹 모드 설정
+		u_long nonBlocking = 1;
+		ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
 	}
 
-	// Set socket to non-blocking mode for timeouts
-	u_long nonBlocking = 1;
-	ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+	int currentEntryIndex = 0;    // 현재 검사할 ARP 항목 인덱스
+	bool bFoundServer = false;    // 서버 발견 여부
+	int foundSocketIndex = -1;    // 서버를 발견한 소켓 인덱스
+	double startTime = FPlatformTime::Seconds();  // 시작 시간
+	const double MAX_SCAN_TIME = 3.0; // 최대 스캔 시간 (초)
 
-	// Try to connect to each IP in the ARP table
-	for (const FString& TargetIP : ARPEntries)
+	// 모든 IP를 검사하거나 서버를 찾을 때까지 반복
+	while ((currentEntryIndex < ARPEntries.Num() || ContainsActiveSocket(ScanInfos)) &&
+		!bFoundServer &&
+		(FPlatformTime::Seconds() - startTime < MAX_SCAN_TIME))
 	{
-		UE_LOG(LogClass, Warning, TEXT("[DBDNet] Trying IP from ARP: %s"), *TargetIP);
-
-		// Set up server address
-		SOCKADDR_IN stServerAddr;
-		ZeroMemory(&stServerAddr, sizeof(stServerAddr));
-		stServerAddr.sin_family = AF_INET;
-		stServerAddr.sin_port = htons(port);
-		stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*TargetIP));
-
-		// Try connection
-		int result = connect(m_socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
-
-		// Check if connection is in progress (expected for non-blocking socket)
-		if (result == SOCKET_ERROR)
+		// 비활성 소켓에 새 IP 할당
+		for (int i = 0; i < MAX_SOCKETS && currentEntryIndex < ARPEntries.Num(); i++)
 		{
-			int error = WSAGetLastError();
-			if (error != WSAEWOULDBLOCK)
+			if (!ScanInfos[i].IsActive && ScanInfos[i].Socket != INVALID_SOCKET)
 			{
-				// This IP failed, try next one
-				closesocket(m_socket);
-				m_socket = socket(AF_INET, SOCK_STREAM, 0);
-				if (m_socket == INVALID_SOCKET) {
-					PrintSockError(WSAGetLastError());
-					return false;
+				// 새 IP 할당
+				ScanInfos[i].IP = ARPEntries[currentEntryIndex++];
+				ScanInfos[i].IsActive = true;
+
+				// 연결 시도
+				SOCKADDR_IN stServerAddr;
+				ZeroMemory(&stServerAddr, sizeof(stServerAddr));
+				stServerAddr.sin_family = AF_INET;
+				stServerAddr.sin_port = htons(port);
+				stServerAddr.sin_addr.s_addr = inet_addr(TCHAR_TO_ANSI(*ScanInfos[i].IP));
+
+				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Socket %d trying IP: %s"), i, *ScanInfos[i].IP);
+
+				int result = connect(ScanInfos[i].Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+
+				// 연결 에러 확인
+				if (result == SOCKET_ERROR)
+				{
+					int error = WSAGetLastError();
+					if (error != WSAEWOULDBLOCK)
+					{
+						// 연결 실패, 소켓 재설정
+						closesocket(ScanInfos[i].Socket);
+						ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
+						if (ScanInfos[i].Socket != INVALID_SOCKET)
+						{
+							u_long nonBlocking = 1;
+							ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
+						}
+						ScanInfos[i].IsActive = false;
+					}
 				}
-				ioctlsocket(m_socket, FIONBIO, &nonBlocking);
-				continue;
 			}
 		}
 
-		// Use select to wait for connection with timeout
+		// 모든 활성 소켓 상태 확인
 		fd_set writefds, exceptfds;
 		FD_ZERO(&writefds);
 		FD_ZERO(&exceptfds);
-		FD_SET(m_socket, &writefds);
-		FD_SET(m_socket, &exceptfds);
 
-		// Set timeout
-		struct timeval timeout;
-		timeout.tv_sec = 0;
-		timeout.tv_usec = SCAN_TIMEOUT_MS * 1000;
-
-		// Check if socket is writable (connected)
-		if (select(0, NULL, &writefds, &exceptfds, &timeout) > 0)
+		// 활성 소켓만 fd_set에 추가
+		bool hasActiveSockets = false;
+		for (int i = 0; i < MAX_SOCKETS; i++)
 		{
-			// Check if connection succeeded
-			if (FD_ISSET(m_socket, &writefds) && !FD_ISSET(m_socket, &exceptfds))
+			if (ScanInfos[i].IsActive && ScanInfos[i].Socket != INVALID_SOCKET)
 			{
-				// Set back to blocking mode for normal operation
-				nonBlocking = 0;
-				ioctlsocket(m_socket, FIONBIO, &nonBlocking);
-
-				// Set TCP_NODELAY option
-				int option = TRUE;
-				setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
-
-				// Start worker thread
-				if (StartThread())
-				{
-					m_bIsConnected = true;
-					return true;
-				}
-				else
-				{
-					UE_LOG(LogClass, Error, TEXT("[DBDNet] Failed to start worker thread"));
-					Disconnect();
-					return false;
-				}
+				FD_SET(ScanInfos[i].Socket, &writefds);
+				FD_SET(ScanInfos[i].Socket, &exceptfds);
+				hasActiveSockets = true;
 			}
 		}
 
-		// Connection failed or timed out, try next IP
-		closesocket(m_socket);
-		m_socket = socket(AF_INET, SOCK_STREAM, 0);
-		if (m_socket == INVALID_SOCKET) {
-			PrintSockError(WSAGetLastError());
+		// 활성 소켓이 있으면 select 호출
+		if (hasActiveSockets)
+		{
+			// 타임아웃 설정
+			struct timeval timeout;
+			timeout.tv_sec = 0;
+			timeout.tv_usec = SCAN_TIMEOUT_MS * 1000;
+
+			// 소켓 상태 확인
+			int selectResult = select(0, NULL, &writefds, &exceptfds, &timeout);
+
+			if (selectResult > 0)
+			{
+				// 각 소켓의 상태 확인
+				for (int i = 0; i < MAX_SOCKETS; i++)
+				{
+					if (!ScanInfos[i].IsActive || ScanInfos[i].Socket == INVALID_SOCKET)
+						continue;
+
+					// 연결 성공 확인
+					if (FD_ISSET(ScanInfos[i].Socket, &writefds) && !FD_ISSET(ScanInfos[i].Socket, &exceptfds))
+					{
+						// 서버 발견!
+						bFoundServer = true;
+						foundSocketIndex = i;
+						UE_LOG(LogClass, Warning, TEXT("[DBDNet] Server found at %s"), *ScanInfos[i].IP);
+						break;
+					}
+					else if (FD_ISSET(ScanInfos[i].Socket, &writefds) || FD_ISSET(ScanInfos[i].Socket, &exceptfds))
+					{
+						// 연결 실패 또는 완료
+						closesocket(ScanInfos[i].Socket);
+						ScanInfos[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
+						if (ScanInfos[i].Socket != INVALID_SOCKET)
+						{
+							u_long nonBlocking = 1;
+							ioctlsocket(ScanInfos[i].Socket, FIONBIO, &nonBlocking);
+						}
+						ScanInfos[i].IsActive = false;
+					}
+				}
+			}
+			else if (selectResult == SOCKET_ERROR)
+			{
+				// select 에러
+				PrintSockError(WSAGetLastError());
+			}
+		}
+
+		// CPU 부하 감소를 위한 짧은 대기
+		FPlatformProcess::Sleep(0.01f);
+	}
+
+	// 시간 초과 확인
+	if (FPlatformTime::Seconds() - startTime >= MAX_SCAN_TIME)
+	{
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet] Scan timed out after %f seconds"), MAX_SCAN_TIME);
+	}
+
+	// 서버를 찾았을 경우
+	if (bFoundServer && foundSocketIndex >= 0)
+	{
+		// 찾은 소켓을 m_socket으로 설정하고 나머지는 정리
+		m_socket = ScanInfos[foundSocketIndex].Socket;
+
+		// 소켓을 블로킹 모드로 되돌림
+		u_long nonBlocking = 0;
+		ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+
+		// TCP_NODELAY 옵션 설정
+		int option = TRUE;
+		setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
+
+		// 나머지 소켓 정리
+		for (int i = 0; i < MAX_SOCKETS; i++)
+		{
+			if (i != foundSocketIndex && ScanInfos[i].Socket != INVALID_SOCKET)
+			{
+				closesocket(ScanInfos[i].Socket);
+			}
+		}
+
+		// 워커 스레드 시작
+		if (StartThread())
+		{
+			m_bIsConnected = true;
+			return true;
+		}
+		else
+		{
+			UE_LOG(LogClass, Error, TEXT("[DBDNet] Failed to start worker thread"));
+			Disconnect();
 			return false;
 		}
-		ioctlsocket(m_socket, FIONBIO, &nonBlocking);
+	}
+	else
+	{
+		// 서버를 찾지 못했을 경우 - 모든 소켓 정리
+		for (int i = 0; i < MAX_SOCKETS; i++)
+		{
+			if (ScanInfos[i].Socket != INVALID_SOCKET)
+			{
+				closesocket(ScanInfos[i].Socket);
+			}
+		}
+
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No servers found"));
 	}
 
-	// No servers found
-	UE_LOG(LogClass, Warning, TEXT("[DBDNet] No servers found on any ARP table entries"));
+	return false;
+}
 
-	// Make sure we leave a valid socket
-	closesocket(m_socket);
-	m_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_socket == INVALID_SOCKET) {
-		PrintSockError(WSAGetLastError());
+// 활성 소켓이 있는지 확인하는 헬퍼 함수
+bool UDBDNetManager::ContainsActiveSocket(const TArray<FScanInfo>& ScanInfos)
+{
+	for (const FScanInfo& Info : ScanInfos)
+	{
+		if (Info.IsActive)
+			return true;
 	}
-
-	// Set TCP_NODELAY option for the new socket
-	int option = TRUE;
-	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
-
 	return false;
 }
 
