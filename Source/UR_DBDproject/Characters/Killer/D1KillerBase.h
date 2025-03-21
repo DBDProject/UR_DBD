@@ -6,6 +6,8 @@
 #include "Characters/D1CharacterBase.h"
 #include "D1KillerBase.generated.h"
 
+class USoundAttenuation;
+class UAudioComponent;
 class UCameraComponent;
 class USkeletalMeshComponent;
 /**
@@ -100,6 +102,13 @@ protected:
 
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
+
+	//사운드
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundAttenuation* AttenuationSetting;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	class UAudioComponent* AudioComponent;
 
 private:
 	UFUNCTION()

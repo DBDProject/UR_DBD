@@ -19,6 +19,8 @@
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "SkeletalMeshRestoreState.h"
+#include "Sound/SoundAttenuation.h"
+#include "Components/AudioComponent.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -183,6 +185,10 @@ AD1KillerBase::AD1KillerBase()
 	GetMesh()->bEnableUpdateRateOptimizations = false;
 	BatMesh->bEnableUpdateRateOptimizations = false;
 
+	// 오디오 컴포넌트 생성
+	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComponent->SetupAttachment(RootComponent);
+
 }
 
 void AD1KillerBase::BeginPlay()
@@ -235,6 +241,14 @@ void AD1KillerBase::BeginPlay()
 	{
 		WolfPowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
 		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
+	}
+
+	if (GetController())
+	{
+		if (GetController()->IsLocalController())
+		{
+			AudioComponent->SetVolumeMultiplier(0.0f);
+		}
 	}
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
