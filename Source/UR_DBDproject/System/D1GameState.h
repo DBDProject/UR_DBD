@@ -27,14 +27,14 @@ private:
 	// 맵에 있는 ExitGate 찾기
 	void FindExitGates();
 
-	// 맵에 있는 PlayerSpawner 찾기
-	void FindPlayerSpawners();
-
-	// 플레이어 위치 설정
-	void SetPlayerLocation();
-
 	// 일정 시간 이후 입력 잠금 해제
 	void OnInputUnlockTimer();
+
+	// 게임 시작 시 호출
+	void OnGameStartTimer();
+
+	// 일정 시간 이후 서버장 나가기
+	void OnTravelTimer();
 
 	// UI용 변수 바뀔 시 호출
 	UFUNCTION()
@@ -46,6 +46,9 @@ private:
 
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetInputLock(bool bIsLock);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_GameStart();
 
 protected:
 	virtual void BeginPlay() override;
@@ -62,8 +65,14 @@ public:
 
 private:
 	FTimerHandle InputLockTimer;
+	FTimerHandle GameStartTimer;
+	FTimerHandle TravelTimer; // 서버장 내보내려고 만든 타이머
 
+	class UD1GameStartUI* GameStartUI;
 protected:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameStartUI> GameStartUIClass;
+
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnGeneratorRepaired OnGeneratorRepaired;
@@ -92,14 +101,6 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TArray<TObjectPtr<class AD1ExitGate>> ExitGates;
 
-	// 맵에 있는 스포너들 
-	UPROPERTY(VisibleAnywhere, Category = "DBDListen")
-	TArray<AActor*> KillerSpawners;
-
-	// 맵에 있는 스포너들 
-	UPROPERTY(VisibleAnywhere, Category = "DBDListen")
-	TArray<AActor*> SurvivorSpawners;
-
 	// TODO : 남아있는 플레이어
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	int32 RemainingSurvivors;
@@ -107,4 +108,8 @@ protected:
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	float EndGameTimer;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
+	float INPUT_UNLOCK_TIMER = 4.f;
+
 };

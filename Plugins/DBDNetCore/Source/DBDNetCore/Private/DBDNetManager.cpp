@@ -192,7 +192,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 	// 로컬 서버를 찾기 위해 ARP 테이블을 검사
 	TArray<FString> ARPList = GetARPTable();
 
-	const int NUM_THREADS = 8;  // 병렬로 검사할 스레드 수
+	const int NUM_THREADS = 10;  // 병렬로 검사할 스레드 수
 	const int SCAN_TIMEOUT_MS = timeoutMs;  // 빠른 스캔을 위한 짧은 타임아웃
 
 	struct FScanResult
@@ -230,10 +230,10 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 	int currentIP = 0;
 	bool bFoundAny = false;
 
-	while (currentIP <= ARPList.Num() && !bFoundAny)
+	while (currentIP < ARPList.Num() && !bFoundAny)
 	{
 		// 각 스레드에 검사할 IP 할당
-		for (int i = 0; i < NUM_THREADS && currentIP <= ARPList.Num(); ++i, ++currentIP)
+		for (int i = 0; i < NUM_THREADS && currentIP < ARPList.Num(); ++i, ++currentIP)
 		{
 			Results[i].IP = ARPList[currentIP];
 
@@ -254,7 +254,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 		FD_ZERO(&exceptfds);
 
 		// 모든 소켓 추가
-		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
+		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) < ARPList.Num(); ++i)
 		{
 			FD_SET(Results[i].Socket, &writefds);
 			FD_SET(Results[i].Socket, &exceptfds);
@@ -269,7 +269,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 		select(0, NULL, &writefds, &exceptfds, &timeout);
 
 		// 결과 확인
-		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= ARPList.Num(); ++i)
+		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) < ARPList.Num(); ++i)
 		{
 			if (FD_ISSET(Results[i].Socket, &writefds) && !FD_ISSET(Results[i].Socket, &exceptfds))
 			{
@@ -306,7 +306,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 		// 이번 배치에서 찾지 못한 경우 소켓 재설정
 		if (!bFoundAny)
 		{
-			for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) <= 255; ++i)
+			for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) < ARPList.Num(); ++i)
 			{
 				closesocket(Results[i].Socket);
 				Results[i].Socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -494,6 +494,8 @@ TArray<FString> UDBDNetManager::GetARPTable()
 
 	if (GetIpNetTable(pIpNetTable, &size, 0) == NO_ERROR)
 	{
+		ARPList.Reserve((int32)pIpNetTable->dwNumEntries);
+
 		for (DWORD i = 0; i < pIpNetTable->dwNumEntries; i++)
 		{
 			IN_ADDR ipAddr;

@@ -25,6 +25,11 @@
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
+	PrimaryActorTick.bStartWithTickEnabled = true;
+	PrimaryActorTick.bCanEverTick = true;
+	bAlwaysRelevant = true;
+	bReplicates = true;
+
 	UE_LOG(LogTemp, Warning, TEXT("생존자 생성됨! %s"), *GetName());
 	auto a = this;
 	GetCharacterMovement()->bOrientRotationToMovement = false;			// 이동 방향을 자동으로 바라보지 않음
@@ -147,6 +152,7 @@ void AD1SurvivorBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+
 }
 
 void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -178,7 +184,14 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
 	SmoothCameraTransition(DeltaTime);
+
+	if (bPlayingIntro)
+	{
+		CurrentAngle -= OrbitSpeed * DeltaTime;
+		SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+	}
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
@@ -197,7 +210,6 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 		UpdateHookBleedOut(DeltaTime);
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("생존자 인덱스 : %d"), PlayerIndex);
 }
 
 // 웅크릴 때 카메라 보간
@@ -845,6 +857,7 @@ void AD1SurvivorBase::DieFromEntity_Local()
 
 void AD1SurvivorBase::RemoveFromGame()
 {
+	//Cast<APlayerController>(GetController())->ClientTravel("/Game/Maps/Map_MainMenu", ETravelType::TRAVEL_Absolute);
 	Destroy();
 }
 
@@ -1114,6 +1127,23 @@ void AD1SurvivorBase::Server_SetSelfRecovering_Implementation(bool bNewState)
 	bIsCrawlSelfRecovering = bNewState;
 }
 
+void AD1SurvivorBase::Client_PlayStartSequence_Implementation(float UNLOCK_INPUT_TIMER)
+{
+	FTimerHandle EndSequenceTimer;
+	bPlayingIntro = true;
+	OrbitSpeed = CurrentAngle / UNLOCK_INPUT_TIMER;
+	SpringArm->bUsePawnControlRotation = false;
+	SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+
+	GetWorld()->GetTimerManager().SetTimer(EndSequenceTimer, [this]() {
+		bPlayingIntro = false;
+		SpringArm->bUsePawnControlRotation = true;
+		SpringArm->SetRelativeRotation(FRotator(0.f, 0.f, 0.f));
+		},
+		UNLOCK_INPUT_TIMER,
+		false);
+}
+
 void AD1SurvivorBase::FinishHealing()
 {
 	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));
@@ -1229,6 +1259,5 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 void AD1SurvivorBase::OnRep_ChangeState()
 {
 	BP_OnHealthChanged();
-
 	PrevState = CurrentState;
 }
