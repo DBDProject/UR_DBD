@@ -106,7 +106,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->AttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactStart"));
-			D1Killer->AttackCollision->SetActive(true);
+			D1Killer->SetbAttackDetectStart(true);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
 		return;
@@ -117,7 +117,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->AttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactEnd"));
-			D1Killer->AttackCollision->SetActive(false);
+			D1Killer->SetbAttackDetectStart(false);
 			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			D1Killer->SetbAttackSuccess(false);
 		}
@@ -129,6 +129,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->WolfAttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->SetbAttackDetectStart(true);
 			D1Killer->WolfAttackCollision->SetActive(true);
 			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
 		}
@@ -140,6 +141,7 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		if (D1Killer && D1Killer->WolfAttackCollision)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
+			D1Killer->SetbAttackDetectStart(false);
 			D1Killer->WolfAttackCollision->SetActive(false);
 			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 			D1Killer->SetbAttackSuccess(false);

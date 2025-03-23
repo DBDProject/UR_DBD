@@ -1,15 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Abilities/Dracula/Wolf/D1GA_Wolf_Stun.h"
+#include "AbilitySystem/Abilities/Dracula/Bat/D1GA_Bat_Stun.h"
+
 #include "Interactables/D1Pallet.h"
 
-UD1GA_Wolf_Stun::UD1GA_Wolf_Stun(const FObjectInitializer& ObjectInitializer)
+UD1GA_Bat_Stun::UD1GA_Bat_Stun(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
 {
 }
 
-bool UD1GA_Wolf_Stun::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+bool UD1GA_Bat_Stun::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
@@ -18,7 +19,7 @@ bool UD1GA_Wolf_Stun::CanActivateAbility(const FGameplayAbilitySpecHandle Handle
 	return true;
 }
 
-void UD1GA_Wolf_Stun::ActivateAbility(
+void UD1GA_Bat_Stun::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
@@ -35,15 +36,15 @@ void UD1GA_Wolf_Stun::ActivateAbility(
 		return;
 	}
 
-	if (!Wolf_Stun)
+	if (!Bat_Stun)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 DestroyPallet Montage is NULL!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 		return;
 	}
 
-	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
-	if (!WolfAnimInstance)
+	UAnimInstance* BatAnimInstance = Killer->GetBatMesh()->GetAnimInstance();
+	if (!BatAnimInstance)
 	{
 		UE_LOG(LogTemp, Error, TEXT("🚨 AnimInstance is NULL!"));
 		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
@@ -54,24 +55,24 @@ void UD1GA_Wolf_Stun::ActivateAbility(
 
 	if (HasAuthority(&ActivationInfo))
 	{
-		Multicast_WolfStun(Killer);
+		Multicast_BatStun(Killer);
 	}
 
 	// ✅ Montage 시작
-	WolfAnimInstance->Montage_Play(Wolf_Stun.Get());
+	BatAnimInstance->Montage_Play(Bat_Stun.Get());
 
 	// ✅ Montage 끝나면 `OnEndMontage()` 실행
 	FOnMontageEnded EndDelegate;
-	EndDelegate.BindUObject(this, &UD1GA_Wolf_Stun::OnEndMontage);
-	WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_Stun.Get());
+	EndDelegate.BindUObject(this, &UD1GA_Bat_Stun::OnEndMontage);
+	BatAnimInstance->Montage_SetEndDelegate(EndDelegate, Bat_Stun.Get());
 }
 
-void UD1GA_Wolf_Stun::OnEndMontage(UAnimMontage* Montage, bool bInterrupted)
+void UD1GA_Bat_Stun::OnEndMontage(UAnimMontage* Montage, bool bInterrupted)
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UD1GA_Wolf_Stun::Multicast_WolfStun_Implementation(AD1KillerBase* Player)
+void UD1GA_Bat_Stun::Multicast_BatStun_Implementation(AD1KillerBase* Player)
 {
 	AD1Pallet* Pallet = Player->GetCurrentPallet();
 
@@ -79,12 +80,12 @@ void UD1GA_Wolf_Stun::Multicast_WolfStun_Implementation(AD1KillerBase* Player)
 
 	Pallet->MovePlayerToInteractionPoint(Player, ECharacterType::DRACULA);
 
-	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
+	UAnimInstance* BatAnimInstance = Player->GetBatMesh()->GetAnimInstance();
 
-	WolfAnimInstance->Montage_Play(Wolf_Stun.Get());
+	BatAnimInstance->Montage_Play(Bat_Stun.Get());
 }
 
-void UD1GA_Wolf_Stun::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
+void UD1GA_Bat_Stun::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 

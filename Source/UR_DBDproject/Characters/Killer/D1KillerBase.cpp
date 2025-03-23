@@ -392,10 +392,7 @@ void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponen
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!AttackCollision->IsActive())
-		return;
-
-	if (bAttackSuccess)
+	if (bAttackSuccess || !bAttackDetectStart)
 		return;
 
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
@@ -436,7 +433,7 @@ void AD1KillerBase::OnWolfAttackOverlapPlayerBegin(UPrimitiveComponent* Overlapp
 	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 	bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (!WolfAttackCollision->IsActive())
+	if (bAttackSuccess || !bAttackDetectStart)
 		return;
 
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)

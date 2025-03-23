@@ -45,6 +45,8 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_VaultWindow, "Killer.Ability.Wolf.VaultWindow");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Stun, "Killer.Ability.Wolf.Stun");
 
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Bat_Stun, "Killer.Ability.Bat.Stun");
+
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Cooldown_DraculaPowerAttack, "Killer.Ability.Cooldown.DraculaPowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Cooldown_WolfPowerAttack, "Killer.Ability.Cooldown.WolfPowerAttack");
 

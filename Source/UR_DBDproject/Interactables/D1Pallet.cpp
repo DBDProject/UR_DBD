@@ -178,6 +178,10 @@ void AD1Pallet::StartDropping(AD1SurvivorBase* Player)
 	{
 		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Stun);
 	}
+	if (DeteactedKiller->GetCurrentTransformState() == EDraculaTransformationState::Bat)
+	{
+		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Bat_Stun);
+	}
 }
 
 void AD1Pallet::OnOverlapDropPalletBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

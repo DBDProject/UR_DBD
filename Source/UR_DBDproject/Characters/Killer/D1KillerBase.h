@@ -85,10 +85,10 @@ protected:
 	// 상호작용 중인 훅 저장
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Hook> CurrentHook;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedSurvivor;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
@@ -102,6 +102,7 @@ protected:
 
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
+	bool bAttackDetectStart = false;
 
 	//사운드
 	UPROPERTY(EditAnywhere, Category = "Sound")
@@ -202,5 +203,8 @@ public:
 
 	bool GetbSurvivorHit() { return bSurvivorHit; }
 	void SetbAttackSuccess(bool bValue) { bAttackSuccess = bValue; }
+
+	bool GetbAttackDetectStart() { return bAttackDetectStart; }
+	void SetbAttackDetectStart(bool bValue) { bAttackDetectStart = bValue; }
 
 };
