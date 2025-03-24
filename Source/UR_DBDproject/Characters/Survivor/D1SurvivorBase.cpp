@@ -45,7 +45,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
+	//6GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
@@ -101,11 +101,11 @@ AD1SurvivorBase::AD1SurvivorBase()
 void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentState = ESurvivorState::Healthy;
+	//CurrentState = ESurvivorState::Healthy;
 	PrevState = ESurvivorState::Healthy;
 
 	// TEST
-	//CurrentState = ESurvivorState::Crawl;
+	CurrentState = ESurvivorState::Crawl;
 	//HealingProgress = 90.f;
 
 	// 컨트롤러의 기본 회전값을 설정하여 카메라 방향 조정
@@ -270,8 +270,7 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 {
 	if (CurrentState != ESurvivorState::Hooked) return;
 
-	//HookHealth -= HookBleedOutRate * DeltaTime;
-	HookHealth -= HookBleedOutRate * DeltaTime;
+	HookHealth -= HookBleedOutRate * DeltaTime * 6;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
 	Multicast_UpdateHookBleedOut(HookHealth);
@@ -609,7 +608,6 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 	if (HasAuthority())
 	{
 		Multicast_AttachToHook(Hook);
-
 	}
 }
 
@@ -618,7 +616,6 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	if (!Hook) return;
 
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
 	FName HookSocket = "socket_SurvivorHook";
 	AttachToComponent(Hook->GetHookMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
@@ -626,10 +623,9 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 
 	CurrentHook = Hook;
 	CurrentHook->SetIsHooked(true);
-
+	CurrentHook->SetInteractingPlayer(this);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
 	if (HasAuthority())
 	{
 		OnHooked();
@@ -639,8 +635,9 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 void AD1SurvivorBase::OnHooked()
 {
 	//HookedCount++;
-	HookedCount++;
+	HookedCount = 2;
 	bIsCarryHook = true;
+
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
 		// 2번째 갈고리
@@ -735,8 +732,8 @@ void AD1SurvivorBase::AttemptEscape()
 
 	// 4% 확률로 탈출 성공
 	float EscapeChance = FMath::RandRange(0.f, 100.f);
-	//if (EscapeChance <= 99.f)
-	if (EscapeChance <= 4.f)
+	if (EscapeChance <= 99.f)
+	//if (EscapeChance <= 4.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Escape Success!"));
 		PlayMontage(EscapeMontage, "Free");
@@ -767,6 +764,7 @@ void AD1SurvivorBase::OnEscapeSuccess()
 		Multicast_StopEntityEvent();
 
 		CurrentHook->SetIsHooked(false);
+		CurrentHook->SetInteractingPlayer(nullptr);
 		CurrentHook = nullptr;
 	}
 }
@@ -781,6 +779,7 @@ void AD1SurvivorBase::OnRescued()
 		Multicast_StopEntityEvent();
 
 		CurrentHook->SetIsHooked(false);
+		CurrentHook->SetInteractingPlayer(nullptr);
 		CurrentHook = nullptr;
 	}
 }

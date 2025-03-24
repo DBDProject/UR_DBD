@@ -85,7 +85,7 @@ void UD1GA_Dracula_Hook::MoveToHookLocation()
 	FVector HookLocation = Hook->GetActorLocation();
 	FVector ForwardVector = Hook->GetActorForwardVector();
 
-	FVector TargetLocation = HookLocation + ForwardVector * 250.0f;
+	FVector TargetLocation = HookLocation + ForwardVector * 300.0f;
 	TargetLocation.Z += 120.0f;
 
 	KillerController->GetPawn()->SetActorLocation(TargetLocation);
