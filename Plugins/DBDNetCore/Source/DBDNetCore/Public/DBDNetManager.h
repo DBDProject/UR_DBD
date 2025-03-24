@@ -11,6 +11,7 @@
 #include "DBDPacketProcessor.h"
 #include "DBDNetManager.generated.h"
 
+
 UCLASS()
 class DBDNETCORE_API UDBDNetManager : public UObject
 {
@@ -59,7 +60,7 @@ public:
 	FORCEINLINE bool IsConnected() { return m_bIsConnected; }
 
 	UFUNCTION(BlueprintCallable, Category = "DBDNet")
-	bool ConnectLocalServer(const int port);
+	bool ConnectLocalServer(const int port, int timeoutMs);
 
 	UFUNCTION(BlueprintCallable, Category = "DBDNet", meta = (DisplayName = "GetPacketProcessor"))
 	UDBDPacketProcessor* GetPacketProcessor();

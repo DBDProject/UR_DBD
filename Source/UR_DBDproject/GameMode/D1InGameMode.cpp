@@ -4,6 +4,8 @@
 #include "GameMode/D1InGameMode.h"
 #include "System/D1GameState.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "Characters/Survivor/D1SurvivorController.h"
+#include "Characters/Killer/D1KillerController.h"
 
 AD1InGameMode::AD1InGameMode(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -52,6 +54,129 @@ APlayerController* AD1InGameMode::CreateControllerForCharacterType(UPlayer* NewP
 	return NewController;
 }
 
+void AD1InGameMode::TeleportPlayerPawn(APlayerController* PlayerController)
+{
+	if (!PlayerController)
+		return;
+
+	if (Cast<AD1KillerController>(PlayerController))
+	{
+		SpawnKillerAtRandomSpawner(PlayerController);
+	}
+	else
+	{
+		SpawnSurvivorAtRandomSpawner(PlayerController);
+	}
+}
+
+void AD1InGameMode::SpawnSurvivorAtRandomSpawner(APlayerController* PlayerController)
+{
+	if (!PlayerController) return;
+
+	TArray<AActor*> Spawners;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("SurvivorSpawner"), Spawners);
+
+	if (Spawners.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("스포너가 더 이상 없음!"));
+		return;
+	}
+
+	// 랜덤 선택
+	int32 RandomIndex = FMath::RandRange(0, Spawners.Num() - 1);
+	AActor* SelectedSpawner = Spawners[RandomIndex];
+
+	// 플레이어 Pawn 가져오기
+	APawn* SurvivorCharacter = Cast<APawn>(PlayerController->GetPawn());
+	if (SurvivorCharacter && SelectedSpawner)
+	{
+		// 라인트레이스로 정확한 지면 찾기
+		FVector Start = SelectedSpawner->GetActorLocation();
+		FVector End = Start - FVector(0, 0, 10000);
+
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.bTraceComplex = false;
+		QueryParams.AddIgnoredActor(SurvivorCharacter);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			ECC_Visibility,
+			QueryParams
+		);
+
+		if (bHit)
+		{
+			FVector GroundLocation = HitResult.Location + FVector(0, 0, 10.0f);
+			SurvivorCharacter->SetActorLocation(GroundLocation);
+			UE_LOG(LogTemp, Warning, TEXT("랜덤 스폰 지점에 배치: %s"), *SelectedSpawner->GetName());
+		}
+		else
+		{
+			SurvivorCharacter->SetActorLocation(SelectedSpawner->GetActorLocation());
+			UE_LOG(LogTemp, Warning, TEXT("지면 감지 실패. 스포너 위치에 배치: %s"), *SelectedSpawner->GetName());
+		}
+
+		SelectedSpawner->Destroy();
+	}
+}
+
+void AD1InGameMode::SpawnKillerAtRandomSpawner(APlayerController* PlayerController)
+{
+	if (!PlayerController) return;
+
+	TArray<AActor*> Spawners;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("KillerSpawner"), Spawners);
+
+	if (Spawners.Num() == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("스포너가 더 이상 없음!"));
+		return;
+	}
+
+	// 랜덤 선택
+	int32 RandomIndex = FMath::RandRange(0, Spawners.Num() - 1);
+	AActor* SelectedSpawner = Spawners[RandomIndex];
+
+	// 플레이어 Pawn 가져오기
+	APawn* KillerCharacter = Cast<APawn>(PlayerController->GetPawn());
+	if (KillerCharacter && SelectedSpawner)
+	{
+		// 라인트레이스로 정확한 지면 찾기
+		FVector Start = SelectedSpawner->GetActorLocation();
+		FVector End = Start - FVector(0, 0, 10000);
+
+		FHitResult HitResult;
+		FCollisionQueryParams QueryParams;
+		QueryParams.bTraceComplex = false;
+		QueryParams.AddIgnoredActor(KillerCharacter);
+
+		bool bHit = GetWorld()->LineTraceSingleByChannel(
+			HitResult,
+			Start,
+			End,
+			ECC_Visibility,
+			QueryParams
+		);
+
+		if (bHit)
+		{
+			FVector GroundLocation = HitResult.Location + FVector(0, 0, 10.0f);
+			KillerCharacter->SetActorLocation(GroundLocation);
+			UE_LOG(LogTemp, Warning, TEXT("랜덤 스폰 지점에 배치: %s"), *SelectedSpawner->GetName());
+		}
+		else
+		{
+			KillerCharacter->SetActorLocation(SelectedSpawner->GetActorLocation());
+			UE_LOG(LogTemp, Warning, TEXT("지면 감지 실패. 스포너 위치에 배치: %s"), *SelectedSpawner->GetName());
+		}
+
+		SelectedSpawner->Destroy();
+	}
+}
+
 void AD1InGameMode::ConfigureController(APlayerController* Controller,
 	TSubclassOf<APlayerState> PSClass, TSubclassOf<APawn> PawnClass)
 {
@@ -69,16 +194,9 @@ void AD1InGameMode::ConfigureController(APlayerController* Controller,
 		NewPS->SetReplicates(true);
 	}
 
-	FVector SpawnLocation = FVector(0, 0, 3000);
-	FRotator SpawnRotation = FRotator::ZeroRotator;
-
 	FActorSpawnParameters SpawnParams;
 	SpawnParams.bNoFail = true;
-	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(
-		PawnClass,
-		SpawnLocation,
-		SpawnRotation,
-		SpawnParams);
+	APawn* NewPawn = GetWorld()->SpawnActor<APawn>(PawnClass);
 
 	if (NewPawn)
 	{
@@ -129,7 +247,7 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 
 		uint8 player = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 
-		if (player > 2)
+		if (player > 1)
 			READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 
 		UE_LOG(LogTemp, Warning, TEXT("현재 플레이어 매칭 수 : %d"), READY_PLAYER_COUNT);
@@ -178,12 +296,17 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 
 	if (IsValid(gameInstance))
 	{
+		// 아이피로 매칭해서 플레이어 인덱스를 게임 인스터스에 있는 서바이버 데이터와 동기화
 		for (int32 i = 0; i < gameInstance->m_serverInfo.survivorInfos.Num(); i++)
 		{
 			if (gameInstance->m_serverInfo.survivorInfos[i].userIP ==
 				NewPlayer->GetPlayerNetworkAddress())
 			{
-				Cast<AD1SurvivorBase>(NewPlayer->GetPawn())->PlayerIndex = i;
+				AD1SurvivorBase* survivor = Cast<AD1SurvivorBase>(NewPlayer->GetPawn());
+
+				if (IsValid(survivor))
+					survivor->PlayerIndex = i;
+
 				break;
 			}
 		}
@@ -194,14 +317,14 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 
 void AD1InGameMode::Logout(AController* Exiting)
 {
-	AD1GameState* gameState = GetGameState<AD1GameState>();
-
-	//if (IsValid(gameState))
-	//{
-	//	gameState->Server_SetSurvivorState(Cast<APlayerController>(Exiting), ESurvivorState::Logout);
-	//}
-
 	Super::Logout(Exiting);
+
+	nReadyPlayerCount--;
+
+	if (nReadyPlayerCount <= 1)
+	{
+		EndMatch();
+	}
 }
 
 void AD1InGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -209,3 +332,14 @@ void AD1InGameMode::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void AD1InGameMode::RestartPlayer(AController* NewPlayer)
+{
+	// 플레이어 스타트 안쓰니 무시
+}
+
+void AD1InGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+
+	TeleportPlayerPawn(NewPlayer);
+}

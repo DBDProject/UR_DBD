@@ -127,6 +127,11 @@ public:
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelfRecovering(bool bNewState);
 
+
+	// 시작 시 레벨 시퀸스 재생용
+	UFUNCTION(Client, Reliable)
+	void Client_PlayStartSequence(float UNLOCK_INPUT_TIMER);
+
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
 
@@ -221,7 +226,6 @@ protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void RemoveFromGame();
 
-
 	// [[[[[[PROPERTY]]]]]]
 public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
@@ -292,6 +296,13 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	ESurvivorState PrevState;
+
+	UPROPERTY(EditAnywhere)
+	float OrbitSpeed = 60.f; // 인트로 카메라 회전 속도
+
+	bool bPlayingIntro = false; // true : 인트로 중, false : 인트로 종료
+	float CurrentAngle = 200.f; // 시작 시 각도
+	float CurrentSpeed; // 현재 속도
 
 protected: // 치료 기능
 	// 치료를 해주는 생존자
