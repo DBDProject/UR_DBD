@@ -103,48 +103,20 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 {
 	if (EventTag == (D1GameplayTags::Killer_Attack_DetactStart))
 	{
-		if (D1Killer && D1Killer->AttackCollision)
+		if (D1Killer)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactStart"));
-			D1Killer->SetbAttackDetectStart(true);
-			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		return;
-	}
-
-	if (EventTag == (D1GameplayTags::Killer_Attack_DetactEnd))
-	{
-		if (D1Killer && D1Killer->AttackCollision)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Killer_Attack_DetactEnd"));
-			D1Killer->SetbAttackDetectStart(false);
-			D1Killer->AttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			D1Killer->SetbAttackSuccess(false);
+			D1Killer->PerformDraculaAttackTrace();
 		}
 		return;
 	}
 
 	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactStart))
 	{
-		if (D1Killer && D1Killer->WolfAttackCollision)
+		if (D1Killer)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
-			D1Killer->SetbAttackDetectStart(true);
-			D1Killer->WolfAttackCollision->SetActive(true);
-			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-		}
-		return;
-	}
-
-	if (EventTag == (D1GameplayTags::Killer_Wolf_Attack_DetactEnd))
-	{
-		if (D1Killer && D1Killer->WolfAttackCollision)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Killer_Wolf_Attack_DetactStart"));
-			D1Killer->SetbAttackDetectStart(false);
-			D1Killer->WolfAttackCollision->SetActive(false);
-			D1Killer->WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-			D1Killer->SetbAttackSuccess(false);
+			D1Killer->PerformWolfAttackTrace();
 		}
 		return;
 	}

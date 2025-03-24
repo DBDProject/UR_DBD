@@ -22,6 +22,8 @@
 #include "Items/D1Toolbox.h"
 #include "Net/UnrealNetwork.h"
 #include "D1SurvivorController.h"
+#include "EngineUtils.h"
+#include "Components/AudioComponent.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -42,7 +44,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
-	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics); 
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
@@ -51,6 +53,14 @@ AD1SurvivorBase::AD1SurvivorBase()
 	InteractionBox->SetBoxExtent(FVector(50.f, 50.f, 100.f));
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
+
+	BGM_Lv1 = CreateDefaultSubobject<UAudioComponent>(TEXT("BGM_Lv1"));
+	BGM_Lv1->SetupAttachment(RootComponent);
+	BGM_Lv1->bAutoActivate = false;
+
+	BGM_Lv2 = CreateDefaultSubobject<UAudioComponent>(TEXT("BGM_Lv2"));
+	BGM_Lv2->SetupAttachment(RootComponent);
+	BGM_Lv2->bAutoActivate = false;
 
 	RootComponent->SetMobility(EComponentMobility::Movable);
 
@@ -116,6 +126,15 @@ void AD1SurvivorBase::BeginPlay()
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
 	}
+
+	// 월드 내 킬러 감지
+	for (TActorIterator<AD1KillerBase> It(GetWorld()); It; ++It)
+	{
+		DetectedKiller = *It;
+	}
+
+	CurrentBGMStage = -1;
+
 	// Temp
 	//EquipItem(BP_ToolboxClass);
 }
@@ -172,12 +191,15 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckEnable);
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckFail);
 	DOREPLIFETIME(AD1SurvivorBase, EscapeGauge);
+	DOREPLIFETIME(AD1SurvivorBase, CurrentBGMStage);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	SmoothCameraTransition(DeltaTime);
+
+	UpdateBGM();
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
@@ -194,6 +216,58 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		UpdateHookBleedOut(DeltaTime);
+	}
+}
+
+void AD1SurvivorBase::UpdateBGM()
+{
+	if (!DetectedKiller.IsValid())
+		return;
+
+	float Distance = FVector::Dist(this->GetActorLocation(), DetectedKiller->GetActorLocation());
+
+	int32 NewBGMStage = -1;
+
+	if (Distance <= 800.f) // 8m 이하
+	{
+		NewBGMStage = 2;
+	}
+	else if (Distance <= 1600.f) // 16m 이하
+	{
+		NewBGMStage = 1;
+	}
+
+	if (NewBGMStage != CurrentBGMStage)
+	{
+		SwitchBGM(NewBGMStage);
+		CurrentBGMStage = NewBGMStage;
+	}
+}
+
+void AD1SurvivorBase::SwitchBGM(int32 Stage)
+{
+	USoundBase* NewSound = nullptr;
+	float FadeTime = 0.2f;
+
+	switch (CurrentBGMStage)
+	{
+	case 1:
+		BGM_Lv1->FadeOut(FadeTime, 0.0f);
+		break;
+	case 2:
+		BGM_Lv2->FadeOut(FadeTime, 0.0f);
+		break;
+	}
+
+	// 새 BGM FadeIn
+	switch (Stage)
+	{
+	case 1:
+		BGM_Lv1->FadeIn(FadeTime, 0.5f);
+		break;
+	case 2:
+		BGM_Lv2->FadeIn(FadeTime, 0.5f);
+		break;
 	}
 }
 

@@ -22,11 +22,9 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Drop);
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactStart);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Attack_DetactEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PowerAttack_DetactStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_PowerAttack_DetactEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_Attack_DetactStart);
-	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_Attack_DetactEnd);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_PowerAttack_DetactStart);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Wolf_PowerAttack_DetactEnd);
 
