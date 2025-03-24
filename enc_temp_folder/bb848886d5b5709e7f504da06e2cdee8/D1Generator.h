@@ -87,9 +87,6 @@ protected:
     UFUNCTION()
     void DamagePerSeconds();
 
-    UFUNCTION(BlueprintImplementableEvent, Category = "Generator")
-    void BP_CompleteRepair();
-
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<class UAnimMontage> G_GeneratorMontage; // 발전기 몽타주
