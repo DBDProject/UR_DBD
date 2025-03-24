@@ -6,10 +6,12 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "CineCameraComponent.h"
 #include "CineCameraActor.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
+
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -34,7 +36,11 @@ AD1Hook::AD1Hook()
     EntityMesh->SetupAttachment(RootComponent);
     EntityMesh->SetVisibility(false);
 
-    HookCameraActor = CreateDefaultSubobject<ACineCameraActor>(TEXT("HookCamera"));
+    HookReactionCamera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("HookReaction"));
+    HookReactionCamera->SetupAttachment(RootComponent);
+
+    //ExecutionCamera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("ExecutionCamera"));
+    //ExecutionCamera->SetupAttachment(RootComponent);
 
     static ConstructorHelpers::FObjectFinder<UAnimMontage> EntityMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Entity.AM_Entity"));
     if (EntityMontageAsset.Succeeded())
@@ -192,9 +198,9 @@ void AD1Hook::StartHookCameraCutscene()
 
     APlayerController* PC = Cast<APlayerController>(InteractingPlayer->GetController());
 
-    if (HookCameraActor && PC)
+    if (this && PC)
     {
-        PC->SetViewTargetWithBlend(HookCameraActor, 0.3f); // 갈고리 고유 카메라로 전환
+        PC->SetViewTargetWithBlend(this, 0.3f); // 갈고리 고유 카메라로 전환
     }
 }
 
@@ -216,18 +222,25 @@ void AD1Hook::EndHookCameraCutscene()
 
 void AD1Hook::PlayHookExecutionSequence()
 {
-    if (!HookExecutionSequence) return;
+    if (!HookExecutionSequence && !InteractingPlayer) return;
+    if (!(InteractingPlayer->GetController())) return;
 
-    FMovieSceneSequencePlaybackSettings Settings;
-    Settings.bAutoPlay = true;
-
-    ALevelSequenceActor* OutActor;
-    ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(
-        GetWorld(), HookExecutionSequence, Settings, OutActor
-    );
-
-    if (Player)
+    if (InteractingPlayer->GetController()->IsLocalPlayerController())
     {
-        Player->Play();
+        FMovieSceneSequencePlaybackSettings Settings;
+        Settings.bAutoPlay = true;
+
+        ALevelSequenceActor* HookSequenceActor = nullptr;
+        ULevelSequencePlayer* HookSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+            GetWorld(), HookExecutionSequence, Settings, HookSequenceActor
+        );
+
+        if (HookSequencePlayer)
+        {
+            FMovieSceneObjectBindingID BindingID = HookSequenceActor->GetSequence()->FindBindingByTag("CameraTarget");
+            HookSequenceActor->SetBinding(BindingID, { ExecutionCameraActor });
+
+            HookSequencePlayer->Play();
+        }
     }
 }

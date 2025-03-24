@@ -32,7 +32,6 @@ public:
     void StartHookCameraCutscene();
     UFUNCTION(BlueprintCallable)
     void EndHookCameraCutscene();
-
     UFUNCTION(BlueprintCallable)
     void PlayHookExecutionSequence();
 
@@ -49,10 +48,13 @@ protected:
     TObjectPtr<class USceneComponent> RootScene;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    TObjectPtr<class ACineCameraActor> HookCameraActor;
+    TObjectPtr<class UCineCameraComponent> HookReactionCamera;
 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cutscene")
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<class ULevelSequence> HookExecutionSequence;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<class ACineCameraActor> ExecutionCameraActor;
 
     // 상호작용 범위 콜라이더
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")
