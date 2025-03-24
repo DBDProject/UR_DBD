@@ -397,29 +397,6 @@ protected: // 탈출구
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	TSubclassOf<class AD1ItemBase> BP_ToolboxClass;
 
-protected:
-
-	UPROPERTY(VisibleAnywhere)
-	TWeakObjectPtr<class AD1KillerBase> DetectedKiller;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-	USoundBase* BGM_Tension;
-
-	UPROPERTY(EditAnywhere, Category = "Audio")
-	USoundBase* BGM_Danger;
-
-	UFUNCTION()
-	void SwitchBGM(int32 Stage);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
-	UAudioComponent* BGM_Lv1;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Audio", meta = (AllowPrivateAccess = "true"))
-	UAudioComponent* BGM_Lv2;
-
-	UPROPERTY(Replicated, VisibleAnywhere)
-	int32 CurrentBGMStage;
-
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }

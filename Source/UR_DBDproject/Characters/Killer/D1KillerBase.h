@@ -192,4 +192,27 @@ public:
 	void PerformDraculaAttackTrace();
 	void PerformWolfAttackTrace();
 
+
+// 사운드
+	void UpdateSurvivorBGMStates();
+
+	void StartBGMUpdateTimer();         // 타이머 시작
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AD1KillerSoundManager> SoundManagerClass;
+
+	// 로컬 사운드 매니저
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AD1KillerSoundManager> SoundManager;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> NormalBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> ChaseBGM;
+
+	TMap<TObjectPtr<class AD1SurvivorController>, FBGMStateInfo> SurvivorBGMMap;
+
+	EBGMLevel CurrentBGMState;
+	FTimerHandle SurvivorBGMUpdateTimerHandle;
 };

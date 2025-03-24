@@ -23,6 +23,9 @@
 #include "Sound/SoundAttenuation.h"
 #include "Components/AudioComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/GameStateBase.h"
+#include "Characters/Survivor/D1SurvivorController.h"
+#include "D1KillerSoundManager.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -231,6 +234,9 @@ void AD1KillerBase::BeginPlay()
 	}
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
+
+	// TEMP
+	StartBGMUpdateTimer();
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
@@ -245,7 +251,6 @@ void AD1KillerBase::Tick(float DeltaTime)
 
 	if (!DetectedSurvivor.IsValid())
 	{
-
 	}
 }
 
@@ -254,6 +259,22 @@ void AD1KillerBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+
+	if (NewController->IsLocalController())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this; // 선택사항
+		SpawnParams.Instigator = this;
+
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(FVector::ZeroVector);
+
+		SoundManager = GetWorld()->SpawnActor<AD1KillerSoundManager>(
+			SoundManagerClass,
+			SpawnTransform,
+			SpawnParams
+		);
+	}
 }
 
 void AD1KillerBase::InitAbilitySystem()
@@ -565,5 +586,85 @@ void AD1KillerBase::PerformWolfAttackTrace()
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
+	}
+}
+
+void AD1KillerBase::UpdateSurvivorBGMStates()
+{
+	AGameStateBase* GameState = GetWorld()->GetGameState();
+	if (!GameState) return;
+
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		AD1SurvivorController* SurvivorPC = Cast<AD1SurvivorController>(PS->GetOwner());
+		if (!SurvivorPC || SurvivorPC->IsLocalController()) continue;
+
+		APawn* SurvivorPawn = SurvivorPC->GetPawn();
+		if (!SurvivorPawn) continue;
+
+		float DistSq = FVector::DistSquared(GetActorLocation(), SurvivorPawn->GetActorLocation());
+
+		EBGMLevel DetectedLevel;
+
+		if (DistSq <= FMath::Square(800.0f))         // 8m
+			DetectedLevel = EBGMLevel::Terror;
+		else if (DistSq <= FMath::Square(2000.0f))    // 16m
+			DetectedLevel = EBGMLevel::Threat;
+		else if (DistSq <= FMath::Square(4000.0f))   // 32m
+			DetectedLevel = EBGMLevel::Warning;
+		else
+			DetectedLevel = EBGMLevel::Normal;
+
+		FBGMStateInfo& Info = SurvivorBGMMap.FindOrAdd(SurvivorPC);
+
+		// 상태가 바뀌었으면 대기 상태로 전환
+		if (Info.PendingState != DetectedLevel)
+		{
+			Info.PendingState = DetectedLevel;
+			Info.StateDuration = 0.f;
+		}
+		else
+		{
+			Info.StateDuration += 0.5f;
+
+			// 일정 시간 유지되면 전환
+			constexpr float ThresholdTime = 1.0f;
+			if (Info.PendingState != Info.LastConfirmedState && Info.StateDuration >= ThresholdTime)
+			{
+				// 킬러 BGM
+				if (Info.PendingState == EBGMLevel::Terror)
+				{
+					if (CurrentBGMState != EBGMLevel::Terror)
+					{
+						SoundManager->PlayBGM(ChaseBGM, 1.0f);
+						CurrentBGMState = Info.PendingState;
+					}
+				}
+				else
+				{
+					if (CurrentBGMState != EBGMLevel::Normal)
+					{
+						SoundManager->PlayBGM(NormalBGM, 2.0f);
+						CurrentBGMState = EBGMLevel::Normal;
+					}
+				}
+				SurvivorPC->Client_UpdateBGMLevel(Info.PendingState);
+				Info.LastConfirmedState = Info.PendingState;
+			}
+		}
+	}
+}
+
+void AD1KillerBase::StartBGMUpdateTimer()
+{
+	if (HasAuthority()) // 서버에서만 실행
+	{
+		GetWorldTimerManager().SetTimer(
+			SurvivorBGMUpdateTimerHandle,
+			this,
+			&AD1KillerBase::UpdateSurvivorBGMStates,
+			0.5f,     // 주기
+			true      // 루프
+		);
 	}
 }

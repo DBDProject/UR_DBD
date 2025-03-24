@@ -166,7 +166,6 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		}
 		return;
 	}
-
 	if (EventTag == (D1GameplayTags::Interactables_Pallet_DownStart))
 	{
 
