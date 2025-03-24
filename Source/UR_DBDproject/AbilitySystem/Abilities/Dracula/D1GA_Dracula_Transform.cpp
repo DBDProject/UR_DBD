@@ -495,7 +495,7 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	Player->GetCharacterMesh()->SetComponentTickEnabled(!bDraculaVisible);
 	Player->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
 	Player->GetMesh()->SetComponentTickEnabled(!bWolfVisible);
-	Player->GetBatMesh()->SetComponentTickEnabled(!bWolfVisible);
+	Player->GetBatMesh()->SetComponentTickEnabled(!bBatVisible);
 }
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
