@@ -30,8 +30,8 @@ public class UR_DBDproject : ModuleRules
             "UMG",
             "CinematicCamera",
             "LevelSequence",
-            "MovieScene", 
-            "MovieSceneTracks" 
+            "MovieScene",
+            "MovieSceneTracks"
     });
         PublicDefinitions.Add("NOMINMAX");
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
