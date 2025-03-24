@@ -27,7 +27,8 @@ public class UR_DBDproject : ModuleRules
             "NavigationSystem",
             "AIModule",
             "Niagara",
-            "UMG"
+            "UMG",
+            "CinematicCamera"
     });
         PublicDefinitions.Add("NOMINMAX");
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });

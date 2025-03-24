@@ -6,6 +6,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "CineCameraActor.h"
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -29,6 +30,8 @@ AD1Hook::AD1Hook()
     EntityMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EntityMesh"));
     EntityMesh->SetupAttachment(RootComponent);
     EntityMesh->SetVisibility(false);
+
+    HookCameraActor = CreateDefaultSubobject<ACineCameraActor>(TEXT("HookCamera"));
 
     static ConstructorHelpers::FObjectFinder<UAnimMontage> EntityMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Entity.AM_Entity"));
     if (EntityMontageAsset.Succeeded())
@@ -107,7 +110,6 @@ void AD1Hook::StartDissolveEffect_Implementation(AD1SurvivorBase* Player)
 
     if (DynamicMat_Slot0 && DynamicMat_Slot1)
     {
-        InteractingPlayer = Player;
         ActivateEntity();
         GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Hook::UpdateDissolve, 0.05f, true);
         CurrentDissolveValue = 0.0f;
@@ -171,7 +173,6 @@ void AD1Hook::UpdateDissolveDisappear()
     {
         GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
         DeactivateEntity();
-        InteractingPlayer = nullptr;
     }
 }
 
@@ -180,4 +181,32 @@ void AD1Hook::PlayEntityMontage(FName Section)
     if (!EntityMesh || !EntityMontage) return;
     EntityMesh->GetAnimInstance()->Montage_Play(EntityMontage);
     EntityMesh->GetAnimInstance()->Montage_JumpToSection(Section, EntityMontage);
+}
+
+void AD1Hook::StartHookCameraCutscene()
+{
+    if (!InteractingPlayer) return;
+
+    APlayerController* PC = Cast<APlayerController>(InteractingPlayer->GetController());
+
+    if (HookCameraActor && PC)
+    {
+        PC->SetViewTargetWithBlend(HookCameraActor, 0.3f); // 갈고리 고유 카메라로 전환
+    }
+}
+
+void AD1Hook::EndHookCameraCutscene()
+{
+    if (!InteractingPlayer) return;
+
+    APlayerController* PC = Cast<APlayerController>(InteractingPlayer->GetController());
+
+    if (PC)
+    {
+        APawn* PlayerPawn = PC->GetPawn();
+        if (PlayerPawn)
+        {
+            PC->SetViewTargetWithBlend(PlayerPawn, 0.3f); // 플레이어 시점 복귀
+        }
+    }
 }

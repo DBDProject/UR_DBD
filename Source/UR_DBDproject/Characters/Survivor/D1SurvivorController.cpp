@@ -39,8 +39,8 @@ void AD1SurvivorController::BeginPlay()
 	}
 
 	// 카메라 Pitch(위/아래) 제한 설정
-	PlayerCameraManager->ViewPitchMin = -35.0f; // 최소 Pitch (아래 제한)
-	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
+	PlayerCameraManager->ViewPitchMin = -45.0f; // 최소 Pitch (아래 제한)
+	PlayerCameraManager->ViewPitchMax = 45.0f;  // 최대 Pitch (위 제한)
 }
 
 void AD1SurvivorController::OnPossess(APawn* InPawn)

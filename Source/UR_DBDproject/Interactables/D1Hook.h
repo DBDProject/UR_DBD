@@ -28,6 +28,11 @@ public:
     void StartDissolveEffect(class AD1SurvivorBase* Player);
     void PlayEntityMontage(FName Section);
 
+    UFUNCTION(BlueprintCallable)
+    void StartHookCameraCutscene();
+    UFUNCTION(BlueprintCallable)
+    void EndHookCameraCutscene();
+
     void RemoveFromGame();
 
     UFUNCTION(NetMulticast, Reliable)
@@ -39,6 +44,9 @@ private:
 protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
     TObjectPtr<class USceneComponent> RootScene;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite)
+    TObjectPtr<class ACineCameraActor> HookCameraActor;
 
     // 상호작용 범위 콜라이더
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")
@@ -56,7 +64,7 @@ protected:
     TObjectPtr<class UAnimMontage> EntityMontage; // 엔티티 몽타주
 
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Hook")
-    TWeakObjectPtr<class AD1SurvivorBase> InteractingPlayer;
+    TObjectPtr<class AD1SurvivorBase> InteractingPlayer;
 
     UPROPERTY()
     UMaterialInstanceDynamic* DynamicMat_Slot0;
@@ -86,6 +94,7 @@ protected:
 public:
     TObjectPtr<class USkeletalMeshComponent> GetHookMesh() { return HookMesh; }
     TObjectPtr<class USkeletalMeshComponent> GetEntityMesh() { return EntityMesh; }
+    void SetInteractingPlayer(class AD1SurvivorBase* Player) { InteractingPlayer = Player; }
     void SetIsSkillCheckEnable(bool State) { bIsSkillCheckEnable = State; }
     void SetIsSkillCheckFail(bool State) { bIsSkillCheckFail = State; }
     void SetIsHooked(bool State) { bIsHooked = State; }
