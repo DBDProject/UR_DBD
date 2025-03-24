@@ -258,7 +258,7 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 {
 	if (CurrentState != ESurvivorState::Hooked) return;
 
-	HookHealth -= HookBleedOutRate * DeltaTime;
+	HookHealth -= HookBleedOutRate * DeltaTime * 3;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
 	Multicast_UpdateHookBleedOut(HookHealth);

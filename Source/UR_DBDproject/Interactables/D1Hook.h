@@ -33,6 +33,9 @@ public:
     UFUNCTION(BlueprintCallable)
     void EndHookCameraCutscene();
 
+    UFUNCTION(BlueprintCallable)
+    void PlayHookExecutionSequence();
+
     void RemoveFromGame();
 
     UFUNCTION(NetMulticast, Reliable)
@@ -47,6 +50,9 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     TObjectPtr<class ACineCameraActor> HookCameraActor;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Cutscene")
+    TObjectPtr<class ULevelSequence> HookExecutionSequence;
 
     // 상호작용 범위 콜라이더
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Hook")

@@ -7,6 +7,9 @@
 #include "Net/UnrealNetwork.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "CineCameraActor.h"
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -208,5 +211,23 @@ void AD1Hook::EndHookCameraCutscene()
         {
             PC->SetViewTargetWithBlend(PlayerPawn, 0.3f); // 플레이어 시점 복귀
         }
+    }
+}
+
+void AD1Hook::PlayHookExecutionSequence()
+{
+    if (!HookExecutionSequence) return;
+
+    FMovieSceneSequencePlaybackSettings Settings;
+    Settings.bAutoPlay = true;
+
+    ALevelSequenceActor* OutActor;
+    ULevelSequencePlayer* Player = ULevelSequencePlayer::CreateLevelSequencePlayer(
+        GetWorld(), HookExecutionSequence, Settings, OutActor
+    );
+
+    if (Player)
+    {
+        Player->Play();
     }
 }

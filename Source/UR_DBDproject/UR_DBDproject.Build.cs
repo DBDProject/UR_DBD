@@ -28,7 +28,10 @@ public class UR_DBDproject : ModuleRules
             "AIModule",
             "Niagara",
             "UMG",
-            "CinematicCamera"
+            "CinematicCamera",
+            "LevelSequence",
+            "MovieScene", 
+            "MovieSceneTracks" 
     });
         PublicDefinitions.Add("NOMINMAX");
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
