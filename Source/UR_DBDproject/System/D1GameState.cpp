@@ -4,6 +4,7 @@
 #include "System/D1GameState.h"
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1ExitGate.h"
+#include "Interactables/D1ExitArea.h"
 #include "Kismet/GameplayStatics.h"
 #include "Characters/D1PlayerSpawner.h"
 #include "UI/D1GameStartUI.h"
@@ -13,10 +14,16 @@ AD1GameState::AD1GameState()
 {
 	bReplicates = true;
 	bAlwaysRelevant = true;
+
 }
 void AD1GameState::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UD1GameInstance* GI = Cast<UD1GameInstance>(GetGameInstance());
+
+	if (IsValid(GI))
+		SurvivorStates.Init(ESurvivorState::Healthy, GI->m_serverInfo.maxPlayer);
 }
 
 void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -25,6 +32,7 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
+	DOREPLIFETIME(AD1GameState, SurvivorStates);
 }
 
 void AD1GameState::HandleMatchHasStarted()
@@ -55,6 +63,7 @@ void AD1GameState::HandleMatchIsWaitingToStart()
 	if (HasAuthority())
 	{
 		FindExitGates();
+		FindExitAreas();
 		UE_LOG(LogTemp, Warning, TEXT("게임 대기 중!"));
 	}
 
@@ -80,7 +89,7 @@ void AD1GameState::HandleMatchHasEnded()
 		APlayerController* PC = GetWorld()->GetFirstPlayerController();
 		if (PC && PC->IsLocalController())
 		{
-			PC->ClientTravel("L_Showcase2", ETravelType::TRAVEL_Absolute);
+			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
 		}
 	}
 	else
@@ -95,7 +104,7 @@ void AD1GameState::OnTravelTimer()
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
 	if (PC && PC->IsLocalController())
 	{
-		PC->ClientTravel("L_Showcase3", ETravelType::TRAVEL_Absolute);
+		UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase3")));
 	}
 }
 
@@ -114,6 +123,23 @@ void AD1GameState::FindExitGates()
 		}
 	}
 	UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출구를 찾음!"), ExitGates.Num());
+}
+
+void AD1GameState::FindExitAreas()
+{
+	ExitAreas.Empty();
+
+	TArray<AActor*> FoundAreas;
+	UGameplayStatics::GetAllActorsOfClass(GetWorld(), AD1ExitArea::StaticClass(), FoundAreas);
+
+	for (AActor* ExitAreaActor : FoundAreas)
+	{
+		if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(ExitAreaActor))
+		{
+			ExitAreas.Add(ExitArea);
+		}
+	}
+	UE_LOG(LogTemp, Warning, TEXT("맵에서 %d개의 탈출 지역을 찾음!"), ExitAreas.Num());
 }
 
 void AD1GameState::OnInputUnlockTimer()
@@ -212,6 +238,54 @@ void AD1GameState::UpdateGeneratorState()
 				ExitGate->Multicast_ActivateExitGate();
 			}
 		}
+
+		for (AD1ExitArea* ExitArea : ExitAreas)
+		{
+			if (ExitArea)
+			{
+				ExitArea->ActiavteExitArea();
+			}
+		}
 	}
+}
+
+void AD1GameState::SetSurvivorState(int32 PlayerIndex, ESurvivorState State)
+{
+	SurvivorStates[PlayerIndex] = State;
+	Multi_SetSurvivorState(PlayerIndex, State);
+}
+
+void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
+{
+	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+	UE_LOG(LogTemp, Warning, TEXT("생존자 게임 결과! : %d"), PlayerIndex);
+
+	if (IsValid(GI))
+	{
+		GI->m_resultInfo.isKiller = false;
+		GI->m_resultInfo.playerIndex = PlayerIndex;
+		GI->m_resultInfo.survivorStates = SurvivorStates;
+		GI->m_resultInfo.survivorInfos = GI->m_serverInfo.survivorInfos;
+	}
+}
+
+void AD1GameState::ResultKillerGame()
+{
+	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+	if (IsValid(GI))
+	{
+		GI->m_resultInfo.isKiller = true;
+		GI->m_resultInfo.playerIndex = -1;
+		GI->m_resultInfo.survivorStates = SurvivorStates;
+		GI->m_resultInfo.survivorInfos = GI->m_serverInfo.survivorInfos;
+	}
+}
+
+void AD1GameState::Multi_SetSurvivorState_Implementation(int32 PlayerIndex, ESurvivorState State)
+{
+	UE_LOG(LogTemp, Warning, TEXT("생존자 상태 변경! : %d %d"), PlayerIndex, State);
+	OnSurvivorStateChanged.Broadcast(PlayerIndex, State);
 }
 

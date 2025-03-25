@@ -15,7 +15,11 @@ class UR_DBDPROJECT_API AD1ExitArea : public AActor
 {
 	GENERATED_BODY()
 
-protected:
+private:
+	UPROPERTY(Replicated)
+	bool bIsActivated = false;
+
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class USceneComponent> RootScene;
 
@@ -24,20 +28,23 @@ protected:
 	TObjectPtr<class UBoxComponent> PhysicsCollisionBox;
 
 	// 상호작용 범위 콜라이더
-	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ExitAreac")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "ExitArea")
 	TObjectPtr<class UBoxComponent> InteractionBox;
 
 private:
-	UFUNCTION()
-	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 public:
 	// Sets default values for this actor's properties
 	AD1ExitArea();
+
+	void ActiavteExitArea();
+
+	bool IsActivated() { return bIsActivated; }
+
 };
