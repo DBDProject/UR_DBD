@@ -174,6 +174,9 @@ protected:
 public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SkillCheckEnable(bool State);
+
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StartEntityEvent(class AD1SurvivorBase* Player);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -365,7 +368,6 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckEnable = false;
 
@@ -378,6 +380,8 @@ protected: // 갈고리
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
 	float MaxEscapeGauge = 100.0f;
 
+	bool bIsHookEventReaction = false;
+	bool bIsHookEventSkillCheck = false;
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 	// 사망 처리 타이머

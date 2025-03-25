@@ -285,10 +285,11 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 			Multicast_StartEntityEvent(this);
 		}
 	}
-	if (HookHealth <= 45.f && bIsHookSkillCheckEnable == false)
+	if (HookHealth <= 45.f && bIsHookEventReaction == false)
 	{
 		if (CurrentHook.IsValid())
 		{
+			bIsHookEventReaction = true;
 			Multicast_StartEntityReaction();
 		}
 	}
@@ -297,6 +298,14 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	{
 		DieFromEntity();
 		return;
+	}
+
+
+	if (bIsHookSkillCheckEnable == true
+		&& bIsHookEventSkillCheck == false)
+	{
+		Multicast_SkillCheckEnable(true);
+		bIsHookEventSkillCheck = true;
 	}
 }
 
@@ -594,9 +603,6 @@ void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
 	{
 		PlayAnimMontage(SpiderMontage, 1.0f, "Reaction");
 		CurrentHook->PlayEntityMontage("Reaction");
-		bIsHookSkillCheckEnable = true;
-		CurrentHook->SetIsSkillCheckEnable(true);
-		BP_GetHook();
 	}
 }
 
@@ -661,7 +667,7 @@ void AD1SurvivorBase::OnHookSkillCheckFail()
 
 void AD1SurvivorBase::Server_OnHookSkillCheckFail_Implementation()
 {
-	HookHealth -= 5.0f;
+	HookHealth -= 2.5f;
 	Multicast_OnHookSkillCheckFail();
 }
 
@@ -853,21 +859,24 @@ void AD1SurvivorBase::DieFromEntity_Local()
 	// 상태 변경
 	CurrentState = ESurvivorState::Dying;
 
-	// 사망 애니메이션 재생
-	if (SpiderMontage && CurrentHook.IsValid())
-	{
-		bIsHookSkillCheckEnable = false;
-		CurrentHook->SetIsSkillCheckEnable(false);
-		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
-		CurrentHook->PlayEntityMontage("Sacrifice");
-	}
-	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
 	// 입력 비활성화
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		DisableInput(PC);
+		if (PC->IsLocalPlayerController())
+		{
+			bIsHookSkillCheckEnable = false;
+			BP_GetHook();
+		}
 	}
+
+	// 사망 애니메이션 재생
+	if (SpiderMontage && CurrentHook.IsValid())
+	{
+		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
+		CurrentHook->PlayEntityMontage("Sacrifice");
+	}
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 void AD1SurvivorBase::RemoveFromGame()
@@ -1275,4 +1284,15 @@ void AD1SurvivorBase::OnRep_ChangeState()
 {
 	BP_OnHealthChanged();
 	PrevState = CurrentState;
+}
+
+void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)
+{
+	bIsHookSkillCheckEnable = State;
+	if (!GetController()) return;
+
+	if (GetController()->IsLocalPlayerController())
+	{
+		BP_GetHook();
+	}
 }
