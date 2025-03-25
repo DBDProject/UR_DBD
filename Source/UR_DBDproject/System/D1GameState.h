@@ -81,7 +81,7 @@ private:
 	FTimerHandle TravelTimer; // 서버장 내보내려고 만든 타이머
 
 	// 현재 수리해야할 발전기 개수
-	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators)
+	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	uint8 RepairedGenerators = 5;
 
 	// 모든 발전기가 수리되었는지 여부

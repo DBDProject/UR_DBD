@@ -11,7 +11,7 @@
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-//#include "Windows/AllowWindowsPlatformTypes.h"
+#include "Windows/AllowWindowsPlatformTypes.h"
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -222,7 +222,7 @@ void AD1Hook::EndHookCameraCutscene()
 
 void AD1Hook::PlayHookExecutionSequence()
 {
- /*   if (!HookExecutionSequence && !InteractingPlayer) return;
+    if (!HookExecutionSequence && !InteractingPlayer) return;
     if (!(InteractingPlayer->GetController())) return;
 
     if (InteractingPlayer->GetController()->IsLocalPlayerController())
@@ -242,5 +242,5 @@ void AD1Hook::PlayHookExecutionSequence()
 
             HookSequencePlayer->Play();
         }
-    }*/
+    }
 }
