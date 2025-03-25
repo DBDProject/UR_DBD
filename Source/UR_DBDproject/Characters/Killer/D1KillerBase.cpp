@@ -26,6 +26,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Characters/Survivor/D1SurvivorController.h"
 #include "D1KillerSoundManager.h"
+#include "EngineUtils.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -227,6 +228,7 @@ void AD1KillerBase::BeginPlay()
 
 	// TEMP
 	StartBGMUpdateTimer();
+
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
@@ -637,4 +639,18 @@ void AD1KillerBase::StartBGMUpdateTimer()
 			true      // 루프
 		);
 	}
+}
+
+TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
+{
+	for (TActorIterator<AD1SurvivorBase> It(GetWorld()); It; ++It)
+	{
+		AD1SurvivorBase* Survivor = *It;
+		if (Survivor)
+		{
+			FoundSurvivors.Add(Survivor);
+		}
+	}
+
+	return FoundSurvivors;
 }

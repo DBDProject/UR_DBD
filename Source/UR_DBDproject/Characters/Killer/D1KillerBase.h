@@ -63,6 +63,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<class USpotLightComponent> EyeSpotLight;
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
+	TArray<TObjectPtr<class AD1SurvivorBase>> FoundSurvivors;
+
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -158,6 +161,7 @@ public:
 	TObjectPtr<UCameraComponent> GetWolfCameraComponent() const { return WolfCameraComponent; }
 	TObjectPtr<UCameraComponent> GetBatCameraComponent() const { return BatCameraComponent; }
 	TObjectPtr<USpotLightComponent> GetEyeSpotLight() const { return EyeSpotLight; }
+	TArray<TObjectPtr<AD1SurvivorBase>> GetFoundSurvivor();
 
 	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
