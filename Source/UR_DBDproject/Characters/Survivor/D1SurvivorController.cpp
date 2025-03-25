@@ -108,9 +108,12 @@ void AD1SurvivorController::SetupInputComponent()
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_Space);
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_Space);
 
-		// Test(1)
-		auto TestAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_TestInput);
-		EnhancedInputComponent->BindAction(TestAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartTestInput_1);
+		// (1번)
+		auto PointToAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_PointTo);
+		EnhancedInputComponent->BindAction(PointToAction, ETriggerEvent::Started, this, &ThisClass::Input_PointTo);
+		// (2번)
+		auto ComeHereAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_ComeHere);
+		EnhancedInputComponent->BindAction(ComeHereAction, ETriggerEvent::Started, this, &ThisClass::Input_ComeHere);
 	}
 }
 
@@ -260,6 +263,8 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 		// 발전기
 		if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 		{
+			if (Generator->GetIsRepairBlocked() == true) return;
+
 			D1Survivor->StartRepair();
 			return;
 		}
@@ -306,6 +311,8 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(D1Survivor.Get()->GetDetectedObject()))
 	{
+		if (D1Survivor->GetIsFail() == true) return;
+
 		D1Survivor->StopRepair();
 		return;
 	}
@@ -401,11 +408,36 @@ void AD1SurvivorController::Input_StopInteract_Space()
 	}
 }
 
-void AD1SurvivorController::Input_StartTestInput_1()
+void AD1SurvivorController::Input_PointTo()
 {
-	UE_LOG(LogTemp, Warning, TEXT("TakeDamageFromKiller"));
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
-	SetControlRotation(FRotator(-90.f, 180.f, 0));
+	if (!D1Survivor.IsValid()) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor->PlayMontage(D1Survivor->GestureMontage, "PointTo");
+	}
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor->PlayMontage(D1Survivor->GestureMontage, "Injured_PointTo");
+	}
+}
+
+void AD1SurvivorController::Input_ComeHere()
+{
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+	if (!D1Survivor.IsValid()) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy)
+	{
+		D1Survivor->PlayMontage(D1Survivor->GestureMontage, "ComeHere");
+	}
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor->PlayMontage(D1Survivor->GestureMontage, "Injured_ComeHere");
+	}
 }
 
 void AD1SurvivorController::RepairDelegate_Start()

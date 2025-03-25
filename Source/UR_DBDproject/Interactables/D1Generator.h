@@ -64,7 +64,7 @@ public:
 
 public: // 스킬 체크
     UFUNCTION(BlueprintCallable)
-    void OnSkillCheckSuccess();
+    void OnSkillCheckSuccess(class AD1SurvivorBase* Player);
     UFUNCTION(BlueprintCallable)
     void OnSkillCheckFail(class AD1SurvivorBase* Player);
 protected:
@@ -106,6 +106,10 @@ protected:
     UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
     TObjectPtr<class USkeletalMeshComponent> GeneratorMesh;
 
+    // 엔티티 메쉬
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Generator")
+    TObjectPtr<class USkeletalMeshComponent> EntityMesh;
+
     // 발전기 수리중인지
     UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
     bool bIsRepairing = false;
@@ -114,13 +118,9 @@ protected:
     UPROPERTY(Replicated, EditDefaultsOnly, BlueprintReadOnly, Category = "Generator")
     bool bIsCompleteRepair = false;
 
-    // 스킬 체크 실패 시 3초간 수리 불가
+    // 모든 플레이어 발전기 수리 불가 
     UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
-    bool bIsRepairBlocked = false;
-
-    // 스킬 체크 실패 시 
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Generator")
-    bool bIsFail = false;
+    bool bIsRepairBlockedAll = false;
 
     // 수리 진행도
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Generator")
@@ -150,12 +150,39 @@ protected:
     FTimerHandle DamageTimer;
 
 public:
-    bool GetIsRepairBlocked() { return bIsRepairBlocked; }
+    bool GetIsRepairBlocked() { return bIsRepairBlockedAll; }
     float GetRepairProgress() { return RepairProgress; }
-    bool GetIsFail() { return bIsFail; }
 
     EGeneratorState GetCurrentState() { return CurrentState; }
     void SetCurrentState(EGeneratorState State) { CurrentState = State; }
 
     TMap<EGeneratorInteractionPosition, TObjectPtr<AD1SurvivorBase>> GetReparingPositions() { return RepairingPositions; }
+
+
+    // [[[[[[ 엔티티 ]]]]]]
+public:
+    void ActivateEntity();
+    void DeactivateEntity();
+
+    UFUNCTION(NetMulticast, Reliable)
+    void StartDissolveEffect();
+    UFUNCTION(NetMulticast, Reliable)
+    void StartDissolveDisappearEffect();
+
+    bool GetEntityVisible() { return bEntityVisible; }
+protected:
+    void UpdateDissolve();
+    void UpdateDissolveDisappear();
+
+     UPROPERTY(Replicated)
+     bool bEntityVisible;
+
+     UPROPERTY()
+     UMaterialInstanceDynamic* DynamicMat_Slot;
+
+     UPROPERTY(Replicated)
+     float CurrentDissolveValue;
+
+     float DissolveStartTime;
+     FTimerHandle DissolveTimer;
 };

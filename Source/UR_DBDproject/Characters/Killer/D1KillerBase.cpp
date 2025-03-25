@@ -608,9 +608,7 @@ void AD1KillerBase::UpdateSurvivorBGMStates()
 
 		if (DistSq <= FMath::Square(800.0f))         // 8m
 			DetectedLevel = EBGMLevel::Terror;
-		else if (DistSq <= FMath::Square(2000.0f))    // 16m
-			DetectedLevel = EBGMLevel::Threat;
-		else if (DistSq <= FMath::Square(4000.0f))   // 32m
+		else if (DistSq <= FMath::Square(3200.0f))   // 32m
 			DetectedLevel = EBGMLevel::Warning;
 		else
 			DetectedLevel = EBGMLevel::Normal;
