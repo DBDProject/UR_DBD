@@ -20,6 +20,7 @@
 #include "Characters/Killer/D1KillerBase.h"
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1Hook.h"
+#include "D1SurvivorSoundManager.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -39,8 +40,24 @@ void AD1SurvivorController::BeginPlay()
 	}
 
 	// 카메라 Pitch(위/아래) 제한 설정
-	PlayerCameraManager->ViewPitchMin = -35.0f; // 최소 Pitch (아래 제한)
-	PlayerCameraManager->ViewPitchMax = 35.0f;  // 최대 Pitch (위 제한)
+	PlayerCameraManager->ViewPitchMin = -45.0f; // 최소 Pitch (아래 제한)
+	PlayerCameraManager->ViewPitchMax = 45.0f;  // 최대 Pitch (위 제한)
+
+	if (IsLocalController())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this; // 선택사항
+		SpawnParams.Instigator = GetPawn(); // 선택사항
+
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(FVector::ZeroVector);
+
+		SoundManager = GetWorld()->SpawnActor<AD1SurvivorSoundManager>(
+			SoundManagerClass,
+			SpawnTransform,
+			SpawnParams
+		);
+	}
 }
 
 void AD1SurvivorController::OnPossess(APawn* InPawn)
@@ -51,7 +68,6 @@ void AD1SurvivorController::OnPossess(APawn* InPawn)
 	if (D1Survivor.IsValid())
 	{
 		D1Survivor.Get()->GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-		CachedAnimInstance = Cast<UD1SurvivorBaseAnim>(D1Survivor.Get()->GetMesh()->GetAnimInstance());
 	}
 }
 
@@ -816,4 +832,36 @@ void AD1SurvivorController::SetCreatureState(ECreatureState InState)
 ECreatureState AD1SurvivorController::GetCreatureState()
 {
 	return D1Survivor.IsValid() ? D1Survivor->CreatureState : ECreatureState::None;
+}
+
+// 사운드
+void AD1SurvivorController::Client_UpdateBGMLevel_Implementation(EBGMLevel NewLevel)
+{
+	if (!D1Survivor.IsValid()) return;
+
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Healthy ||
+		D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		if (SoundManager)
+		{
+			// 상태 비교 후 전환
+			if (CurrentBGMLevel != NewLevel)
+			{
+				CurrentBGMLevel = NewLevel;
+
+				switch (NewLevel)
+				{
+				case EBGMLevel::Normal:  SoundManager->PlayBGM(NormalBGM, 2.5f); break;
+				case EBGMLevel::Warning: SoundManager->PlayBGM(WarningBGM, 1.5f); break;
+				case EBGMLevel::Threat:  SoundManager->PlayBGM(ThreatBGM, 1.0f); break;
+				case EBGMLevel::Terror:  SoundManager->PlayBGM(TerrorBGM, 0.5f); break;
+				default: break;
+				}
+			}
+		}
+	}
+	else
+	{
+		SoundManager->StopBGM(1.0f);
+	}
 }

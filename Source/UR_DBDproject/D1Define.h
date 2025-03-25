@@ -133,3 +133,20 @@ struct FCharacterDataSet : public FTableRowBase
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TSubclassOf<APlayerState> PlayerStateClass;
 };
+
+UENUM(BlueprintType)
+enum class EBGMLevel : uint8
+{
+	None,
+	Normal,
+	Warning,
+	Threat,
+	Terror
+};
+
+struct FBGMStateInfo
+{
+	EBGMLevel LastConfirmedState;   // 실제로 클라에 적용된 상태
+	EBGMLevel PendingState;         // 새로 감지된 상태
+	float     StateDuration;        // PendingState가 유지된 시간
+};

@@ -20,11 +20,9 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Drop, "Input.Action.Drop");
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactStart, "Killer.Attack.DetactStart");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactEnd, "Killer.Attack.DetactEnd");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_PowerAttack_DetactStart, "Killer.PowerAttack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_PowerAttack_DetactEnd, "Killer.PowerAttack.DetactEnd");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactStart, "Killer.Wolf.Attack.DetactStart");
-	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_Attack_DetactEnd, "Killer.Wolf.Attack.DetactEnd");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_PowerAttack_DetactStart, "Killer.Wolf.PowerAttack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Wolf_PowerAttack_DetactEnd, "Killer.Wolf.PowerAttack.DetactEnd");
 
@@ -44,6 +42,8 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_PowerAttack, "Killer.Ability.Wolf.PowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_VaultWindow, "Killer.Ability.Wolf.VaultWindow");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Stun, "Killer.Ability.Wolf.Stun");
+
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Bat_Stun, "Killer.Ability.Bat.Stun");
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Cooldown_DraculaPowerAttack, "Killer.Ability.Cooldown.DraculaPowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Cooldown_WolfPowerAttack, "Killer.Ability.Cooldown.WolfPowerAttack");

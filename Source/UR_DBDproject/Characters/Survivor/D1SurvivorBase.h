@@ -42,6 +42,7 @@ public:
 	void UpdateHealingProgress(float DeltaTime);
 	void UpdateCrawlBleedOut(float DeltaTime);
 	void UpdateHookBleedOut(float DeltaTime);
+	void UpdateBGM();
 
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void MoveToVaultStartPosition();

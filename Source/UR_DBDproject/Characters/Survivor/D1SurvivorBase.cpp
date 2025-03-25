@@ -22,6 +22,8 @@
 #include "Items/D1Toolbox.h"
 #include "Net/UnrealNetwork.h"
 #include "D1SurvivorController.h"
+#include "EngineUtils.h"
+#include "Components/AudioComponent.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -45,7 +47,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
+	//GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
@@ -120,6 +122,7 @@ void AD1SurvivorBase::BeginPlay()
 		InteractionBox->OnComponentBeginOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapBegin);
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1SurvivorBase::OnOverlapEnd);
 	}
+
 	// Temp
 	//EquipItem(BP_ToolboxClass);
 }
@@ -210,7 +213,6 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	}
 
 }
-
 // 웅크릴 때 카메라 보간
 void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 {
@@ -269,8 +271,7 @@ void AD1SurvivorBase::UpdateCrawlBleedOut(float DeltaTime)
 void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 {
 	if (CurrentState != ESurvivorState::Hooked) return;
-
-	//HookHealth -= HookBleedOutRate * DeltaTime;
+	//HookHealth -= HookBleedOutRate * DeltaTime*6;
 	HookHealth -= HookBleedOutRate * DeltaTime;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
@@ -609,7 +610,6 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 	if (HasAuthority())
 	{
 		Multicast_AttachToHook(Hook);
-
 	}
 }
 
@@ -618,7 +618,6 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	if (!Hook) return;
 
 	DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-
 	FName HookSocket = "socket_SurvivorHook";
 	AttachToComponent(Hook->GetHookMesh(),
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
@@ -626,10 +625,9 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 
 	CurrentHook = Hook;
 	CurrentHook->SetIsHooked(true);
-
+	CurrentHook->SetInteractingPlayer(this);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-
 	if (HasAuthority())
 	{
 		OnHooked();
@@ -638,9 +636,10 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 
 void AD1SurvivorBase::OnHooked()
 {
-	//HookedCount++;
 	HookedCount++;
+	//HookedCount = 2;
 	bIsCarryHook = true;
+
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
 		// 2번째 갈고리
@@ -767,6 +766,7 @@ void AD1SurvivorBase::OnEscapeSuccess()
 		Multicast_StopEntityEvent();
 
 		CurrentHook->SetIsHooked(false);
+		CurrentHook->SetInteractingPlayer(nullptr);
 		CurrentHook = nullptr;
 	}
 }
@@ -781,6 +781,7 @@ void AD1SurvivorBase::OnRescued()
 		Multicast_StopEntityEvent();
 
 		CurrentHook->SetIsHooked(false);
+		CurrentHook->SetInteractingPlayer(nullptr);
 		CurrentHook = nullptr;
 	}
 }

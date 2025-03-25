@@ -6,6 +6,11 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Net/UnrealNetwork.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "CineCameraComponent.h"
+#include "CineCameraActor.h"
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
 
 // Sets default values
 AD1Hook::AD1Hook()
@@ -29,6 +34,12 @@ AD1Hook::AD1Hook()
     EntityMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EntityMesh"));
     EntityMesh->SetupAttachment(RootComponent);
     EntityMesh->SetVisibility(false);
+
+    HookReactionCamera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("HookReaction"));
+    HookReactionCamera->SetupAttachment(RootComponent);
+
+    //ExecutionCamera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("ExecutionCamera"));
+    //ExecutionCamera->SetupAttachment(RootComponent);
 
     static ConstructorHelpers::FObjectFinder<UAnimMontage> EntityMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Entity.AM_Entity"));
     if (EntityMontageAsset.Succeeded())
@@ -107,7 +118,6 @@ void AD1Hook::StartDissolveEffect_Implementation(AD1SurvivorBase* Player)
 
     if (DynamicMat_Slot0 && DynamicMat_Slot1)
     {
-        InteractingPlayer = Player;
         ActivateEntity();
         GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Hook::UpdateDissolve, 0.05f, true);
         CurrentDissolveValue = 0.0f;
@@ -171,7 +181,6 @@ void AD1Hook::UpdateDissolveDisappear()
     {
         GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
         DeactivateEntity();
-        InteractingPlayer = nullptr;
     }
 }
 
@@ -180,4 +189,57 @@ void AD1Hook::PlayEntityMontage(FName Section)
     if (!EntityMesh || !EntityMontage) return;
     EntityMesh->GetAnimInstance()->Montage_Play(EntityMontage);
     EntityMesh->GetAnimInstance()->Montage_JumpToSection(Section, EntityMontage);
+}
+
+void AD1Hook::StartHookCameraCutscene()
+{
+    if (!InteractingPlayer) return;
+
+    APlayerController* PC = Cast<APlayerController>(InteractingPlayer->GetController());
+
+    if (this && PC)
+    {
+        PC->SetViewTargetWithBlend(this, 0.3f); // 갈고리 고유 카메라로 전환
+    }
+}
+
+void AD1Hook::EndHookCameraCutscene()
+{
+    if (!InteractingPlayer) return;
+
+    APlayerController* PC = Cast<APlayerController>(InteractingPlayer->GetController());
+
+    if (PC)
+    {
+        APawn* PlayerPawn = PC->GetPawn();
+        if (PlayerPawn)
+        {
+            PC->SetViewTargetWithBlend(PlayerPawn, 0.3f); // 플레이어 시점 복귀
+        }
+    }
+}
+
+void AD1Hook::PlayHookExecutionSequence()
+{
+    if (!HookExecutionSequence && !InteractingPlayer) return;
+    if (!(InteractingPlayer->GetController())) return;
+
+    if (InteractingPlayer->GetController()->IsLocalPlayerController())
+    {
+        FMovieSceneSequencePlaybackSettings Settings;
+        Settings.bAutoPlay = true;
+
+        ALevelSequenceActor* HookSequenceActor = nullptr;
+        ULevelSequencePlayer* HookSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+            GetWorld(), HookExecutionSequence, Settings, HookSequenceActor
+        );
+
+        if (HookSequencePlayer)
+        {
+            FMovieSceneObjectBindingID BindingID = HookSequenceActor->GetSequence()->FindBindingByTag("CameraTarget");
+            HookSequenceActor->SetBinding(BindingID, { ExecutionCameraActor });
+
+            HookSequencePlayer->Play();
+        }
+    }
 }

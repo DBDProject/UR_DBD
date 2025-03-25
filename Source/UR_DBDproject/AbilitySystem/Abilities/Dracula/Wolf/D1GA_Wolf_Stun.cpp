@@ -79,7 +79,7 @@ void UD1GA_Wolf_Stun::Multicast_WolfStun_Implementation(AD1KillerBase* Player)
 
 	Pallet->MovePlayerToInteractionPoint(Player, ECharacterType::DRACULA);
 
-	UAnimInstance* WolfAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
+	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
 
 	WolfAnimInstance->Montage_Play(Wolf_Stun.Get());
 }

@@ -12,6 +12,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/DecalComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Interactables/D1Generator.h"
 #include "Interactables/D1VaultObject.h"
@@ -19,6 +20,12 @@
 #include "Interactables/D1Hook.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "SkeletalMeshRestoreState.h"
+#include "Sound/SoundAttenuation.h"
+#include "Components/AudioComponent.h"
+#include "Net/UnrealNetwork.h"
+#include "GameFramework/GameStateBase.h"
+#include "Characters/Survivor/D1SurvivorController.h"
+#include "D1KillerSoundManager.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -57,23 +64,6 @@ AD1KillerBase::AD1KillerBase()
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Failed to load FPVMesh asset!"));
 	}
-
-	/*GetMesh() = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GetMesh()"));
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> GetMesh()Asset(
-		TEXT("/Script/Engine.SkeletalMesh'/Game/Art/Characters/Killer/Dracula/Meshes/Wolf/SKM_Wolf.SKM_Wolf'")
-	);
-	if (GetMesh()Asset.Succeeded())
-	{
-		GetMesh()->SetSkeletalMesh(GetMesh()Asset.Object);
-		GetMesh()->SetupAttachment(GetCapsuleComponent());
-		GetMesh()->SetRelativeLocationAndRotation(FVector(0.0f, 0.0f, -88.0f), FRotator(0.0f, -90.0f, 0.0f));
-		GetMesh()->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
-		GetMesh()->SetHiddenInGame(true);
-	}*/
-	/*else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load GetMesh() asset!"));
-	}*/
 
 	BatMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BatMesh"));
 	static ConstructorHelpers::FObjectFinder<USkeletalMesh> BatMeshAsset(
@@ -146,20 +136,6 @@ AD1KillerBase::AD1KillerBase()
 	InteractionBox->SetCollisionProfileName(TEXT("Trigger"));
 	InteractionBox->SetGenerateOverlapEvents(true); // 오버랩 감지 활성화
 
-	AttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("AttackCollision"));
-	AttackCollision->SetupAttachment(CharacterMesh);
-	AttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
-	AttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	AttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
-	AttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-
-	WolfAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfAttackCollision"));
-	WolfAttackCollision->SetupAttachment(GetMesh(), TEXT("AttackCollision")); // 메쉬에 부착
-	WolfAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
-	WolfAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	WolfAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WolfAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-
 	PowerAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("PowerAttackCollision"));
 	PowerAttackCollision->SetupAttachment(CharacterMesh); // 메쉬에 부착
 	PowerAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
@@ -183,6 +159,29 @@ AD1KillerBase::AD1KillerBase()
 	GetMesh()->bEnableUpdateRateOptimizations = false;
 	BatMesh->bEnableUpdateRateOptimizations = false;
 
+	// 오디오 컴포넌트 생성
+	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
+	AudioComponent->SetupAttachment(RootComponent);
+
+	// 안광
+	{
+		EyeDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("EyeDecal"));
+		EyeDecal->SetupAttachment(RootComponent);
+		EyeDecal->DecalSize = FVector(500.f, 500.f, 500.f);
+		EyeDecal->SetRelativeLocation(FVector(100.f, 0.f, 0.f));
+		static ConstructorHelpers::FObjectFinder<UMaterialInterface> DecalMat(TEXT("/Game/Materials/M_BloodDecal"));
+		if (DecalMat.Succeeded())
+		{
+			EyeDecal->SetDecalMaterial(DecalMat.Object);
+		}
+		EyeDecal->SetVisibility(false);
+	}
+}
+
+void AD1KillerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(AD1KillerBase, bAttackDetectStart);
 }
 
 void AD1KillerBase::BeginPlay()
@@ -192,10 +191,10 @@ void AD1KillerBase::BeginPlay()
 	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
-	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
-	//if (Camera) Camera->Activate();
-	if (Camera) Camera->Deactivate();
+	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
+	if (Camera) Camera->Activate();
+	//if (Camera) Camera->Deactivate();
 
 	GetCharacterMesh()->bPauseAnims = false;
 	GetFPVMesh()->bPauseAnims = false;
@@ -213,18 +212,6 @@ void AD1KillerBase::BeginPlay()
 		InteractionBox->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapObjectEnd);
 	}
 
-	if (AttackCollision)
-	{
-		AttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapPlayerBegin);
-		AttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnOverlapPlayerEnd);
-	}
-
-	if (WolfAttackCollision)
-	{
-		WolfAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerBegin);
-		WolfAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnWolfAttackOverlapPlayerEnd);
-	}
-
 	if (PowerAttackCollision)
 	{
 		PowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
@@ -237,7 +224,34 @@ void AD1KillerBase::BeginPlay()
 		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
+	if (GetController())
+	{
+		if (GetController()->IsLocalController())
+		{
+			AudioComponent->SetVolumeMultiplier(0.0f);
+			EyeDecal->SetVisibility(true);
+		}
+	}
+
 	CurrentTransformState = EDraculaTransformationState::Dracula;
+
+	// TEMP
+	StartBGMUpdateTimer();
+}
+
+void AD1KillerBase::Tick(float DeltaTime)
+{
+	Super::Tick(DeltaTime);
+
+	{
+		FVector Forward = GetActorForwardVector();
+		FRotator DecalRotation = Forward.Rotation();
+		EyeDecal->SetWorldRotation(DecalRotation);
+	}
+
+	if (!DetectedSurvivor.IsValid())
+	{
+	}
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -245,6 +259,22 @@ void AD1KillerBase::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	InitAbilitySystem();
+
+	if (NewController->IsLocalController())
+	{
+		FActorSpawnParameters SpawnParams;
+		SpawnParams.Owner = this; // 선택사항
+		SpawnParams.Instigator = this;
+
+		FTransform SpawnTransform;
+		SpawnTransform.SetLocation(FVector::ZeroVector);
+
+		SoundManager = GetWorld()->SpawnActor<AD1KillerSoundManager>(
+			SoundManagerClass,
+			SpawnTransform,
+			SpawnParams
+		);
+	}
 }
 
 void AD1KillerBase::InitAbilitySystem()
@@ -374,88 +404,6 @@ void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent,
 	DetectedObject = nullptr;
 }
 
-void AD1KillerBase::OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-	bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!AttackCollision->IsActive())
-		return;
-
-	if (bAttackSuccess)
-		return;
-
-	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
-	{
-		UE_LOG(LogTemp, Log, TEXT("공격 적중: %s"), *OtherActor->GetName());
-		
-		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
-
-			Survivor->TakeDamageFromKiller();
-			DetectedSurvivor = Survivor;
-
-			bSurvivorHit = true;
-			bAttackSuccess = true;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("캐스팅 실패! OtherActor 클래스: %s"), *OtherActor->GetClass()->GetName());
-		}
-	}
-	else
-	{
-		bSurvivorHit = false;
-	}
-}
-
-void AD1KillerBase::OnOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (DetectedObject == OtherActor)
-	{
-		DetectedSurvivor = nullptr;
-		DetectedObject = nullptr;
-	}
-}
-
-void AD1KillerBase::OnWolfAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-	UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-	bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!WolfAttackCollision->IsActive())
-		return;
-
-	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Wolf Attack 적중: %s"), *OtherActor->GetName());
-		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Survivor 감지됨: %s"), *Survivor->GetName());
-			Survivor->TakeDamageFromKiller();
-			DetectedSurvivor = Survivor;
-			bSurvivorHit = true;
-			bAttackSuccess = true;
-		}
-		else
-		{
-			UE_LOG(LogTemp, Error, TEXT("캐스팅 실패! OtherActor 클래스: %s"), *OtherActor->GetClass()->GetName());
-		}
-	}
-	else
-	{
-		bSurvivorHit = false;
-	}
-}
-
-void AD1KillerBase::OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	if (DetectedObject == OtherActor)
-	{
-		DetectedSurvivor = nullptr;
-		DetectedObject = nullptr;
-	}
-}
-
 void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	if (!PowerAttackCollision->IsActive())
@@ -504,6 +452,16 @@ void AD1KillerBase::OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* Overl
 {
 }
 
+void AD1KillerBase::DamageSurvivor(class AD1SurvivorBase* Player)
+{
+	if (!DetectedSurvivor.IsValid()) return;
+
+	
+
+	DetectedSurvivor->TakeDamageFromKiller();
+
+}
+
 void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
 {
 	AbilitySystemComponent->ActivateAbility(AbilityTag);
@@ -517,3 +475,196 @@ void AD1KillerBase::OnRep_KillerSet()
 	}
 }
 
+void AD1KillerBase::PerformDraculaAttackTrace()
+{
+	bSurvivorHit = false;
+	FVector TraceStart = GetMesh()->GetSocketLocation("joint_FingerBRT_01");
+	FVector TraceEnd = TraceStart + (GetActorForwardVector() * 150.f);
+
+	float TraceRadius = 75.f;
+
+	// 트레이스 결과값 저장용
+	TArray<FHitResult> HitResults;
+	ECollisionChannel TraceChannel = ECC_Pawn;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+
+	// SphereTraceMulti
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		TraceStart,
+		TraceEnd,
+		FQuat::Identity,
+		TraceChannel,
+		FCollisionShape::MakeSphere(TraceRadius),
+		Params
+	);
+
+	// For Debugging
+	//float DebugDrawTime = 2.f;
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, DebugDrawTime);
+	//DrawDebugSphere(GetWorld(), TraceEnd, TraceRadius, 12, FColor::Red, false, DebugDrawTime);
+
+	if (bHit)
+	{
+		for (auto& Hit : HitResults)
+		{
+			AActor* HitActor = Hit.GetActor();
+			if (HitActor && HitActor != this)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
+				if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(HitActor))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
+
+					Survivor->TakeDamageFromKiller();
+					bSurvivorHit = true;
+
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
+	}
+}
+
+void AD1KillerBase::PerformWolfAttackTrace()
+{
+	bSurvivorHit = false;
+	FVector TraceStart = GetMesh()->GetSocketLocation("nose");
+	FVector TraceEnd = TraceStart + (GetActorForwardVector() * 150.f);
+
+	float TraceRadius = 50.0f;
+
+	// 트레이스 결과값 저장용
+	TArray<FHitResult> HitResults;
+	ECollisionChannel TraceChannel = ECC_Pawn;
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+
+	// SphereTraceMulti
+	bool bHit = GetWorld()->SweepMultiByChannel(
+		HitResults,
+		TraceStart,
+		TraceEnd,
+		FQuat::Identity,
+		TraceChannel,
+		FCollisionShape::MakeSphere(TraceRadius),
+		Params
+	);
+
+	// For Debugging
+	//float DebugDrawTime = 2.f;
+	//DrawDebugLine(GetWorld(), TraceStart, TraceEnd, FColor::Green, false, DebugDrawTime);
+	//DrawDebugSphere(GetWorld(), TraceEnd, TraceRadius, 12, FColor::Red, false, DebugDrawTime);
+
+	if (bHit)
+	{
+		for (auto& Hit : HitResults)
+		{
+			AActor* HitActor = Hit.GetActor();
+			if (HitActor && HitActor != this)
+			{
+				UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
+				if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(HitActor))
+				{
+					UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
+
+					Survivor->TakeDamageFromKiller();
+					bSurvivorHit = true;
+
+					break;
+				}
+			}
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
+	}
+}
+
+void AD1KillerBase::UpdateSurvivorBGMStates()
+{
+	AGameStateBase* GameState = GetWorld()->GetGameState();
+	if (!GameState) return;
+
+	for (APlayerState* PS : GameState->PlayerArray)
+	{
+		AD1SurvivorController* SurvivorPC = Cast<AD1SurvivorController>(PS->GetOwner());
+		if (!SurvivorPC || SurvivorPC->IsLocalController()) continue;
+
+		APawn* SurvivorPawn = SurvivorPC->GetPawn();
+		if (!SurvivorPawn) continue;
+
+		float DistSq = FVector::DistSquared(GetActorLocation(), SurvivorPawn->GetActorLocation());
+
+		EBGMLevel DetectedLevel;
+
+		if (DistSq <= FMath::Square(800.0f))         // 8m
+			DetectedLevel = EBGMLevel::Terror;
+		else if (DistSq <= FMath::Square(2000.0f))    // 16m
+			DetectedLevel = EBGMLevel::Threat;
+		else if (DistSq <= FMath::Square(4000.0f))   // 32m
+			DetectedLevel = EBGMLevel::Warning;
+		else
+			DetectedLevel = EBGMLevel::Normal;
+
+		FBGMStateInfo& Info = SurvivorBGMMap.FindOrAdd(SurvivorPC);
+
+		// 상태가 바뀌었으면 대기 상태로 전환
+		if (Info.PendingState != DetectedLevel)
+		{
+			Info.PendingState = DetectedLevel;
+			Info.StateDuration = 0.f;
+		}
+		else
+		{
+			Info.StateDuration += 0.5f;
+
+			// 일정 시간 유지되면 전환
+			constexpr float ThresholdTime = 1.0f;
+			if (Info.PendingState != Info.LastConfirmedState && Info.StateDuration >= ThresholdTime)
+			{
+				// 킬러 BGM
+				if (Info.PendingState == EBGMLevel::Terror)
+				{
+					if (CurrentBGMState != EBGMLevel::Terror)
+					{
+						SoundManager->PlayBGM(ChaseBGM, 1.0f);
+						CurrentBGMState = Info.PendingState;
+					}
+				}
+				else
+				{
+					if (CurrentBGMState != EBGMLevel::Normal)
+					{
+						SoundManager->PlayBGM(NormalBGM, 2.0f);
+						CurrentBGMState = EBGMLevel::Normal;
+					}
+				}
+				SurvivorPC->Client_UpdateBGMLevel(Info.PendingState);
+				Info.LastConfirmedState = Info.PendingState;
+			}
+		}
+	}
+}
+
+void AD1KillerBase::StartBGMUpdateTimer()
+{
+	if (HasAuthority()) // 서버에서만 실행
+	{
+		GetWorldTimerManager().SetTimer(
+			SurvivorBGMUpdateTimerHandle,
+			this,
+			&AD1KillerBase::UpdateSurvivorBGMStates,
+			0.5f,     // 주기
+			true      // 루프
+		);
+	}
+}

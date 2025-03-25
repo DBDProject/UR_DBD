@@ -120,9 +120,29 @@ protected:
 	UPROPERTY(BlueprintReadOnly)
 	TWeakObjectPtr<class AD1SurvivorBase> D1Survivor;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Animation", meta = (AllowPrivateAccess = "true"))
-	TWeakObjectPtr<class UD1SurvivorBaseAnim> CachedAnimInstance;
+protected: // 사운드
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AD1SurvivorSoundManager> SoundManagerClass;
 
+	// 로컬 사운드 매니저
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AD1SurvivorSoundManager> SoundManager;
+
+	// [[[[사운드 트랙]]]]
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EBGMLevel CurrentBGMLevel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> NormalBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> WarningBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> ThreatBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> TerrorBGM;
 private:
 	bool bCanVaultAfterDrop = true; // DropPallet 후 VaultPallet을 막기 위한 변수
 	FTimerHandle VaultCooldownTimer; // 타이머 핸들러 추가
@@ -133,5 +153,8 @@ private:
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
-
+	
+// 사운드
+	UFUNCTION(Client, Reliable)
+	void Client_UpdateBGMLevel(EBGMLevel NewLevel);
 };

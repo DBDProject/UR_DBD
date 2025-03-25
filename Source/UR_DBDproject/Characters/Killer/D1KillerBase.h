@@ -6,6 +6,8 @@
 #include "Characters/D1CharacterBase.h"
 #include "D1KillerBase.generated.h"
 
+class USoundAttenuation;
+class UAudioComponent;
 class UCameraComponent;
 class USkeletalMeshComponent;
 /**
@@ -31,8 +33,10 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void PossessedBy(AController* NewController) override;
+	virtual void Tick(float DeltaTime) override;
 	virtual void InitAbilitySystem() override;
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH, meta = (AllowPrivateAccess = "true"))
@@ -53,11 +57,11 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> FPVMesh;
 
-	/*UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
-	TObjectPtr<USkeletalMeshComponent> GetMesh();*/
-
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
+	TObjectPtr<class UDecalComponent> EyeDecal;
 
 protected:
 	// 오버랩 감지용 박스 컴포넌트
@@ -83,10 +87,10 @@ protected:
 	// 상호작용 중인 훅 저장
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	TWeakObjectPtr<class AD1Hook> CurrentHook;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedSurvivor;
-	
+
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
 	TWeakObjectPtr<class AD1SurvivorBase> DetectedCrawlSurvivor;
 
@@ -101,6 +105,16 @@ protected:
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
 
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly)
+	bool bAttackDetectStart = false;
+
+	//사운드
+	UPROPERTY(EditAnywhere, Category = "Sound")
+	class USoundAttenuation* AttenuationSetting;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
+	class UAudioComponent* AudioComponent;
+
 private:
 	UFUNCTION()
 	void OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -109,24 +123,6 @@ private:
 
 	UFUNCTION()
 	void OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UFUNCTION()
-	void OnOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
-	UFUNCTION()
-	void OnWolfAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnWolfAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
 	UFUNCTION()
@@ -147,15 +143,12 @@ private:
 	void OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+	UFUNCTION()
+	void DamageSurvivor(class AD1SurvivorBase* Player);
+
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
-	UBoxComponent* AttackCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Attack")
-	UBoxComponent* WolfAttackCollision;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack")
 	UBoxComponent* PowerAttackCollision;
@@ -165,7 +158,6 @@ public:
 
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
-	//TObjectPtr<USkeletalMeshComponent> GetMesh() const { return GetMesh(); }
 	TObjectPtr<USkeletalMeshComponent> GetBatMesh() const { return BatMesh; }
 
 	TObjectPtr<UCameraComponent> GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
@@ -194,4 +186,33 @@ public:
 	bool GetbSurvivorHit() { return bSurvivorHit; }
 	void SetbAttackSuccess(bool bValue) { bAttackSuccess = bValue; }
 
+	bool GetbAttackDetectStart() { return bAttackDetectStart; }
+	void SetbAttackDetectStart(bool bValue) { bAttackDetectStart = bValue; }
+
+	void PerformDraculaAttackTrace();
+	void PerformWolfAttackTrace();
+
+
+// 사운드
+	void UpdateSurvivorBGMStates();
+
+	void StartBGMUpdateTimer();         // 타이머 시작
+protected:
+	UPROPERTY(EditDefaultsOnly)
+	TSubclassOf<class AD1KillerSoundManager> SoundManagerClass;
+
+	// 로컬 사운드 매니저
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Sound", meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class AD1KillerSoundManager> SoundManager;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> NormalBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> ChaseBGM;
+
+	TMap<TObjectPtr<class AD1SurvivorController>, FBGMStateInfo> SurvivorBGMMap;
+
+	EBGMLevel CurrentBGMState;
+	FTimerHandle SurvivorBGMUpdateTimerHandle;
 };
