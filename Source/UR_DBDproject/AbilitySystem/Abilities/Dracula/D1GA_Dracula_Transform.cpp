@@ -7,6 +7,8 @@
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
 #include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
+
 
 UD1GA_Dracula_Transform::UD1GA_Dracula_Transform(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -501,11 +503,13 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	{
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+		Player->GetEyeSpotLight()->SetVisibility(false);
 	}
 	else
 	{
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
 		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Player->GetEyeSpotLight()->SetVisibility(true);
 	}
 }
 
@@ -517,11 +521,13 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 	{
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+		Killer->GetEyeSpotLight()->SetVisibility(false);
 	}
 	else
 	{
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Killer->GetEyeSpotLight()->SetVisibility(true);
 	}
 
 	KillerController->SetbTransform(false);
