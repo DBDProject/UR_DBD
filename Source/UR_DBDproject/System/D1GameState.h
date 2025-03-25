@@ -17,6 +17,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameEnd);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSurvivorStateChanged,
+	int32, SurvivorIndex, ESurvivorState, SurvivorState);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1GameState : public AGameState
@@ -26,6 +28,8 @@ class UR_DBDPROJECT_API AD1GameState : public AGameState
 private:
 	// 맵에 있는 ExitGate 찾기
 	void FindExitGates();
+
+	void FindExitAreas();
 
 	// 일정 시간 이후 입력 잠금 해제
 	void OnInputUnlockTimer();
@@ -63,12 +67,32 @@ public:
 	// 발전기 수리 완료 시 호출
 	void UpdateGeneratorState();
 
+	void SetSurvivorState(int32 PlayerIndex, ESurvivorState State);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multi_SetSurvivorState(int32 PlayerIndex, ESurvivorState State);
+
+	void ResultSurvivorGame(int32 PlayerIndex);
+	void ResultKillerGame();
+
 private:
 	FTimerHandle InputLockTimer;
 	FTimerHandle GameStartTimer;
 	FTimerHandle TravelTimer; // 서버장 내보내려고 만든 타이머
 
+	// 현재 수리해야할 발전기 개수
+	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	uint8 RepairedGenerators = 5;
+
+	// 모든 발전기가 수리되었는지 여부
+	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted)
+	bool bAllGeneratorsRepaired = false;
+
 	class UD1GameStartUI* GameStartUI;
+
+	UPROPERTY(Replicated)
+	TArray<ESurvivorState> SurvivorStates;
+
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TSubclassOf<class UD1GameStartUI> GameStartUIClass;
@@ -89,21 +113,16 @@ protected:
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnGameEnd OnGameEnd;
 
-	// 현재 수리해야할 발전기 개수
-	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, Category = "DBDListen")
-	uint8 RepairedGenerators = 5;
-
-	// 모든 발전기가 수리되었는지 여부
-	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted, BlueprintReadWrite, Category = "DBDListen")
-	bool bAllGeneratorsRepaired = false;
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnSurvivorStateChanged OnSurvivorStateChanged;
 
 	// 맵에 있는 탈출구들
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TArray<TObjectPtr<class AD1ExitGate>> ExitGates;
 
-	// TODO : 남아있는 플레이어
-	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
-	int32 RemainingSurvivors;
+	// 맵에 있는 탈출 Area
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TArray<TObjectPtr<class AD1ExitArea>> ExitAreas;
 
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
@@ -112,4 +131,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
 	float INPUT_UNLOCK_TIMER = 4.f;
 
+public:
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
 };

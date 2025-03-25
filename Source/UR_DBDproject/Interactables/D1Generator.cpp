@@ -369,6 +369,11 @@ void AD1Generator::CompleteRepair()
 
     StopRepairAll();
 
+    if (HasAuthority())
+    {
+        BP_CompleteRepair();
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("발전기 수리 완료! 모든 플레이어에게 알림"));
     if (AD1GameState* GameState = GetWorld()->GetGameState<AD1GameState>())
     {

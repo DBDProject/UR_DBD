@@ -166,15 +166,6 @@ void AD1KillerController::HandleGameplayEvent(FGameplayTag EventTag)
 		}
 		return;
 	}
-	if (EventTag == (D1GameplayTags::Interactables_Pallet_DownStart))
-	{
-
-	}
-
-	if (EventTag == (D1GameplayTags::Interactables_Pallet_DownEnd))
-	{
-
-	}
 }
 
 void AD1KillerController::Input_Move(const FInputActionValue& InputValue)

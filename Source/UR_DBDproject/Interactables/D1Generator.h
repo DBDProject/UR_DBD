@@ -87,6 +87,9 @@ protected:
     UFUNCTION()
     void DamagePerSeconds();
 
+    UFUNCTION(BlueprintImplementableEvent, Category = "Generator")
+    void BP_CompleteRepair();
+
 public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
     TObjectPtr<class UAnimMontage> G_GeneratorMontage; // 발전기 몽타주
@@ -124,7 +127,7 @@ protected:
 
     // 수리 진행도
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Generator")
-    float RepairProgress = 0.f;
+    float RepairProgress = 99.f;
 
     // 수리 하고 있는 플레이어
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")

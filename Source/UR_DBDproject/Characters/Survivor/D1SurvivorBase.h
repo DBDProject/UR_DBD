@@ -11,16 +11,11 @@
 /**
  *
  */
-DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnStateChange, ESurvivorState, NewState);
 
 UCLASS()
 class UR_DBDPROJECT_API AD1SurvivorBase : public AD1CharacterBase
 {
 	GENERATED_BODY()
-public:
-	UPROPERTY(BlueprintAssignable, Category = "State")
-	FOnStateChange OnChangePlayerState;
-
 public:
 	AD1SurvivorBase();
 
@@ -42,7 +37,6 @@ public:
 	void UpdateHealingProgress(float DeltaTime);
 	void UpdateCrawlBleedOut(float DeltaTime);
 	void UpdateHookBleedOut(float DeltaTime);
-	void UpdateBGM();
 
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void MoveToVaultStartPosition();
@@ -84,6 +78,20 @@ protected:
 	void Multi_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
+
+public: // 게임스테이트와 연동
+	void PlayEscapeSequence(class AD1ExitArea* ExitArea);
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetSurvivorState(int32 _PlayerIndex, ESurvivorState State);
+
+	// 시작 시 시퀸스 재생용
+	UFUNCTION(Client, Reliable)
+	void Client_PlayStartSequence(float UNLOCK_INPUT_TIMER);
+
+	UFUNCTION(Server, Reliable)
+	void Server_PlayEscapeSequence(AD1SurvivorBase* Survivor, class AD1ExitArea* ExitArea);
+
 
 public:	// 판자
 	UFUNCTION(Server, Reliable)
@@ -135,10 +143,6 @@ public:
 	void Server_SetSelfRecovering(bool bNewState);
 
 
-	// 시작 시 레벨 시퀸스 재생용
-	UFUNCTION(Client, Reliable)
-	void Client_PlayStartSequence(float UNLOCK_INPUT_TIMER);
-
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
 
@@ -157,14 +161,9 @@ public:
 	UFUNCTION()
 	void OnRep_SurvivorSet();
 
-	UFUNCTION()
-	void OnRep_ChangeState();
-
-	UFUNCTION(BlueprintImplementableEvent, Category = "State")
-	void BP_OnHealthChanged();
-
 	UFUNCTION(BlueprintImplementableEvent, Category = "State")
 	void BP_GetHook();
+
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
@@ -181,6 +180,9 @@ protected:
 public: // 갈고리
 	// 생존자 훅 처리 함수
 	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_SkillCheckEnable(bool State);
+
+	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StartEntityEvent(class AD1SurvivorBase* Player);
 
 	UFUNCTION(NetMulticast, Reliable)
@@ -196,12 +198,16 @@ public: // 갈고리
 	void StartEscapeAttempt();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void CancelEscapeAttempt();
-
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHookSkillCheckFail();
+	UFUNCTION(Server, Reliable)
+	void Server_OnHookSkillCheckFail();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnHookSkillCheckFail();
+
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void IncreaseEscapeGauge();
 	UFUNCTION(Server, Reliable)
@@ -305,18 +311,23 @@ protected:
 	bool bIsFail = false;
 
 	// 생존자 상태 (건강, 부상, 기절)
-	UPROPERTY(ReplicatedUsing = OnRep_ChangeState, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
-	ESurvivorState CurrentState;
+	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	ESurvivorState CurrentState = ESurvivorState::Healthy;
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
-	ESurvivorState PrevState;
+	ESurvivorState PrevState = ESurvivorState::Healthy;
 
-	UPROPERTY(EditAnywhere)
-	float OrbitSpeed = 60.f; // 인트로 카메라 회전 속도
 
+	UPROPERTY(EditAnywhere, BluePrintReadWrite)
+	float EscapeTime = 5.f; // 탈출 진행 될 시간
+
+	float OrbitSpeed = 0.f; // 인트로 및 탈출 카메라 회전 속도 알아서 값에 맞춰 변경됨
+	float ArmLengthSpeed = 0.f; // 인트로 및 탈출 카메라 줌 속도 알아서 값에 맞춰 변경됨.
+	float CurrentArmLength = 0.f;
 	bool bPlayingIntro = false; // true : 인트로 중, false : 인트로 종료
+	bool bPlayingEscape = false; // true : 탈출 중, false : 탈출 종료
 	float CurrentAngle = 200.f; // 시작 시 각도
-	float CurrentSpeed; // 현재 속도
+	FVector3d ExitAreaFowardVector; // 탈출구 앞 방향 벡터
 
 protected: // 치료 기능
 	// 치료를 해주는 생존자
@@ -375,7 +386,6 @@ protected: // 갈고리
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	float HookHealth = 100.0f;
 
-
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
 	bool bIsHookSkillCheckEnable = false;
 
@@ -388,6 +398,8 @@ protected: // 갈고리
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Survivor")
 	float MaxEscapeGauge = 100.0f;
 
+	bool bIsHookEventReaction = false;
+	bool bIsHookEventSkillCheck = false;
 	// 치료 불가 타이머 핸들
 	FTimerHandle HealingCooldownTimer;
 	// 사망 처리 타이머
@@ -419,7 +431,7 @@ public:
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
 
-	void SetSurvivorState(ESurvivorState state) { CurrentState = state; }
+	void SetSurvivorState(ESurvivorState state);
 
 	bool GetIsFail() { return bIsFail; }
 	void SetIsFail(bool state) { bIsFail = state; }

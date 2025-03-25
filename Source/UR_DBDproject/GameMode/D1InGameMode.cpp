@@ -245,10 +245,16 @@ void AD1InGameMode::InitGame(const FString& MapName, const FString& Options, FSt
 			m_dataTable = LoadObject<UDataTable>(nullptr, TEXT("DataTable'/Game/DBD/Data/CharacterDataTable.CharacterDataTable'"));
 		}
 
-		uint8 player = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
 
-		if (player > 1)
-			READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
+		UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+		if (IsValid(GI))
+		{
+			if (GI->m_serverInfo.killerInfo.userIP != TEXT("127.0.0.1"))
+			{
+				READY_PLAYER_COUNT = GetGameInstance<UD1GameInstance>()->m_serverInfo.maxPlayer;
+			}
+		}
 
 		UE_LOG(LogTemp, Warning, TEXT("현재 플레이어 매칭 수 : %d"), READY_PLAYER_COUNT);
 	}
@@ -321,9 +327,12 @@ void AD1InGameMode::Logout(AController* Exiting)
 
 	nReadyPlayerCount--;
 
-	if (nReadyPlayerCount <= 1)
+	if (IsMatchInProgress())
 	{
-		EndMatch();
+		if (nReadyPlayerCount <= 1)
+		{
+			EndMatch();
+		}
 	}
 }
 

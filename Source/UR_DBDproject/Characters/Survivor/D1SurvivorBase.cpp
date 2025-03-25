@@ -13,6 +13,7 @@
 #include "Components/BoxComponent.h"
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
+#include "Interactables/D1ExitArea.h"
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
@@ -24,6 +25,8 @@
 #include "D1SurvivorController.h"
 #include "EngineUtils.h"
 #include "Components/AudioComponent.h"
+#include "System/D1GameState.h"
+#include "UI/D1GameEscapeUI.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -109,8 +112,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentState = ESurvivorState::Healthy;
-	PrevState = ESurvivorState::Healthy;
 
 	// TEST
 	//CurrentState = ESurvivorState::Crawl;
@@ -193,13 +194,34 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SmoothCameraTransition(DeltaTime);
-
 	if (bPlayingIntro)
 	{
-		CurrentAngle -= OrbitSpeed * DeltaTime;
-		SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+		if (GetController()->IsLocalPlayerController())
+		{
+			CurrentAngle -= OrbitSpeed * DeltaTime;
+			SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+		}
 	}
+
+	if (bPlayingEscape)
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			CurrentAngle += OrbitSpeed * DeltaTime;
+			CurrentArmLength += ArmLengthSpeed * DeltaTime;
+
+			if (CurrentAngle <= 150.f)
+				SpringArm->SetRelativeRotation(FRotator(0.f, -CurrentAngle, 0.f));
+
+			if (CurrentArmLength <= 450.f)
+				SpringArm->TargetArmLength = CurrentArmLength;
+
+			AddMovementInput(ExitAreaFowardVector, 1.f, true);
+		}
+		return;
+	}
+
+	SmoothCameraTransition(DeltaTime);
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
@@ -291,10 +313,11 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 			Multicast_StartEntityEvent(this);
 		}
 	}
-	if (HookHealth <= 45.f && bIsHookSkillCheckEnable == false)
+	if (HookHealth <= 45.f && bIsHookEventReaction == false)
 	{
 		if (CurrentHook.IsValid())
 		{
+			bIsHookEventReaction = true;
 			Multicast_StartEntityReaction();
 		}
 	}
@@ -303,6 +326,14 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	{
 		DieFromEntity();
 		return;
+	}
+
+
+	if (bIsHookSkillCheckEnable == true
+		&& bIsHookEventSkillCheck == false)
+	{
+		Multicast_SkillCheckEnable(true);
+		bIsHookEventSkillCheck = true;
 	}
 }
 
@@ -612,12 +643,8 @@ void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
 	{
 		PlayAnimMontage(SpiderMontage, 1.0f, "Reaction");
 		CurrentHook->PlayEntityMontage("Reaction");
-		bIsHookSkillCheckEnable = true;
-		CurrentHook->SetIsSkillCheckEnable(true);
-		BP_GetHook();
 	}
 }
-
 
 
 void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
@@ -646,6 +673,12 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	CurrentHook->SetInteractingPlayer(this);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+	{
+		PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
+	}
+
 	if (HasAuthority())
 	{
 		OnHooked();
@@ -672,11 +705,23 @@ void AD1SurvivorBase::OnHookSkillCheckFail()
 {
 	if (!CurrentHook.IsValid()) return;
 
+	if (!HasAuthority())
+	{
+		Server_OnHookSkillCheckFail();
+		return;
+	}
+}
+
+void AD1SurvivorBase::Server_OnHookSkillCheckFail_Implementation()
+{
+	HookHealth -= 2.5f;
+	Multicast_OnHookSkillCheckFail();
+}
+
+void AD1SurvivorBase::Multicast_OnHookSkillCheckFail_Implementation()
+{
 	bIsHookSkillCheckFail = true;
 	CurrentHook->SetIsSkillCheckFail(true);
-
-	HookHealth -= 5.0f;
-	// 애니메이션 (TODO)
 
 	UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패!"));
 }
@@ -781,8 +826,8 @@ void AD1SurvivorBase::OnEscapeSuccess()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CurrentState = ESurvivorState::Injured;
 		bIsHookSkillCheckEnable = false;
+		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
 
@@ -797,8 +842,8 @@ void AD1SurvivorBase::OnRescued()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CurrentState = ESurvivorState::Injured;
 		bIsHookSkillCheckEnable = false;
+		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
 
@@ -816,7 +861,7 @@ void AD1SurvivorBase::Die()
 	}
 
 	// 생존자 상태 변경
-	CurrentState = ESurvivorState::Dying;
+	SetSurvivorState(ESurvivorState::Dying);
 
 	// 사망 애니메이션 (TODO)
 
@@ -861,29 +906,41 @@ void AD1SurvivorBase::DieFromEntity_Local()
 	UE_LOG(LogTemp, Log, TEXT("생존자 엔티티에 의해 사망!"));
 
 	// 상태 변경
-	CurrentState = ESurvivorState::Dying;
+	SetSurvivorState(ESurvivorState::Dying);
+
+	// 입력 비활성화
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		DisableInput(PC);
+		if (PC->IsLocalPlayerController())
+		{
+			bIsHookSkillCheckEnable = false;
+			BP_GetHook();
+		}
+	}
 
 	// 사망 애니메이션 재생
 	if (SpiderMontage && CurrentHook.IsValid())
 	{
 		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
 		CurrentHook->PlayEntityMontage("Sacrifice");
-		bIsHookSkillCheckEnable = false;
-		CurrentHook->SetIsSkillCheckEnable(false);
 	}
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	// 입력 비활성화
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		DisableInput(PC);
-	}
 }
 
 void AD1SurvivorBase::RemoveFromGame()
 {
-	//Cast<APlayerController>(GetController())->ClientTravel("/Game/Maps/Map_MainMenu", ETravelType::TRAVEL_Absolute);
-	Destroy();
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (IsValid(PC) && IsValid(GS))
+	{
+		if (PC->IsLocalPlayerController())
+		{
+			GS->ResultSurvivorGame(PlayerIndex);
+			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+		}
+	}
 }
 
 void AD1SurvivorBase::MoveToPalletStartPosition()
@@ -942,6 +999,7 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 	}
 
 	UpdateClosestDetectedObject();
+
 }
 
 void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -1007,6 +1065,14 @@ void AD1SurvivorBase::UpdateClosestDetectedObject()
 	else if (DetectedObject.IsValid() && DetectedObject->ActorHasTag("Vaultable"))
 	{
 		VaultTarget = Cast<AD1VaultObject>(DetectedObject);
+	}
+	
+	else if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(DetectedObject))
+	{
+		if (ExitArea->IsActivated())
+		{
+			PlayEscapeSequence(ExitArea);
+		}
 	}
 }
 
@@ -1075,7 +1141,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	{
 
 		PlayMontage(HitMontage, "Hit_BK");
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
 		break;
 	}
@@ -1084,7 +1150,11 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	case ESurvivorState::Injured:
 	{
 		PlayMontage(HitMontage, "BK");
-		CurrentState = ESurvivorState::Crawl;
+		SetSurvivorState(ESurvivorState::Crawl);
+		if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+		{
+			PC->PlaySurvivorBGMByLevel(EBGMLevel::Crawl);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
 		break;
 	}
@@ -1253,9 +1323,9 @@ void AD1SurvivorBase::FinishHealing()
 	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));
 
 	if (CurrentState == ESurvivorState::Injured)
-		CurrentState = ESurvivorState::Healthy;
+		SetSurvivorState(ESurvivorState::Healthy);
 	else if (CurrentState == ESurvivorState::Crawl)
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 
 	if (HasAuthority())
 	{
@@ -1360,8 +1430,87 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 	}
 }
 
-void AD1SurvivorBase::OnRep_ChangeState()
+void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)
 {
-	BP_OnHealthChanged();
+	bIsHookSkillCheckEnable = State;
+	if (!GetController()) return;
+
+	if (GetController()->IsLocalPlayerController())
+	{
+		BP_GetHook();
+	}
+}
+
+void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (!IsValid(PC) || !IsValid(GS))
+		return;
+
+	if (PC->IsLocalController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("플레이어 탈출 시퀀스 시작"));
+		FTimerHandle EscapeSequenceTimer;
+
+		// 콜리젼 없애기
+		Server_PlayEscapeSequence(this, ExitArea);
+		GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+
+		FRotator TargetRot = ExitArea->GetActorRotation();
+		UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GS->GameEscapeUIClass);
+		SetSurvivorState(ESurvivorState::Escape);
+		GetController()->DisableInput(Cast<APlayerController>(GetController()));
+		GetWorld()->GetGameViewport()->RemoveAllViewportWidgets();
+		EscapeUI->AddToViewport();
+		EscapeUI->GameEscape(EscapeTime);
+
+		ExitAreaFowardVector = ExitArea->GetActorForwardVector();
+		CurrentAngle = 0.f;
+		CurrentArmLength = SpringArm->TargetArmLength;
+
+		OrbitSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 150도 회전시키고 뒤에 관찰
+		ArmLengthSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 뒤로 이동 150 길이 더하도록 하드코딩함
+
+		SpringArm->bUsePawnControlRotation = false;
+		SpringArm->bDoCollisionTest = false;
+
+		GetWorld()->GetTimerManager().SetTimer(EscapeSequenceTimer, [this, PC, GS]()
+			{
+				if (!IsValid(PC) || !IsValid(GS))
+					return;
+
+				GS->ResultSurvivorGame(PlayerIndex);
+				bPlayingEscape = false;
+				UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+			},
+			EscapeTime,
+			false);
+
+		bPlayingEscape = true;
+	}
+}
+void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)
+{
+	Survivor->GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+}
+void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
+{
 	PrevState = CurrentState;
+	CurrentState = state;
+
+	if (PlayerIndex < 0)
+		return;
+
+	Server_SetSurvivorState(PlayerIndex, CurrentState);
+}
+
+
+void AD1SurvivorBase::Server_SetSurvivorState_Implementation(int32 _PlayerIndex, ESurvivorState State)
+{
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (IsValid(GS))
+		GS->SetSurvivorState(_PlayerIndex, State);
 }

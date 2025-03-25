@@ -32,6 +32,7 @@ enum class ESurvivorState : uint8
 	PickedUp	UMETA(DisplayName = "Picked Up"), // 킬러가 들고 있는 상태
 	Hooked		UMETA(DisplayName = "Hooked"),    // 갈고리 상태 (갈고리에 걸림)
 	Dying		UMETA(DisplayName = "Dying"),     // 사망 상태
+	Escape		UMETA(DisplayName = "Escape"),    // 탈출 상태
 	Logout		UMETA(DisplayName = "Logout"),    // 로그아웃 상태
 };
 
@@ -100,6 +101,24 @@ struct FPlayerInfo
 };
 
 USTRUCT(BlueprintType)
+struct FResultInfo
+{
+	GENERATED_BODY()
+
+	UPROPERTY(BlueprintReadWrite)
+	bool isKiller = true;
+
+	UPROPERTY(BlueprintReadWrite)
+	int32 playerIndex = -1;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<FPlayerInfo> survivorInfos;
+
+	UPROPERTY(BlueprintReadWrite)
+	TArray<ESurvivorState> survivorStates;
+};
+
+USTRUCT(BlueprintType)
 struct FServerInfo // 리슨 서버장 ( 킬러 ) 소켓 서버에서 받아야 할 정보
 {
 	GENERATED_BODY()
@@ -141,7 +160,10 @@ enum class EBGMLevel : uint8
 	Normal,
 	Warning,
 	Threat,
-	Terror
+	Terror,
+	Crawl,
+	HookPart1,
+	HookPart2
 };
 
 struct FBGMStateInfo
