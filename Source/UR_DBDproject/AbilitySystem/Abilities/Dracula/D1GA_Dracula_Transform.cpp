@@ -6,7 +6,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
-
+#include "Components/CapsuleComponent.h"
 
 UD1GA_Dracula_Transform::UD1GA_Dracula_Transform(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
@@ -496,11 +496,33 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	Player->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
 	Player->GetMesh()->SetComponentTickEnabled(!bWolfVisible);
 	Player->GetBatMesh()->SetComponentTickEnabled(!bBatVisible);
+
+	if (!bBatVisible)
+	{
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+	}
+	else
+	{
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+	}
 }
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	if (Killer->GetCurrentTransformState() == EDraculaTransformationState::Bat)
+	{
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+	}
+	else
+	{
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+	}
 
 	KillerController->SetbTransform(false);
 	UE_LOG(LogTemp, Log, TEXT("✅ Transform GAS END "));

@@ -61,7 +61,7 @@ protected:
 	TObjectPtr<USkeletalMeshComponent> BatMesh;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
-	TObjectPtr<class UDecalComponent> EyeDecal;
+	TObjectPtr<class USpotLightComponent> EyeSpotLight;
 
 protected:
 	// 오버랩 감지용 박스 컴포넌트
@@ -105,9 +105,6 @@ protected:
 	bool bSurvivorHit = false;
 	bool bAttackSuccess = false;
 
-	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly)
-	bool bAttackDetectStart = false;
-
 	//사운드
 	UPROPERTY(EditAnywhere, Category = "Sound")
 	class USoundAttenuation* AttenuationSetting;
@@ -143,9 +140,6 @@ private:
 	void OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UFUNCTION()
-	void DamageSurvivor(class AD1SurvivorBase* Player);
-
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
@@ -163,6 +157,7 @@ public:
 	TObjectPtr<UCameraComponent> GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
 	TObjectPtr<UCameraComponent> GetWolfCameraComponent() const { return WolfCameraComponent; }
 	TObjectPtr<UCameraComponent> GetBatCameraComponent() const { return BatCameraComponent; }
+	TObjectPtr<USpotLightComponent> GetEyeSpotLight() const { return EyeSpotLight; }
 
 	EDraculaTransformationState GetPrevTransformState() { return PrevTransformState; }
 	EDraculaTransformationState GetCurrentTransformState() { return CurrentTransformState; }
@@ -186,12 +181,8 @@ public:
 	bool GetbSurvivorHit() { return bSurvivorHit; }
 	void SetbAttackSuccess(bool bValue) { bAttackSuccess = bValue; }
 
-	bool GetbAttackDetectStart() { return bAttackDetectStart; }
-	void SetbAttackDetectStart(bool bValue) { bAttackDetectStart = bValue; }
-
 	void PerformDraculaAttackTrace();
 	void PerformWolfAttackTrace();
-
 
 // 사운드
 	void UpdateSurvivorBGMStates();

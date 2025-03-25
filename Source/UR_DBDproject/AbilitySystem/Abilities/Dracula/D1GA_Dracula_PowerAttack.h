@@ -70,12 +70,14 @@ private:
 	void WolfInMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void WolfSwingMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 	void CompleteCharge();
+	void StopChargeAnimation();
 
 	bool bAttackHit = false;
 	float ChargingStartTime = 0.0f;
 	float ChargeDuration = 0.9f;
 	float WolfChargeDuration = 0.85f;
 	FTimerHandle ChargeTimerHandle;
+	FTimerHandle PauseTimerHandle;
 public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_DraculaPowerAttack(AD1KillerBase* Player, FName SectionName);
