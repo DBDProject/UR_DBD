@@ -17,10 +17,13 @@
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
 #include "Interactables/D1ExitGate.h"
+#include "Interactables/D1ExitArea.h"
 #include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
 #include "Net/UnrealNetwork.h"
+#include "System/D1GameState.h"
+#include "UI/D1GameEscapeUI.h"
 #include "D1SurvivorController.h"
 #include "EngineUtils.h"
 #include "Components/AudioComponent.h"
@@ -187,13 +190,34 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	SmoothCameraTransition(DeltaTime);
-
 	if (bPlayingIntro)
 	{
-		CurrentAngle -= OrbitSpeed * DeltaTime;
-		SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+		if (GetController()->IsLocalPlayerController())
+		{
+			CurrentAngle -= OrbitSpeed * DeltaTime;
+			SpringArm->SetRelativeRotation(FRotator(0.f, CurrentAngle, 0.f));
+		}
 	}
+
+	if (bPlayingEscape)
+	{
+		if (GetController()->IsLocalPlayerController())
+		{
+			CurrentAngle += OrbitSpeed * DeltaTime;
+			CurrentArmLength += ArmLengthSpeed * DeltaTime;
+
+			if (CurrentAngle <= 150.f)
+				SpringArm->SetRelativeRotation(FRotator(0.f, -CurrentAngle, 0.f));
+
+			if (CurrentArmLength <= 450.f)
+				SpringArm->TargetArmLength = CurrentArmLength;
+
+			AddMovementInput(ExitAreaFowardVector, 1.f, true);
+		}
+		return;
+	}
+
+	SmoothCameraTransition(DeltaTime);
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
@@ -779,7 +803,7 @@ void AD1SurvivorBase::OnEscapeSuccess()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
 
@@ -794,7 +818,7 @@ void AD1SurvivorBase::OnRescued()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
 
@@ -812,7 +836,7 @@ void AD1SurvivorBase::Die()
 	}
 
 	// 생존자 상태 변경
-	CurrentState = ESurvivorState::Dying;
+	SetSurvivorState(ESurvivorState::Dying);
 
 	// 사망 애니메이션 (TODO)
 
@@ -857,7 +881,7 @@ void AD1SurvivorBase::DieFromEntity_Local()
 	UE_LOG(LogTemp, Log, TEXT("생존자 엔티티에 의해 사망!"));
 
 	// 상태 변경
-	CurrentState = ESurvivorState::Dying;
+	SetSurvivorState(ESurvivorState::Dying);
 
 	// 입력 비활성화
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
@@ -881,8 +905,28 @@ void AD1SurvivorBase::DieFromEntity_Local()
 
 void AD1SurvivorBase::RemoveFromGame()
 {
-	//Cast<APlayerController>(GetController())->ClientTravel("/Game/Maps/Map_MainMenu", ETravelType::TRAVEL_Absolute);
-	Destroy();
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (IsValid(PC) && IsValid(GS))
+	{
+		if (PC->IsLocalPlayerController())
+		{
+			GS->ResultSurvivorGame(PlayerIndex);
+			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+		}
+	}
+}
+
+void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
+{
+	PrevState = CurrentState;
+	CurrentState = state;
+
+	if (PlayerIndex < 0)
+		return;
+
+	Server_SetSurvivorState(PlayerIndex, CurrentState);
 }
 
 void AD1SurvivorBase::MoveToPalletStartPosition()
@@ -958,6 +1002,13 @@ void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, A
 		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
 		DetectedObject = OtherActor;
 	}
+	else if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(OtherActor))
+	{
+		if (ExitArea->IsActivated())
+		{
+			PlayEscapeSequence(ExitArea);
+		}
+	}
 }
 
 void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -987,6 +1038,11 @@ void AD1SurvivorBase::Server_StartDropping_Request_Implementation(AD1Pallet* Pal
 	Pallet->StartDropping(this);
 }
 
+void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)
+{
+	Survivor->GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+}
+
 void AD1SurvivorBase::TakeDamageFromKiller()
 {
 	switch (CurrentState)
@@ -995,7 +1051,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	{
 
 		PlayMontage(HitMontage, "Hit_BK");
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
 		break;
 	}
@@ -1004,7 +1060,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	case ESurvivorState::Injured:
 	{
 		PlayMontage(HitMontage, "BK");
-		CurrentState = ESurvivorState::Crawl;
+		SetSurvivorState(ESurvivorState::Crawl);
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
 		break;
 	}
@@ -1173,9 +1229,9 @@ void AD1SurvivorBase::FinishHealing()
 	UE_LOG(LogTemp, Warning, TEXT("치료 완료!"));
 
 	if (CurrentState == ESurvivorState::Injured)
-		CurrentState = ESurvivorState::Healthy;
+		SetSurvivorState(ESurvivorState::Healthy);
 	else if (CurrentState == ESurvivorState::Crawl)
-		CurrentState = ESurvivorState::Injured;
+		SetSurvivorState(ESurvivorState::Injured);
 
 	if (HasAuthority())
 	{
@@ -1295,4 +1351,61 @@ void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)
 	{
 		BP_GetHook();
 	}
+}
+void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (!IsValid(PC) || !IsValid(GS))
+		return;
+
+	if (PC->IsLocalController())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("플레이어 탈출 시퀀스 시작"));
+		FTimerHandle EscapeSequenceTimer;
+
+		// 콜리젼 없애기
+		Server_PlayEscapeSequence(this, ExitArea);
+		GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+
+		FRotator TargetRot = ExitArea->GetActorRotation();
+		UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GS->GameEscapeUIClass);
+		SetSurvivorState(ESurvivorState::Escape);
+		GetController()->DisableInput(Cast<APlayerController>(GetController()));
+		GetWorld()->GetGameViewport()->RemoveAllViewportWidgets();
+		EscapeUI->AddToViewport();
+		EscapeUI->GameEscape(EscapeTime);
+
+		ExitAreaFowardVector = ExitArea->GetActorForwardVector();
+		CurrentAngle = 0.f;
+		CurrentArmLength = SpringArm->TargetArmLength;
+
+		OrbitSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 150도 회전시키고 뒤에 관찰
+		ArmLengthSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 뒤로 이동 150 길이 더하도록 하드코딩함
+
+		SpringArm->bUsePawnControlRotation = false;
+		SpringArm->bDoCollisionTest = false;
+
+		GetWorld()->GetTimerManager().SetTimer(EscapeSequenceTimer, [this, PC, GS]() {
+			if (!IsValid(PC) || !IsValid(GS))
+				return;
+
+			GS->ResultSurvivorGame(PlayerIndex);
+			bPlayingEscape = false;
+			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+			},
+			EscapeTime,
+			false);
+
+		bPlayingEscape = true;
+	}
+}
+
+void AD1SurvivorBase::Server_SetSurvivorState_Implementation(int32 _PlayerIndex, ESurvivorState State)
+{
+	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
+
+	if (IsValid(GS))
+		GS->SetSurvivorState(_PlayerIndex, State);
 }

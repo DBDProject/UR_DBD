@@ -25,6 +25,9 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "DBDNet", meta = (DisplayName = "ServerInfo"))
 	FServerInfo m_serverInfo;
 
+	UPROPERTY(BlueprintReadWrite, Category = "DBDNet", meta = (DisplayName = "ResultInfo"))
+	FResultInfo m_resultInfo;
+
 public:
 	UD1GameInstance(const FObjectInitializer& ObjectInitializer);
 

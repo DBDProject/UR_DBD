@@ -26,11 +26,6 @@ void UDBDNetManager::InitWinSock()
 		PrintSockError(WSAGetLastError());
 	}
 
-	m_socket = socket(AF_INET, SOCK_STREAM, 0);
-	if (m_socket == INVALID_SOCKET) {
-		PrintSockError(WSAGetLastError());
-	}
-
 	int option = TRUE;
 	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
 }
@@ -96,6 +91,11 @@ bool UDBDNetManager::Connect(const FString& ip, const int port, int timeoutMs)
 	stServerAddr.sin_family = AF_INET;
 	stServerAddr.sin_port = htons(port);
 
+	m_socket = socket(AF_INET, SOCK_STREAM, 0);
+	if (m_socket == INVALID_SOCKET) {
+		PrintSockError(WSAGetLastError());
+	}
+
 	// Convert FString to ANSI string for inet_addr
 	const char* ipAddress = TCHAR_TO_ANSI(*ip);
 	stServerAddr.sin_addr.s_addr = inet_addr(ipAddress);
@@ -106,6 +106,7 @@ bool UDBDNetManager::Connect(const FString& ip, const int port, int timeoutMs)
 		PrintSockError(WSAGetLastError());
 		return false;
 	}
+
 
 	// Attempt to connect (will return immediately in non-blocking mode)
 	int nRet = connect(m_socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
@@ -277,9 +278,10 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s"), *Results[i].IP);
 				Results[i].bFound = true;
 				bFoundAny = true;
+				int option = TRUE;
 
-				// 찾은 소켓 저장하고 다른 소켓은 닫기
 				m_socket = Results[i].Socket;
+				setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
 
 				// 다른 소켓 정리
 				for (int j = 0; j < NUM_THREADS; ++j) {
@@ -330,16 +332,6 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 		for (int i = 0; i < NUM_THREADS; ++i) {
 			closesocket(Results[i].Socket);
 		}
-
-		// 새로운 소켓 생성
-		m_socket = socket(AF_INET, SOCK_STREAM, 0);
-		if (m_socket == INVALID_SOCKET) {
-			PrintSockError(WSAGetLastError());
-		}
-
-		// TCP_NODELAY 옵션 설정
-		int option = TRUE;
-		setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
 	}
 
 	return bFoundAny;
