@@ -33,7 +33,13 @@ public class UR_DBDproject : ModuleRules
             "MovieScene",
             "MovieSceneTracks"
     });
-        PublicDefinitions.Add("NOMINMAX");
+
+        // Add additional required modules for platform-specific operations
+        if (Target.Platform == UnrealTargetPlatform.Win64)
+        {
+            PublicDefinitions.Add("NOMINMAX");
+            PublicDefinitions.Add("WIN32_LEAN_AND_MEAN");
+        }
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
     }
 }
