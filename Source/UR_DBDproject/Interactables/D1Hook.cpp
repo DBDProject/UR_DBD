@@ -222,7 +222,7 @@ void AD1Hook::EndHookCameraCutscene()
 
 void AD1Hook::PlayHookExecutionSequence()
 {
-    if (!HookExecutionSequence && !InteractingPlayer) return;
+ /*   if (!HookExecutionSequence && !InteractingPlayer) return;
     if (!(InteractingPlayer->GetController())) return;
 
     if (InteractingPlayer->GetController()->IsLocalPlayerController())
@@ -242,5 +242,5 @@ void AD1Hook::PlayHookExecutionSequence()
 
             HookSequencePlayer->Play();
         }
-    }
+    }*/
 }
