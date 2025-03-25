@@ -11,7 +11,6 @@
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
-//#include "Windows/AllowWindowsPlatformTypes.h"
 
 // Sets default values
 AD1Hook::AD1Hook()

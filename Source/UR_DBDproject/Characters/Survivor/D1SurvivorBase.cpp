@@ -13,20 +13,20 @@
 #include "Components/BoxComponent.h"
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
+#include "Interactables/D1ExitArea.h"
 #include "Animation/D1SurvivorBaseAnim.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
 #include "Interactables/D1ExitGate.h"
-#include "Interactables/D1ExitArea.h"
 #include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
 #include "Net/UnrealNetwork.h"
-#include "System/D1GameState.h"
-#include "UI/D1GameEscapeUI.h"
 #include "D1SurvivorController.h"
 #include "EngineUtils.h"
 #include "Components/AudioComponent.h"
+#include "System/D1GameState.h"
+#include "UI/D1GameEscapeUI.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -106,8 +106,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 void AD1SurvivorBase::BeginPlay()
 {
 	Super::BeginPlay();
-	CurrentState = ESurvivorState::Healthy;
-	PrevState = ESurvivorState::Healthy;
 
 	// TEST
 	//CurrentState = ESurvivorState::Crawl;
@@ -918,17 +916,6 @@ void AD1SurvivorBase::RemoveFromGame()
 	}
 }
 
-void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
-{
-	PrevState = CurrentState;
-	CurrentState = state;
-
-	if (PlayerIndex < 0)
-		return;
-
-	Server_SetSurvivorState(PlayerIndex, CurrentState);
-}
-
 void AD1SurvivorBase::MoveToPalletStartPosition()
 {
 	if (!CurrentPallet.IsValid())	return;
@@ -1036,11 +1023,6 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 void AD1SurvivorBase::Server_StartDropping_Request_Implementation(AD1Pallet* Pallet)
 {
 	Pallet->StartDropping(this);
-}
-
-void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)
-{
-	Survivor->GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
 }
 
 void AD1SurvivorBase::TakeDamageFromKiller()
@@ -1336,12 +1318,6 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 	}
 }
 
-void AD1SurvivorBase::OnRep_ChangeState()
-{
-	BP_OnHealthChanged();
-	PrevState = CurrentState;
-}
-
 void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)
 {
 	bIsHookSkillCheckEnable = State;
@@ -1352,6 +1328,7 @@ void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)
 		BP_GetHook();
 	}
 }
+
 void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
@@ -1387,13 +1364,14 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bDoCollisionTest = false;
 
-		GetWorld()->GetTimerManager().SetTimer(EscapeSequenceTimer, [this, PC, GS]() {
-			if (!IsValid(PC) || !IsValid(GS))
-				return;
+		GetWorld()->GetTimerManager().SetTimer(EscapeSequenceTimer, [this, PC, GS]()
+			{
+				if (!IsValid(PC) || !IsValid(GS))
+					return;
 
-			GS->ResultSurvivorGame(PlayerIndex);
-			bPlayingEscape = false;
-			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+				GS->ResultSurvivorGame(PlayerIndex);
+				bPlayingEscape = false;
+				UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
 			},
 			EscapeTime,
 			false);
@@ -1401,6 +1379,21 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 		bPlayingEscape = true;
 	}
 }
+void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)
+{
+	Survivor->GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+}
+void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
+{
+	PrevState = CurrentState;
+	CurrentState = state;
+
+	if (PlayerIndex < 0)
+		return;
+
+	Server_SetSurvivorState(PlayerIndex, CurrentState);
+}
+
 
 void AD1SurvivorBase::Server_SetSurvivorState_Implementation(int32 _PlayerIndex, ESurvivorState State)
 {
