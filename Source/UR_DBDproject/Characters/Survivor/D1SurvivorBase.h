@@ -42,7 +42,6 @@ public:
 	void UpdateHealingProgress(float DeltaTime);
 	void UpdateCrawlBleedOut(float DeltaTime);
 	void UpdateHookBleedOut(float DeltaTime);
-	void UpdateBGM();
 
 	void MoveToGeneratorPosition(EGeneratorInteractionPosition Position);
 	void MoveToVaultStartPosition();
@@ -190,12 +189,16 @@ public: // 갈고리
 	void StartEscapeAttempt();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void CancelEscapeAttempt();
-
 protected:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHooked();
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnHookSkillCheckFail();
+	UFUNCTION(Server, Reliable)
+	void Server_OnHookSkillCheckFail();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_OnHookSkillCheckFail();
+
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void IncreaseEscapeGauge();
 	UFUNCTION(Server, Reliable)

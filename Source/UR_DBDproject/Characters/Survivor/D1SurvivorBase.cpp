@@ -652,11 +652,23 @@ void AD1SurvivorBase::OnHooked()
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
 {
+	if (!HasAuthority())
+	{
+		Server_OnHookSkillCheckFail();
+		return;
+	}
+}
+
+void AD1SurvivorBase::Server_OnHookSkillCheckFail_Implementation()
+{
+	HookHealth -= 5.0f;
+	Multicast_OnHookSkillCheckFail();
+}
+
+void AD1SurvivorBase::Multicast_OnHookSkillCheckFail_Implementation()
+{
 	bIsHookSkillCheckFail = true;
 	CurrentHook->SetIsSkillCheckFail(true);
-
-	HookHealth -= 5.0f;
-	// 애니메이션 (TODO)
 
 	UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패!"));
 }
@@ -844,10 +856,10 @@ void AD1SurvivorBase::DieFromEntity_Local()
 	// 사망 애니메이션 재생
 	if (SpiderMontage && CurrentHook.IsValid())
 	{
-		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
-		CurrentHook->PlayEntityMontage("Sacrifice");
 		bIsHookSkillCheckEnable = false;
 		CurrentHook->SetIsSkillCheckEnable(false);
+		PlayAnimMontage(SpiderMontage, 1.0f, "Sacrifice");
+		CurrentHook->PlayEntityMontage("Sacrifice");
 	}
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 
