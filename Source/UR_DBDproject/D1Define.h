@@ -160,7 +160,10 @@ enum class EBGMLevel : uint8
 	Normal,
 	Warning,
 	Threat,
-	Terror
+	Terror,
+	Crawl,
+	HookPart1,
+	HookPart2
 };
 
 struct FBGMStateInfo

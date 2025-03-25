@@ -629,7 +629,6 @@ void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
 }
 
 
-
 void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 {
 	if (!Hook) return;
@@ -656,6 +655,12 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	CurrentHook->SetInteractingPlayer(this);
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+	{
+		PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
+	}
+
 	if (HasAuthority())
 	{
 		OnHooked();
@@ -1043,6 +1048,10 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	{
 		PlayMontage(HitMontage, "BK");
 		SetSurvivorState(ESurvivorState::Crawl);
+		if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+		{
+			PC->PlaySurvivorBGMByLevel(EBGMLevel::Crawl);
+		}
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 기절 상태가 되었습니다!"));
 		break;
 	}

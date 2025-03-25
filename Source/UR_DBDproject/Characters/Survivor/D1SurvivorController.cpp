@@ -860,8 +860,42 @@ void AD1SurvivorController::Client_UpdateBGMLevel_Implementation(EBGMLevel NewLe
 			}
 		}
 	}
-	else
+}
+
+void AD1SurvivorController::Client_PlaySurvivorBGMByLevel_Implementation(EBGMLevel NewLevel)
+{
+	PlaySurvivorBGMByLevel(NewLevel);
+}
+void AD1SurvivorController::PlaySurvivorBGMByLevel(EBGMLevel NewLevel)
+{
+	if (HasAuthority())
 	{
-		SoundManager->StopBGM(1.0f);
+		Client_PlaySurvivorBGMByLevel(NewLevel);
+	}
+	if (!IsLocalPlayerController())	return;
+
+	if (!SoundManager || !D1Survivor.IsValid()) return;
+	if (CurrentBGMLevel == NewLevel)	return;
+
+	CurrentBGMLevel = NewLevel;
+
+	switch (NewLevel)
+	{
+	case EBGMLevel::Normal:
+		SoundManager->PlayBGM(NormalBGM, 2.5f); break;
+	case EBGMLevel::Warning:
+		SoundManager->PlayBGM(WarningBGM, 1.5f); break;
+	case EBGMLevel::Threat:
+		SoundManager->PlayBGM(ThreatBGM, 1.0f); break;
+	case EBGMLevel::Terror:
+		SoundManager->PlayBGM(TerrorBGM, 0.5f); break;
+	case EBGMLevel::Crawl:
+		SoundManager->PlayBGM(CrawlBGM, 1.0f); break;
+	case EBGMLevel::HookPart1:
+		SoundManager->PlayBGM(HookBGM_Part1, 1.0f); break;
+	case EBGMLevel::HookPart2:
+		SoundManager->PlayBGM(HookBGM_Part2, 1.0f); break;
+	default:
+		break;
 	}
 }

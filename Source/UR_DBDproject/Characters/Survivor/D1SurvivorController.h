@@ -143,6 +143,15 @@ protected: // 사운드
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class USoundBase> TerrorBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> CrawlBGM;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> HookBGM_Part1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	TObjectPtr<class USoundBase> HookBGM_Part2;
 private:
 	bool bCanVaultAfterDrop = true; // DropPallet 후 VaultPallet을 막기 위한 변수
 	FTimerHandle VaultCooldownTimer; // 타이머 핸들러 추가
@@ -157,4 +166,11 @@ public:
 // 사운드
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateBGMLevel(EBGMLevel NewLevel);
+
+
+	UFUNCTION(Client, Reliable)
+	void Client_PlaySurvivorBGMByLevel(EBGMLevel NewLevel);
+
+	UFUNCTION(BlueprintCallable)
+	void PlaySurvivorBGMByLevel(EBGMLevel NewLevel);
 };
