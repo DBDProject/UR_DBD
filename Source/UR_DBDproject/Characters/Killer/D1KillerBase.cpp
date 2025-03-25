@@ -12,7 +12,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
-#include "Components/DecalComponent.h"
+#include "Components/SpotLightComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Interactables/D1Generator.h"
 #include "Interactables/D1VaultObject.h"
@@ -26,6 +26,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Characters/Survivor/D1SurvivorController.h"
 #include "D1KillerSoundManager.h"
+#include "EngineUtils.h"
 
 AD1KillerBase::AD1KillerBase()
 {
@@ -165,23 +166,14 @@ AD1KillerBase::AD1KillerBase()
 
 	// 안광
 	{
-		EyeDecal = CreateDefaultSubobject<UDecalComponent>(TEXT("EyeDecal"));
-		EyeDecal->SetupAttachment(RootComponent);
-		EyeDecal->DecalSize = FVector(500.f, 500.f, 500.f);
-		EyeDecal->SetRelativeLocation(FVector(100.f, 0.f, 0.f));
-		static ConstructorHelpers::FObjectFinder<UMaterialInterface> DecalMat(TEXT("/Game/Materials/M_BloodDecal"));
-		if (DecalMat.Succeeded())
-		{
-			EyeDecal->SetDecalMaterial(DecalMat.Object);
-		}
-		EyeDecal->SetVisibility(false);
+		EyeSpotLight = CreateDefaultSubobject<USpotLightComponent>(TEXT("EyeSpotLight"));
+		EyeSpotLight->SetupAttachment(RootComponent);
 	}
 }
 
 void AD1KillerBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-	DOREPLIFETIME(AD1KillerBase, bAttackDetectStart);
 }
 
 void AD1KillerBase::BeginPlay()
@@ -229,7 +221,6 @@ void AD1KillerBase::BeginPlay()
 		if (GetController()->IsLocalController())
 		{
 			AudioComponent->SetVolumeMultiplier(0.0f);
-			EyeDecal->SetVisibility(true);
 		}
 	}
 
@@ -237,21 +228,12 @@ void AD1KillerBase::BeginPlay()
 
 	// TEMP
 	StartBGMUpdateTimer();
+
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	{
-		FVector Forward = GetActorForwardVector();
-		FRotator DecalRotation = Forward.Rotation();
-		EyeDecal->SetWorldRotation(DecalRotation);
-	}
-
-	if (!DetectedSurvivor.IsValid())
-	{
-	}
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -450,16 +432,6 @@ void AD1KillerBase::OnWolfPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Ove
 
 void AD1KillerBase::OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-}
-
-void AD1KillerBase::DamageSurvivor(class AD1SurvivorBase* Player)
-{
-	if (!DetectedSurvivor.IsValid()) return;
-
-	
-
-	DetectedSurvivor->TakeDamageFromKiller();
-
 }
 
 void AD1KillerBase::ActivateAbility(FGameplayTag AbilityTag)
@@ -667,4 +639,18 @@ void AD1KillerBase::StartBGMUpdateTimer()
 			true      // 루프
 		);
 	}
+}
+
+TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
+{
+	for (TActorIterator<AD1SurvivorBase> It(GetWorld()); It; ++It)
+	{
+		AD1SurvivorBase* Survivor = *It;
+		if (Survivor)
+		{
+			FoundSurvivors.Add(Survivor);
+		}
+	}
+
+	return FoundSurvivors;
 }

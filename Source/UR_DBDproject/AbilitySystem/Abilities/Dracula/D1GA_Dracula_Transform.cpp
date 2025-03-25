@@ -4,8 +4,11 @@
 #include "AbilitySystem/Abilities/Dracula/D1GA_Dracula_Transform.h"
 #include "D1Define.h"
 #include "Net/UnrealNetwork.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "Components/CapsuleComponent.h"
+#include "Components/SpotLightComponent.h"
 
 
 UD1GA_Dracula_Transform::UD1GA_Dracula_Transform(const FObjectInitializer& ObjectInitializer)
@@ -496,11 +499,59 @@ void UD1GA_Dracula_Transform::Multicast_SetHiddenState_Implementation(AD1KillerB
 	Player->GetFPVMesh()->SetComponentTickEnabled(!bDraculaVisible);
 	Player->GetMesh()->SetComponentTickEnabled(!bWolfVisible);
 	Player->GetBatMesh()->SetComponentTickEnabled(!bBatVisible);
+
+	if (!bBatVisible)
+	{
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+		Player->GetEyeSpotLight()->SetVisibility(false);
+	}
+	else
+	{
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Player->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Player->GetEyeSpotLight()->SetVisibility(true);
+	}
 }
 
 void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
+
+	TArray<TObjectPtr<class AD1SurvivorBase>> FoundSurvivor = Killer->GetFoundSurvivor();
+
+	if (Killer->GetCurrentTransformState() == EDraculaTransformationState::Bat)
+	{
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
+		Killer->GetEyeSpotLight()->SetVisibility(false);
+		if (KillerController)
+		{
+			for (AD1SurvivorBase* Survivor : FoundSurvivor)
+			{
+				if (Survivor)
+				{
+					Survivor->GetMesh()->SetVisibility(false);  // 메쉬만 숨기기
+				}
+			}
+		}
+	}
+	else
+	{
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Killer->GetEyeSpotLight()->SetVisibility(true);
+		if (KillerController)
+		{
+			for (AD1SurvivorBase* Survivor : FoundSurvivor)
+			{
+				if (Survivor)
+				{
+					Survivor->GetMesh()->SetVisibility(true);  // 메쉬만 숨기기
+				}
+			}
+		}
+	}
 
 	KillerController->SetbTransform(false);
 	UE_LOG(LogTemp, Log, TEXT("✅ Transform GAS END "));

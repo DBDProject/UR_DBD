@@ -48,6 +48,7 @@ void UD1GA_Dracula_PowerAttack::ActivateAbility(
 	}
 	CurrentTransformState = Killer->GetCurrentTransformState();
 
+	// 드라큘라 파워어택
 	if (CurrentTransformState == EDraculaTransformationState::Dracula)
 	{
 		if (!TPV_PowerAttack || !FPV_PowerAttack)
@@ -89,7 +90,7 @@ void UD1GA_Dracula_PowerAttack::ActivateAbility(
 			WaitInputReleaseTask->Activate();
 		}
 	}
-	else if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	else if (CurrentTransformState == EDraculaTransformationState::Wolf) // 울프 파워어택
 	{
 		if (!Wolf_PowerAttack)
 		{
@@ -109,16 +110,16 @@ void UD1GA_Dracula_PowerAttack::ActivateAbility(
 		WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 
 		WolfAnimInstance->Montage_JumpToSection(FName("In"), Wolf_PowerAttack.Get());
+		float SectionEndTime = Wolf_PowerAttack.Get()->GetSectionLength(Wolf_PowerAttack.Get()->GetSectionIndex(FName("In")));
+		GetWorld()->GetTimerManager().SetTimer(PauseTimerHandle, this, &UD1GA_Dracula_PowerAttack::StopChargeAnimation, SectionEndTime, false);
+
+		ChargingStartTime = GetWorld()->GetTimeSeconds();
 
 		if (HasAuthority(&ActivationInfo))
 		{
 			Multicast_WolfPowerAttack(Killer, FName("In"));
 		}
-
-		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(this, &UD1GA_Dracula_PowerAttack::WolfInMontageEnded);
-		WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_PowerAttack.Get());
-
+		GetWorld()->GetTimerManager().SetTimer(ChargeTimerHandle, this, &UD1GA_Dracula_PowerAttack::CompleteCharge, 0.85f, false);
 	}
 	
 	CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
@@ -189,11 +190,20 @@ void UD1GA_Dracula_PowerAttack::CompleteCharge()
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 
-	WolfAnimInstance->Montage_JumpToSection(FName("Swing"), TPV_PowerAttack.Get());
+	WolfAnimInstance->Montage_JumpToSection(FName("Swing"), Wolf_PowerAttack.Get());
 
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &UD1GA_Dracula_PowerAttack::WolfSwingMontageEnded);
 	WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_PowerAttack.Get());
+}
+
+void UD1GA_Dracula_PowerAttack::StopChargeAnimation()
+{
+	UAnimInstance* AnimInstance = Killer->GetMesh()->GetAnimInstance();
+	if (AnimInstance && Wolf_PowerAttack)
+	{
+		AnimInstance->Montage_Pause(Wolf_PowerAttack);
+	}
 }
 
 void UD1GA_Dracula_PowerAttack::WolfSwingMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -269,7 +279,6 @@ void UD1GA_Dracula_PowerAttack::WolfInMontageEnded(UAnimMontage* Montage, bool b
 		Multicast_WolfPowerAttackLoop(Killer, FName("In"));
 	}
 
-	GetWorld()->GetTimerManager().SetTimer(ChargeTimerHandle, this, &UD1GA_Dracula_PowerAttack::CompleteCharge, 0.85f, false);
 }
 
 void UD1GA_Dracula_PowerAttack::Multicast_WolfPowerAttackLoop_Implementation(AD1KillerBase* Player, FName SectionName)
