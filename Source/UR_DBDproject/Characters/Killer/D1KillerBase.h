@@ -66,6 +66,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = KDH)
 	TArray<TObjectPtr<class AD1SurvivorBase>> FoundSurvivors;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = KDH)
+	TObjectPtr<class ULevelSequence> StartLevelSequence;
+
 protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
@@ -188,10 +191,12 @@ public:
 	void PerformDraculaAttackTrace();
 	void PerformWolfAttackTrace();
 
-// 사운드
+	// 사운드
 	void UpdateSurvivorBGMStates();
 
 	void StartBGMUpdateTimer();         // 타이머 시작
+
+	void PlayStartSequence(float INPUT_UNLOCK_TIME);			// 시작 시퀀스 재생
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AD1KillerSoundManager> SoundManagerClass;

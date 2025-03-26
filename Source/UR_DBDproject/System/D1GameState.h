@@ -16,6 +16,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGateOpend);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGateEnded);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSurvivorStateChanged,
 	int32, SurvivorIndex, ESurvivorState, SurvivorState);
@@ -40,6 +42,9 @@ private:
 	// 일정 시간 이후 서버장 나가기
 	void OnTravelTimer();
 
+	// 일정 시간 이후 플레이어 나가기
+	void OnPlayerTravelTimer();
+
 	// UI용 변수 바뀔 시 호출
 	UFUNCTION()
 	void OnRep_RepairedGenerators();
@@ -60,6 +65,7 @@ protected:
 	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
 	virtual void HandleMatchIsWaitingToStart() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 public:
 	AD1GameState();
@@ -72,13 +78,14 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetSurvivorState(int32 PlayerIndex, ESurvivorState State);
 
-	void ResultSurvivorGame(int32 PlayerIndex);
+	void ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state);
 	void ResultKillerGame();
 
 private:
 	FTimerHandle InputLockTimer;
 	FTimerHandle GameStartTimer;
 	FTimerHandle TravelTimer; // 서버장 내보내려고 만든 타이머
+	FTimerHandle SurvivorTravelTimer; // 플레이어 결과창 보내려는 타이머
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -88,14 +95,22 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted)
 	bool bAllGeneratorsRepaired = false;
 
-	class UD1GameStartUI* GameStartUI;
-
 	UPROPERTY(Replicated)
 	TArray<ESurvivorState> SurvivorStates;
+
+	bool IsGateOpened = false;
+
+	class UD1GameStartUI* GameStartUI;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TSubclassOf<class UD1GameStartUI> GameStartUIClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameExitUI> GameExitUIClass;
 
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
@@ -114,6 +129,12 @@ protected:
 	FOnGameEnd OnGameEnd;
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGateOpend OnGateOpend;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGateOpend OnGateEnded;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnSurvivorStateChanged OnSurvivorStateChanged;
 
 	// 맵에 있는 탈출구들
@@ -126,12 +147,27 @@ protected:
 
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
-	float EndGameTimer;
+	float ExitRemainingTime = 0.f;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
-	float INPUT_UNLOCK_TIMER = 4.f;
-
-public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
-	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
+	float GATE_EXIT_TIME = 30.f;
+
+	// 입력 잠금 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "GameStartTime"))
+	float GAME_START_TIME = 4.f;
+
+	// 입력 잠금 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
+	float INPUT_UNLOCK_TIMER = 5.f;
+
+	// 탈출 후 나갈때 까지 대기 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "EscapeExitTime"))
+	float ESCAPE_EXIT_TIME = 5.f;
+
+	// 결과 후 나갈때 까지 대기 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "NormalExitTime"))
+	float NORMAL_EXIT_TIME = 2.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "NormalExitTime"))
+	float KILLER_EXIT_TIME = 5.f;
 };

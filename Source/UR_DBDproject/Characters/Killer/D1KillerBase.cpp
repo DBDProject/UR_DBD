@@ -18,12 +18,12 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
-#include "MovieSceneSequencePlayer.h"
-#include "CineCameraComponent.h"
-#include "CineCameraActor.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
+#include "CineCameraActor.h"
+#include "CineCameraComponent.h"
+#include "MovieSceneSequencePlayer.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "SkeletalMeshRestoreState.h"
 #include "Sound/SoundAttenuation.h"
@@ -118,6 +118,7 @@ AD1KillerBase::AD1KillerBase()
 	FirstPersonCameraComponent->SetupAttachment(SpringArm);
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.0f, 0.f, 10.0f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->Activate();
 
 	WolfCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("WolfCamera"));
 	WolfCameraComponent->SetupAttachment(GetMesh());
@@ -135,6 +136,7 @@ AD1KillerBase::AD1KillerBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 	Camera->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 90.f), FRotator(-30.0f, 0.0f, 0.0f)); // Position the camera
+	Camera->Deactivate();
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
@@ -190,8 +192,8 @@ void AD1KillerBase::BeginPlay()
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
 	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
-	if (Camera) Camera->Activate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
+	if (Camera) Camera->Deactivate();
 	//if (Camera) Camera->Deactivate();
 
 	GetCharacterMesh()->bPauseAnims = false;
@@ -642,6 +644,63 @@ void AD1KillerBase::StartBGMUpdateTimer()
 	}
 }
 
+void AD1KillerBase::PlayStartSequence(float INPUT_UNLOCK_TIME)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+
+	if (!IsValid(PC))
+		return;
+
+	// Create playback settings
+	FMovieSceneSequencePlaybackSettings Settings;
+	Settings.bAutoPlay = true;
+
+	// Create sequence player
+	ALevelSequenceActor* StartSequenceActor = nullptr;
+	ULevelSequencePlayer* StartSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+		GetWorld(), StartLevelSequence, Settings, StartSequenceActor);
+
+	if (StartSequencePlayer)
+	{
+		// Spawn camera and dummy actors
+		ACineCameraActor* SpawnedCamera = GetWorld()->SpawnActor<ACineCameraActor>(
+			ACineCameraActor::StaticClass());
+
+		AActor* DummyTarget = GetWorld()->SpawnActor<AActor>(
+			AActor::StaticClass());
+
+		AActor* DummyTarget2 = GetWorld()->SpawnActor<AActor>(
+			AActor::StaticClass());
+
+		// Create and set up root components
+		USceneComponent* RootComp = NewObject<USceneComponent>(DummyTarget);
+		RootComp->RegisterComponent();
+		DummyTarget->SetRootComponent(RootComp);
+
+		USceneComponent* RootComp2 = NewObject<USceneComponent>(DummyTarget2);
+		RootComp2->RegisterComponent();
+		DummyTarget2->SetRootComponent(RootComp2);
+
+		// Debug output to verify positions
+		SpawnedCamera->AttachToActor(DummyTarget2, FAttachmentTransformRules::KeepRelativeTransform);
+		DummyTarget2->AttachToActor(DummyTarget, FAttachmentTransformRules::KeepRelativeTransform);
+		DummyTarget->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
+
+		// Explicitly set the view target before playing
+
+		// Set up bindings
+		FMovieSceneObjectBindingID CameraBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("TargetCamera");
+		StartSequenceActor->SetBinding(CameraBindingID, { SpawnedCamera });
+
+		FMovieSceneObjectBindingID DummyBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor");
+		StartSequenceActor->SetBinding(DummyBindingID, { DummyTarget });
+
+		FMovieSceneObjectBindingID DummyBindingID2 = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor2");
+		StartSequenceActor->SetBinding(DummyBindingID2, { DummyTarget2 });
+
+		StartSequencePlayer->Play();
+	}
+}
 TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
 {
 	for (TActorIterator<AD1SurvivorBase> It(GetWorld()); It; ++It)

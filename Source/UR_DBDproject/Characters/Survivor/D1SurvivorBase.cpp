@@ -26,7 +26,6 @@
 #include "EngineUtils.h"
 #include "Components/AudioComponent.h"
 #include "System/D1GameState.h"
-#include "UI/D1GameEscapeUI.h"
 
 AD1SurvivorBase::AD1SurvivorBase()
 {
@@ -954,8 +953,8 @@ void AD1SurvivorBase::RemoveFromGame()
 	{
 		if (PC->IsLocalPlayerController())
 		{
-			GS->ResultSurvivorGame(PlayerIndex);
-			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
+			GetController()->GetPawn()->SetActorHiddenInGame(true);
+			GS->ResultSurvivorGame(PlayerIndex, ESurvivorState::Dying);
 		}
 	}
 }
@@ -1553,43 +1552,26 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 	if (PC->IsLocalController())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("플레이어 탈출 시퀀스 시작"));
-		FTimerHandle EscapeSequenceTimer;
 
 		// 콜리젼 없애기
 		Server_PlayEscapeSequence(this, ExitArea);
 		GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
 
 		FRotator TargetRot = ExitArea->GetActorRotation();
-		UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GS->GameEscapeUIClass);
 		SetSurvivorState(ESurvivorState::Escape);
-		GetController()->DisableInput(Cast<APlayerController>(GetController()));
-		GetWorld()->GetGameViewport()->RemoveAllViewportWidgets();
-		EscapeUI->AddToViewport();
-		EscapeUI->GameEscape(EscapeTime);
 
 		ExitAreaFowardVector = ExitArea->GetActorForwardVector();
 		CurrentAngle = 0.f;
 		CurrentArmLength = SpringArm->TargetArmLength;
 
-		OrbitSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 150도 회전시키고 뒤에 관찰
-		ArmLengthSpeed = 150.f / (EscapeTime * 0.5f); // 2배 속도로 빠르게 뒤로 이동 150 길이 더하도록 하드코딩함
+		OrbitSpeed = 60.f;
+		ArmLengthSpeed = 60.f;
 
 		SpringArm->bUsePawnControlRotation = false;
 		SpringArm->bDoCollisionTest = false;
 
-		GetWorld()->GetTimerManager().SetTimer(EscapeSequenceTimer, [this, PC, GS]()
-			{
-				if (!IsValid(PC) || !IsValid(GS))
-					return;
-
-				GS->ResultSurvivorGame(PlayerIndex);
-				bPlayingEscape = false;
-				UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
-			},
-			EscapeTime,
-			false);
-
 		bPlayingEscape = true;
+		GS->ResultSurvivorGame(PlayerIndex, ESurvivorState::Escape);
 	}
 }
 void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)

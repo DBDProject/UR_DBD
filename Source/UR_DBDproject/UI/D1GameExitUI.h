@@ -4,17 +4,17 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "D1GameEscapeUI.generated.h"
+#include "D1GameExitUI.generated.h"
 
 /**
  *
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GameEscapeUI : public UUserWidget
+class UR_DBDPROJECT_API UD1GameExitUI : public UUserWidget
 {
 	GENERATED_BODY()
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void GameEscape(); // 블루프린트에서 구현할 함수
+	void GameExit(); // 블루프린트에서 구현할 함수
 };

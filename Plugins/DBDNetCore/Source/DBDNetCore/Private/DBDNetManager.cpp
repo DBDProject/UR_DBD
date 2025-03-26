@@ -193,8 +193,21 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 	// 로컬 서버를 찾기 위해 ARP 테이블을 검사
 	TArray<FString> ARPList = GetARPTable();
 
+	if (ARPList.Num() == 0)
+	{
+		UE_LOG(LogClass, Warning, TEXT("[DBDNet] No ARP entries found to scan"));
+		return false;
+	}
+
+	UE_LOG(LogClass, Warning, TEXT("[DBDNet] Starting scan of %d ARP entries"), ARPList.Num());
+
 	const int NUM_THREADS = 10;  // 병렬로 검사할 스레드 수
-	const int SCAN_TIMEOUT_MS = timeoutMs;  // 빠른 스캔을 위한 짧은 타임아웃
+	const int SCAN_TIMEOUT_MS = timeoutMs;  // 개별 연결 시도 타임아웃
+	const float WAIT_TIME_SEC = (float)timeoutMs / 1000.f;  // 각 스레드가 대기할 시간
+
+	// 전체 검색 시간 제한 (기본값: 타임아웃의 5배, 최소 3초)
+	const double TOTAL_TIMEOUT_SEC = FMath::Max(timeoutMs / 1000.0 * 5.0, 3.0);
+	double startTime = FPlatformTime::Seconds();
 
 	struct FScanResult
 	{
@@ -247,6 +260,9 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 
 			// 연결 시도
 			connect(Results[i].Socket, (sockaddr*)&stServerAddr, sizeof(sockaddr));
+
+			// 로그 추가
+			UE_LOG(LogClass, Verbose, TEXT("[DBDNet] Trying to connect to %s:%d"), *ARPList[currentIP], port);
 		}
 
 		// 모든 소켓 확인
@@ -263,11 +279,18 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 
 		// 타임아웃 설정
 		struct timeval timeout;
-		timeout.tv_sec = timeoutMs / 1000;
-		timeout.tv_usec = (timeoutMs % 1000) * 1000;
+		timeout.tv_sec = SCAN_TIMEOUT_MS / 1000;
+		timeout.tv_usec = (SCAN_TIMEOUT_MS % 1000) * 1000;
 
 		// 모든 소켓에 대해 select 호출
-		select(0, NULL, &writefds, &exceptfds, &timeout);
+		int selectResult = select(0, NULL, &writefds, &exceptfds, &timeout);
+
+		if (selectResult == SOCKET_ERROR)
+		{
+			PrintSockError(WSAGetLastError());
+		}
+
+		FPlatformProcess::Sleep(WAIT_TIME_SEC);
 
 		// 결과 확인
 		for (int i = 0; i < NUM_THREADS && (currentIP - NUM_THREADS + i) < ARPList.Num(); ++i)
@@ -275,7 +298,8 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 			if (FD_ISSET(Results[i].Socket, &writefds) && !FD_ISSET(Results[i].Socket, &exceptfds))
 			{
 				// 연결 성공
-				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s"), *Results[i].IP);
+				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s (after %.2f seconds)"),
+					*Results[i].IP, FPlatformTime::Seconds() - startTime);
 				Results[i].bFound = true;
 				bFoundAny = true;
 				int option = true;
@@ -322,15 +346,38 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 				u_long nonBlocking = 1;
 				ioctlsocket(Results[i].Socket, FIONBIO, &nonBlocking);
 			}
+
+			// CPU 과부하 방지를 위한 짧은 대기 시간 추가
 		}
 	}
 
 	// 서버를 찾지 못한 경우
 	if (!bFoundAny)
 	{
+		double scanTime = FPlatformTime::Seconds() - startTime;
+
 		// 모든 소켓 정리
 		for (int i = 0; i < NUM_THREADS; ++i) {
 			closesocket(Results[i].Socket);
+		}
+
+		// 새로운 소켓 생성 (반환용)
+
+		m_socket = socket(AF_INET, SOCK_STREAM, 0);
+		if (m_socket != INVALID_SOCKET) {
+			int option = true;
+			setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
+		}
+
+		// 스캔 결과 로그
+		if (scanTime >= TOTAL_TIMEOUT_SEC)
+		{
+			UE_LOG(LogClass, Warning, TEXT("[DBDNet] Scan timed out after %.2f seconds, no server found"), scanTime);
+		}
+		else
+		{
+			UE_LOG(LogClass, Warning, TEXT("[DBDNet] Scanned %d IP addresses in %.2f seconds, no server found"),
+				ARPList.Num(), scanTime);
 		}
 	}
 
