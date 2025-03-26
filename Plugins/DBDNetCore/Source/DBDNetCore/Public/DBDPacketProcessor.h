@@ -11,9 +11,12 @@
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 
 #include "CoreMinimal.h"
+#include "Windows/AllowWindowsPlatformTypes.h"
 #include <WinSock2.h>
 #include <WS2tcpip.h>
 #include <iphlpapi.h>  // Windows ARP 테이블 조회용
+#include "Windows/HideWindowsPlatformTypes.h"
+
 #include "DBDProtocol.h"
 #include "UObject/NoExportTypes.h"
 #include "Packet.pb.h"

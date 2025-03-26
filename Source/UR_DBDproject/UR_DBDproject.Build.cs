@@ -33,7 +33,6 @@ public class UR_DBDproject : ModuleRules
             "MovieScene",
             "MovieSceneTracks"
     });
-        PublicDefinitions.Add("NOMINMAX");
         PublicDependencyModuleNames.AddRange(new string[] { "DBDUI", "DBDNetCore" });
     }
 }

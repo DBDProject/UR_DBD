@@ -38,6 +38,10 @@ AD1Generator::AD1Generator()
     GeneratorMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GeneratorMesh"));
     GeneratorMesh->SetupAttachment(RootComponent);
 
+    EntityMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("EntityMesh"));
+    EntityMesh->SetupAttachment(RootComponent);
+    EntityMesh->SetVisibility(false);
+
     // 발전기 몽타주
     static ConstructorHelpers::FObjectFinder<UAnimMontage> GeneratorMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Generator_Fail.AM_Generator_Fail"));
     if (GeneratorMontageAsset.Succeeded())
@@ -67,10 +71,12 @@ void AD1Generator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 
     DOREPLIFETIME(AD1Generator, bIsRepairing);
     DOREPLIFETIME(AD1Generator, bIsCompleteRepair);
-    DOREPLIFETIME(AD1Generator, bIsRepairBlocked);
+    DOREPLIFETIME(AD1Generator, bIsRepairBlockedAll);
     DOREPLIFETIME(AD1Generator, RepairProgress);
     DOREPLIFETIME(AD1Generator, CurrentState);
     DOREPLIFETIME(AD1Generator, InteractionPosition);
+    DOREPLIFETIME(AD1Generator, bEntityVisible);
+    DOREPLIFETIME(AD1Generator, CurrentDissolveValue);
 }
 
 // Called every frame
@@ -85,6 +91,8 @@ void AD1Generator::Tick(float DeltaTime)
     // 발전기 수리 진행
     if (bIsRepairing && RepairProgress < 100.f)
     {
+        if (RepairingPlayers.Num() == 0)    return;
+
         // 수리 속도 계산
         float RepairSpeed = 1.0f;
         int NumPlayers = RepairingPlayers.Num();
@@ -94,11 +102,12 @@ void AD1Generator::Tick(float DeltaTime)
 
         switch (NumPlayers)
         {
-        case 1: RepairSpeed = 1.0f; break;
-        case 2: RepairSpeed = 1.7f; break;
-        case 3: RepairSpeed = 2.1f; break;
-        case 4: RepairSpeed = 2.2f; break;
-        default: RepairSpeed = 1.0f; break;
+        case 1: RepairSpeed = 1.5f; break;
+        case 2: RepairSpeed = 2.2f; break;
+        case 3: RepairSpeed = 2.6f; break;
+        case 4: RepairSpeed = 3.0f; break;
+        default: 
+            return;        
         }
 
         // 진행도 증가
@@ -148,7 +157,7 @@ EGeneratorInteractionPosition AD1Generator::FindInteractionPosition(AD1Character
  
 void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPosition Position)
 {
-    if (!Player || bIsRepairBlocked) return;
+    if (!Player || bIsRepairBlockedAll) return;
 
     if (RepairingPositions.Contains(Position))
     {
@@ -189,7 +198,7 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
 
 void AD1Generator::Multicast_SetRepairState_Implementation(AD1SurvivorBase* Player, bool bRepairing, EGeneratorInteractionPosition Position)
 {
-    if (!Player || bIsRepairBlocked) return;
+    if (!Player || bIsRepairBlockedAll) return;
 
     // 이동 불가능 설정
     Player->GetCharacterMovement()->DisableMovement();
@@ -244,7 +253,7 @@ void AD1Generator::DamagePerSeconds()
     UE_LOG(LogTemp, Warning, TEXT("발전기 진행도 %.2f"), RepairProgress);
 }
 
-void AD1Generator::OnSkillCheckSuccess()
+void AD1Generator::OnSkillCheckSuccess(AD1SurvivorBase* Player)
 {
     if (!HasAuthority())
     {
@@ -264,36 +273,53 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
         return;
     }
 
-    Multi_OnSkillCheckFail(Player);
+    // 서버에서 실행
+    {
+        RepairProgress -= 5.0f;
+        if (RepairProgress < 0.0f) RepairProgress = 0.0f;
+
+        // 스킬 체크 실패한 플레이어 상태 변환
+        Multi_OnSkillCheckFail(Player);
+
+        // 실패한 플레이어 배열 지우기
+        RepairingPlayers.Remove(Player);
+
+        // 모든 플레이어 5초간 블락
+        StartDissolveEffect();  // Generator Entity Active
+        bIsRepairBlockedAll = true;
+        GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 5.0f, false);
+        UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 모든 플레이어 5초간 수리 불가"));
+
+        // 모든 플레이어 수리 중지
+        StopRepairAll();
+    }
 }
 
 void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player)
 {
     if (!Player) return;
 
+    // 애니메이션 실행
     GeneratorMesh->GetAnimInstance()->Montage_Play(G_GeneratorMontage);
     Player->PlayAnimMontage(Player->S_GeneratorMontage, 1.0f);
-    bIsFail = true;
-    bIsRepairBlocked = true;
+
+    // 실패한 플레이어 상태 변환
     Player->SetIsFail(true);
-    Player->StopRepair();
+    Player->SetIsRepairing(false);
+    Player->SetPrevRepairing(false);
 
-    RepairProgress -= 5.0f;
-    if (RepairProgress < 0.0f) RepairProgress = 0.0f;
+    // 실패한 플레이어 스킬체크 UI 제거
+    if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+    {
+        if (!PC->IsLocalPlayerController()) return;
 
-
-    UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 3초간 수리 불가"));
-
-    GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 3.0f, false);
+        PC->RepairDelegate_End();
+    }
 }
 
 void AD1Generator::StopRepairAll()
 {
     if (RepairingPlayers.Num() == 0) return;
-
-    bIsRepairBlocked = true;
-    bIsRepairing = false;
-    SetOwner(nullptr);
 
     Multicast_StopRepairAll();
 
@@ -307,21 +333,37 @@ void AD1Generator::Multicast_StopRepairAll_Implementation()
         if (Player)
         {
             Player->SetIsRepairing(false);
+            Player->SetPrevRepairing(false);
             Player->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+            if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+            {
+                if (!PC->IsLocalPlayerController()) return;
+
+                PC->RepairDelegate_End();
+            }
         }
     }
+
+    bIsRepairing = false;
+    SetOwner(nullptr);
 
     UE_LOG(LogTemp, Warning, TEXT("Multicast: 모든 플레이어 수리 중단"));
 }
 
 void AD1Generator::EnableRepair()
 {
-    bIsRepairBlocked = false; // 수리 차단 해제
+    bIsRepairBlockedAll = false; // 수리 차단 해제
+    StartDissolveDisappearEffect();
     UE_LOG(LogTemp, Warning, TEXT("수리 가능 상태로 복구됨"));
 }
 
 void AD1Generator::CompleteRepair()
 {
+    if (HasAuthority())
+    {
+        bIsRepairBlockedAll = true;
+    }
     RepairProgress = 100.0f;
     bIsCompleteRepair = true;
 
@@ -336,5 +378,91 @@ void AD1Generator::CompleteRepair()
     if (AD1GameState* GameState = GetWorld()->GetGameState<AD1GameState>())
     {
         GameState->UpdateGeneratorState();
+    }
+}
+
+// 엔티티
+void AD1Generator::ActivateEntity()
+{
+    if (EntityMesh)
+    {
+        EntityMesh->SetVisibility(true);
+        bEntityVisible = true;
+    }
+}
+
+void AD1Generator::DeactivateEntity()
+{
+    if (EntityMesh)
+    {
+        EntityMesh->SetVisibility(false);
+        bEntityVisible = false;
+    }
+}
+
+void AD1Generator::StartDissolveEffect_Implementation()
+{
+    if (!EntityMesh) return;
+
+    if (!DynamicMat_Slot)
+    {
+        DynamicMat_Slot = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);
+    }
+
+    if (DynamicMat_Slot)
+    {
+        ActivateEntity();
+        GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Generator::UpdateDissolve, 0.01f, true);
+        CurrentDissolveValue = 0.0f;
+        DissolveStartTime = GetWorld()->GetTimeSeconds();
+    }
+}
+
+void AD1Generator::UpdateDissolve()
+{
+    if (!DynamicMat_Slot) return;
+
+    float ElapsedTime = GetWorld()->GetTimeSeconds() - DissolveStartTime;
+    CurrentDissolveValue = FMath::Clamp(ElapsedTime, 0.0f, 1.0f);
+
+    if (DynamicMat_Slot)
+        DynamicMat_Slot->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (CurrentDissolveValue >= 1.0f)
+    {
+        GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
+    }
+}
+
+void AD1Generator::StartDissolveDisappearEffect_Implementation()
+{
+    if (!EntityMesh) return;
+
+    if (!DynamicMat_Slot)
+    {
+        DynamicMat_Slot = EntityMesh->CreateAndSetMaterialInstanceDynamic(0);
+    }
+
+    if (DynamicMat_Slot)
+    {
+        GetWorld()->GetTimerManager().SetTimer(DissolveTimer, this, &AD1Generator::UpdateDissolveDisappear, 0.01f, true);
+        DissolveStartTime = GetWorld()->GetTimeSeconds();
+    }
+}
+
+void AD1Generator::UpdateDissolveDisappear()
+{
+    if (!DynamicMat_Slot) return;
+
+    float ElapsedTime = GetWorld()->GetTimeSeconds() - DissolveStartTime;
+    CurrentDissolveValue = 1.0f - FMath::Clamp(ElapsedTime, 0.0f, 1.0f); // 거꾸로 줄어들도록 설정
+
+    if (DynamicMat_Slot)
+        DynamicMat_Slot->SetScalarParameterValue(FName("DissolveValue"), CurrentDissolveValue);
+
+    if (CurrentDissolveValue <= 0.0f) // 완전히 사라지면 비활성화
+    {
+        GetWorld()->GetTimerManager().ClearTimer(DissolveTimer);
+        DeactivateEntity();
     }
 }

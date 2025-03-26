@@ -101,6 +101,12 @@ AD1SurvivorBase::AD1SurvivorBase()
 	{
 		S_GeneratorMontage = GeneratorMontageAsset.Object;
 	}
+
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> GestureMontageAsset(TEXT("/Game/Blueprints/Animation/Survivor/AM_Gesture.AM_Gesture"));
+	if (GestureMontageAsset.Succeeded())
+	{
+		GestureMontage = GestureMontageAsset.Object;
+	}
 }
 
 void AD1SurvivorBase::BeginPlay()
@@ -398,7 +404,7 @@ void AD1SurvivorBase::Server_RequestSkillCheckSuccess_Implementation(AD1Generato
 {
 	if (Generator)
 	{
-		Generator->OnSkillCheckSuccess();
+		Generator->OnSkillCheckSuccess(this);
 	}
 }
 
@@ -409,6 +415,25 @@ void AD1SurvivorBase::Server_RequestSkillCheckFail_Implementation(AD1Generator* 
 		Generator->OnSkillCheckFail(this);
 	}
 }
+
+
+
+void AD1SurvivorBase::Multicast_StartEntityGeneratorEvent_Implementation()
+{
+	if (AD1Generator* Generator = GetCurrentGenerator())
+		Generator->StartDissolveEffect();
+}
+
+void AD1SurvivorBase::Multicast_StopEntityGeneratorEvent_Implementation()
+{
+	if (AD1Generator* Generator = GetCurrentGenerator())
+	{
+		if (Generator->GetEntityVisible() != true) return;
+
+		Generator->StartDissolveDisappearEffect();
+	}
+}
+
 
 void AD1SurvivorBase::StartRepair_Local()
 {
@@ -431,13 +456,9 @@ void AD1SurvivorBase::StartRepair_Local()
 void AD1SurvivorBase::StopRepair_Local()
 {
 	if (!GetCurrentGenerator()) return;
-	if (GetCurrentGenerator()->GetIsFail() == false)
-	{
-		// 이동 가능 설정
-		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
-	}
-	SetPrevRepairing(false);
+
 	SetIsRepairing(false);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 
 	GetCurrentGenerator()->StopRepair(this);
 	if (GetController())
@@ -586,13 +607,10 @@ void AD1SurvivorBase::PlayMontage_Local(UAnimMontage* Montage, FName SectionName
 		}
 	}
 
-	//else if (Montage == SpiderMontage)
-	//{
-	//	if (SectionName == "Reaction")
-	//	{
-	//		PlayAnimMontage(SpiderMontage, 1.0f, SectionName);
-	//	}
-	//}
+	else
+	{
+		PlayAnimMontage(Montage, 1.0f, SectionName);
+	}
 }
 void AD1SurvivorBase::Server_PlayMontage_Implementation(UAnimMontage* Montage, FName SectionName)
 {
@@ -685,6 +703,8 @@ void AD1SurvivorBase::OnHooked()
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
 {
+	if (!CurrentHook.IsValid()) return;
+
 	if (!HasAuthority())
 	{
 		Server_OnHookSkillCheckFail();
@@ -806,6 +826,7 @@ void AD1SurvivorBase::OnEscapeSuccess()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		bIsHookSkillCheckEnable = false;
 		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
@@ -821,6 +842,7 @@ void AD1SurvivorBase::OnRescued()
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+		bIsHookSkillCheckEnable = false;
 		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
@@ -968,51 +990,32 @@ void AD1SurvivorBase::MoveToExitGateStartPosition(AD1ExitGate* Gate)
 
 void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
-	{
-		DetectedObject = OtherActor;
-		CurrentGenerator = Generator;
-	}
-	else if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-	{
-		UE_LOG(LogTemp, Warning, TEXT("other survivor 감지"));
-		DetectedObject = OtherActor;
-	}
-	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
-	{
-		DetectedObject = OtherActor;
-		CurrentPallet = Pallet;
-	}
-	else if (OtherActor->ActorHasTag("Vaultable"))
-	{
-		DetectedObject = OtherActor;
-		VaultTarget = Cast<AD1VaultObject>(OtherActor);
-	}
-	else if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
-	{
+	if (!IsValid(OtherActor) || OtherActor == this)
+		return;
 
-		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
-		DetectedObject = OtherActor;
-	}
-	else if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(OtherActor))
+	if (!OverlappedActors.Contains(OtherActor))
 	{
-		if (ExitArea->IsActivated())
-		{
-			PlayEscapeSequence(ExitArea);
-		}
+		OverlappedActors.Add(OtherActor);
 	}
+
+	UpdateClosestDetectedObject();
+
 }
 
 void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
+	OverlappedActors.Remove(OtherActor);
+
 	if (DetectedObject == OtherActor)
 	{
-		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
+		DetectedObject = nullptr;
+
+		if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 		{
 			Generator->StopRepair(this);
 			CurrentGenerator = nullptr;
 		}
-		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
+		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 		{
 			CurrentPallet = nullptr;
 		}
@@ -1020,10 +1023,162 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 		{
 			VaultTarget = nullptr;
 		}
+	}
 
-		DetectedObject = nullptr;
+	UpdateClosestDetectedObject(); // 가장 가까운 새 대상 다시 선택
+}
+
+void AD1SurvivorBase::UpdateClosestDetectedObject()
+{
+	if (OverlappedActors.Num() == 0)
+		return;
+
+	// 후보 변수 선언
+	AActor* NewDetected = nullptr;
+	AD1Generator* NewGenerator = nullptr;
+	AD1Pallet* NewPallet = nullptr;
+	AD1VaultObject* NewVault = nullptr;
+
+	AActor* ClosestGenerator = nullptr;
+	AActor* ClosestPallet = nullptr;
+	AActor* ClosestVault = nullptr;
+	AActor* ClosestOther = nullptr;
+
+	float DistSq_Generator = TNumericLimits<float>::Max();
+	float DistSq_Pallet = TNumericLimits<float>::Max();
+	float DistSq_Vault = TNumericLimits<float>::Max();
+	float DistSq_Other = TNumericLimits<float>::Max();
+
+	for (AActor* Actor : OverlappedActors)
+	{
+		if (!IsValid(Actor)) continue;
+
+		float DistSq = FVector::DistSquared(Actor->GetActorLocation(), GetActorLocation());
+
+		if (AD1Generator* Gen = Cast<AD1Generator>(Actor))
+		{
+			if (DistSq < DistSq_Generator)
+			{
+				DistSq_Generator = DistSq;
+				ClosestGenerator = Gen;
+			}
+		}
+		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(Actor))
+		{
+			if (DistSq < DistSq_Pallet)
+			{
+				DistSq_Pallet = DistSq;
+				ClosestPallet = Pallet;
+			}
+		}
+		else if (Actor->ActorHasTag("Vaultable"))
+		{
+			if (DistSq < DistSq_Vault)
+			{
+				DistSq_Vault = DistSq;
+				ClosestVault = Actor;
+			}
+		}
+		else
+		{
+			if (DistSq < DistSq_Other)
+			{
+				DistSq_Other = DistSq;
+				ClosestOther = Actor;
+			}
+		}
+	}
+
+	// 우선순위 적용
+	if (ClosestGenerator)
+	{
+		NewDetected = ClosestGenerator;
+		NewGenerator = Cast<AD1Generator>(ClosestGenerator);
+	}
+	else if (ClosestPallet)
+	{
+		NewDetected = ClosestPallet;
+		NewPallet = Cast<AD1Pallet>(ClosestPallet);
+	}
+	else if (ClosestVault)
+	{
+		NewDetected = ClosestVault;
+		NewVault = Cast<AD1VaultObject>(ClosestVault);
+	}
+	else if (ClosestOther)
+	{
+		NewDetected = ClosestOther;
+	}
+
+	// 실제 변경이 있는 경우에만 갱신
+	if (NewDetected != DetectedObject)
+	{
+		DetectedObject = NewDetected;
+		CurrentGenerator = NewGenerator;
+		CurrentPallet = NewPallet;
+		VaultTarget = NewVault;
+
+		if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(DetectedObject))
+		{
+			if (ExitArea->IsActivated())
+			{
+				PlayEscapeSequence(ExitArea);
+			}
+		}
 	}
 }
+
+//void AD1SurvivorBase::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
+//	{
+//		DetectedObject = OtherActor;
+//		CurrentGenerator = Generator;
+//	}
+//	else if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
+//	{
+//		UE_LOG(LogTemp, Warning, TEXT("other survivor 감지"));
+//		DetectedObject = OtherActor;
+//	}
+//	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+//	{
+//		DetectedObject = OtherActor;
+//		CurrentPallet = Pallet;
+//	}
+//	else if (OtherActor->ActorHasTag("Vaultable"))
+//	{
+//		DetectedObject = OtherActor;
+//		VaultTarget = Cast<AD1VaultObject>(OtherActor);
+//	}
+//	else if (AD1ExitGate* Gate = Cast<AD1ExitGate>(OtherActor))
+//	{
+//
+//		UE_LOG(LogTemp, Warning, TEXT("DetectedGate"));
+//		DetectedObject = OtherActor;
+//	}
+//}
+//
+//void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+//{
+//	if (DetectedObject == OtherActor)
+//	{
+//		if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject.Get()))
+//		{
+//			Generator->StopRepair(this);
+//			CurrentGenerator = nullptr;
+//		}
+//		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject.Get()))
+//		{
+//			CurrentPallet = nullptr;
+//		}
+//		else if (OtherActor->ActorHasTag("Vaultable"))
+//		{
+//			VaultTarget = nullptr;
+//		}
+//
+//		DetectedObject = nullptr;
+//	}
+//}
 
 void AD1SurvivorBase::Server_StartDropping_Request_Implementation(AD1Pallet* Pallet)
 {

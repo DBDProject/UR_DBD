@@ -48,10 +48,11 @@ public:
 	void OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
 		bool bFromSweep, const FHitResult& SweepResult);
-
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
+	
+	void UpdateClosestDetectedObject();
 public: // 발전기 수리
 	UFUNCTION(BlueprintCallable)
 	void StartRepair();
@@ -61,6 +62,11 @@ public: // 발전기 수리
 	void Server_RequestSkillCheckSuccess(class AD1Generator* Generator);
 	UFUNCTION(Server, Reliable)
 	void Server_RequestSkillCheckFail(class AD1Generator* Generator);
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StartEntityGeneratorEvent();
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_StopEntityGeneratorEvent();
 protected:
 	void StartRepair_Local();
 	void StopRepair_Local();
@@ -256,6 +262,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
 	TObjectPtr<class UAnimMontage> S_GeneratorMontage; // 발전기 몽타주
 
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> GestureMontage; // 제스쳐 몽타주
+
 	UPROPERTY(Replicated, BlueprintReadOnly, Category = "Survivor")  // 플레이어 인덱스 (0~3)
 		int32 PlayerIndex = -1;
 
@@ -263,6 +272,10 @@ protected:
 	// 오버랩 감지용 박스 컴포넌트
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interaction", meta = (AllowPrivateAccess = "true"))
 	TObjectPtr<class UBoxComponent> InteractionBox;
+
+	// 오버랩 액터 저장
+	UPROPERTY()
+	TArray<class AActor*> OverlappedActors;
 
 	// 생존자가 감지한 오브젝트 저장
 	UPROPERTY(VisibleAnywhere, Category = "Interaction")
@@ -420,6 +433,7 @@ public:
 
 	void SetSurvivorState(ESurvivorState state);
 
+	bool GetIsFail() { return bIsFail; }
 	void SetIsFail(bool state) { bIsFail = state; }
 	void SetIsHealing(bool bNewState) { bIsHealing = bNewState; }
 	void SetHealingTargetState(ESurvivorState State) { HealingTargetState = State; };

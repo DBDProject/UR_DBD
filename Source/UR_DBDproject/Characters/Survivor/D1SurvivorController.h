@@ -47,7 +47,8 @@ private:
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
 	void Input_StopInteract_Space();
-	void Input_StartTestInput_1();
+	void Input_PointTo();
+	void Input_ComeHere();
 
 public: // Repair
 	void RepairDelegate_Start();

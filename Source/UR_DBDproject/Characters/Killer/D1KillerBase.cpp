@@ -18,6 +18,12 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
+#include "MovieSceneSequencePlayer.h"
+#include "CineCameraComponent.h"
+#include "CineCameraActor.h"
+#include "LevelSequence.h"
+#include "LevelSequenceActor.h"
+#include "LevelSequencePlayer.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "SkeletalMeshRestoreState.h"
 #include "Sound/SoundAttenuation.h"
@@ -93,7 +99,7 @@ AD1KillerBase::AD1KillerBase()
 		GetMesh()->SetRelativeScale3D(FVector(0.8f, 0.8f, 0.8f));
 		GetMesh()->SetHiddenInGame(true);
 	}
-	
+
 	GetCapsuleComponent()->InitCapsuleSize(35.0f, 125.0f);
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>("SpringArm");
@@ -152,7 +158,7 @@ AD1KillerBase::AD1KillerBase()
 	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint); 
+	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
 	CharacterMesh->bEnableUpdateRateOptimizations = false;
@@ -351,7 +357,7 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 		UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
 		DetectedObject = OtherActor;
 		VaultTarget = VaultObj;
-	}	
+	}
 }
 
 void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -580,9 +586,7 @@ void AD1KillerBase::UpdateSurvivorBGMStates()
 
 		if (DistSq <= FMath::Square(800.0f))         // 8m
 			DetectedLevel = EBGMLevel::Terror;
-		else if (DistSq <= FMath::Square(2000.0f))    // 16m
-			DetectedLevel = EBGMLevel::Threat;
-		else if (DistSq <= FMath::Square(4000.0f))   // 32m
+		else if (DistSq <= FMath::Square(3200.0f))   // 32m
 			DetectedLevel = EBGMLevel::Warning;
 		else
 			DetectedLevel = EBGMLevel::Normal;
