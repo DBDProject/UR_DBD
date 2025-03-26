@@ -26,7 +26,7 @@ void UDBDNetManager::InitWinSock()
 		PrintSockError(WSAGetLastError());
 	}
 
-	int option = TRUE;
+	int option = true;
 	setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));
 }
 
@@ -278,7 +278,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 				UE_LOG(LogClass, Warning, TEXT("[DBDNet] Connected to server: %s"), *Results[i].IP);
 				Results[i].bFound = true;
 				bFoundAny = true;
-				int option = TRUE;
+				int option = true;
 
 				m_socket = Results[i].Socket;
 				setsockopt(m_socket, IPPROTO_TCP, TCP_NODELAY, (const char*)&option, sizeof(option));

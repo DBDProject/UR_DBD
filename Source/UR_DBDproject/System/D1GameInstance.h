@@ -28,6 +28,12 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "DBDNet", meta = (DisplayName = "ResultInfo"))
 	FResultInfo m_resultInfo;
 
+private:
+	void HandleNetworkFailure(UWorld* World, UNetDriver* NetDriver, ENetworkFailure::Type FailureType,
+		const FString& ErrorString);
+
+	FString GetFailureString(ENetworkFailure::Type FailureType);
+
 public:
 	UD1GameInstance(const FObjectInitializer& ObjectInitializer);
 
