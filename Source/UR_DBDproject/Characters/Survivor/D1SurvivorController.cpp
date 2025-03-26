@@ -947,3 +947,10 @@ void AD1SurvivorController::PlaySurvivorBGMByLevel(EBGMLevel NewLevel)
 		break;
 	}
 }
+
+void AD1SurvivorController::StopSurvivorBGM(float FadeTime)
+{
+	if (!SoundManager) return;
+
+	SoundManager->StopBGM(FadeTime);
+}

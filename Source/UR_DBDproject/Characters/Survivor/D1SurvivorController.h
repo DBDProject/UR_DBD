@@ -171,4 +171,7 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void PlaySurvivorBGMByLevel(EBGMLevel NewLevel);
+
+	UFUNCTION(BlueprintCallable)
+	void StopSurvivorBGM(float FadeTime);
 };

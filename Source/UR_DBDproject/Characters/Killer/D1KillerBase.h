@@ -213,6 +213,7 @@ protected:
 
 	TMap<TObjectPtr<class AD1SurvivorController>, FBGMStateInfo> SurvivorBGMMap;
 
-	EBGMLevel CurrentBGMState;
+	EBGMLevel CurrentBGMState; 
+	FTimerHandle BGMStartTimerHandle;
 	FTimerHandle SurvivorBGMUpdateTimerHandle;
 };

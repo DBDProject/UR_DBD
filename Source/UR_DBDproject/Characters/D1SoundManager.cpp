@@ -66,15 +66,15 @@ void AD1SoundManager::PlayBGM(USoundBase* Music, float FadeTime)
     // 이전 트랙 페이드아웃
     if (PreviousComponent->IsPlaying())
     {
-        PreviousComponent->FadeOut(FadeTime, 0.0f);
+        PreviousComponent->FadeOut(0.5f, 0.0f);
     }
 }
 
 void AD1SoundManager::StopBGM(float FadeTime)
 {
-    if (BGMComponentA->IsPlaying())
+    if (CurrentComponent->IsPlaying())
     {
-        BGMComponentA->FadeOut(FadeTime, 0.0f, EAudioFaderCurve::Sin);
+        CurrentComponent->FadeOut(FadeTime, 0.0f, EAudioFaderCurve::Sin);
         CurrentBGM = nullptr;
     }
 }
