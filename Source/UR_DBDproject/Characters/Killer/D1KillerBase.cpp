@@ -231,10 +231,6 @@ void AD1KillerBase::BeginPlay()
 	}
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
-
-	// TEMP
-	StartBGMUpdateTimer();
-
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
@@ -263,6 +259,14 @@ void AD1KillerBase::PossessedBy(AController* NewController)
 			SpawnParams
 		);
 	}
+
+	GetWorldTimerManager().SetTimer(
+		BGMStartTimerHandle,
+		this,
+		&AD1KillerBase::StartBGMUpdateTimer,
+		10.0f,
+		false
+	);
 }
 
 void AD1KillerBase::InitAbilitySystem()
@@ -574,10 +578,14 @@ void AD1KillerBase::UpdateSurvivorBGMStates()
 		AD1SurvivorController* SurvivorPC = Cast<AD1SurvivorController>(PS->GetOwner());
 		if (!SurvivorPC || SurvivorPC->IsLocalController()) continue;
 
-		APawn* SurvivorPawn = SurvivorPC->GetPawn();
-		if (!SurvivorPawn) continue;
+		AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(SurvivorPC->GetPawn());
+		if (!Survivor) continue;
 
-		float DistSq = FVector::DistSquared(GetActorLocation(), SurvivorPawn->GetActorLocation());
+		if (!(Survivor->GetSurvivorState() == ESurvivorState::Healthy) && 
+			!(Survivor->GetSurvivorState() == ESurvivorState::Injured))
+			continue;
+
+		float DistSq = FVector::DistSquared(GetActorLocation(), Survivor->GetActorLocation());
 
 		EBGMLevel DetectedLevel;
 
