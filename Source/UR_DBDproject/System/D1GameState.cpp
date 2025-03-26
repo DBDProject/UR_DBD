@@ -313,8 +313,13 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state)
 		if (GameExitUIClass)
 		{
 			UD1GameExitUI* ExitUI = CreateWidget<UD1GameExitUI>(GetWorld(), GameExitUIClass);
-			ExitUI->AddToViewport();
-			ExitUI->GameExit();
+
+			if (IsValid(ExitUI))
+			{
+				ExitUI->AddToViewport();
+				ExitUI->GameExit();
+			}
+
 		}
 
 		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
@@ -325,8 +330,12 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state)
 		if (GameEscapeUIClass)
 		{
 			UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GameEscapeUIClass);
-			EscapeUI->AddToViewport();
-			EscapeUI->GameEscape();
+
+			if (IsValid(EscapeUI))
+			{
+				EscapeUI->AddToViewport();
+				EscapeUI->GameEscape();
+			}
 		}
 
 		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
@@ -346,8 +355,12 @@ void AD1GameState::ResultKillerGame()
 	if (GameExitUIClass)
 	{
 		UD1GameExitUI* ExitUI = CreateWidget<UD1GameExitUI>(GetWorld(), GameExitUIClass);
-		ExitUI->AddToViewport();
-		ExitUI->GameExit();
+
+		if (IsValid(ExitUI))
+		{
+			ExitUI->AddToViewport();
+			ExitUI->GameExit();
+		}
 	}
 
 	if (IsValid(GI))
