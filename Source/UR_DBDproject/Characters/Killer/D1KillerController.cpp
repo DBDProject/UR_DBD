@@ -4,6 +4,7 @@
 #include "Characters/Killer/D1KillerController.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerState.h"
+#include "Characters/Survivor/D1SurvivorBase.h"
 #include "Data/D1InputData.h"
 #include "System/D1AssetManager.h"
 #include "EnhancedInputSubsystems.h"
@@ -408,23 +409,32 @@ void AD1KillerController::HandleInteraction()
 	if (D1Killer->GetCurrentHook() && D1Killer->GetCarriedSurvivor() != nullptr)
 	{
 		D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_HookSurvivor);
+		return;
 	}
-	else if (D1Killer->GetDetectedCrawlSurvivor() && D1Killer->GetCarriedSurvivor() == nullptr)
+	
+	if (D1Killer->GetDetectedCrawlSurvivor() && D1Killer->GetCarriedSurvivor() == nullptr)
 	{
-		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
-		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
+		AD1SurvivorBase* Survivor = D1Killer->GetDetectedCrawlSurvivor();
+		if (Survivor->GetSurvivorState() == ESurvivorState::Crawl)
+		{
+			EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_PickUpSurvivor);
+			return;
+		}
 	}
-	else if (D1Killer->GetCurrentPallet() && !D1Killer->GetCarriedSurvivor())
+	
+	if (D1Killer->GetCurrentPallet() && !D1Killer->GetCarriedSurvivor())
 	{
 		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
-		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DestroyPallet);
+		return;
 	}
-	else if (D1Killer->GetCurrentGenerator() && !D1Killer->GetCarriedSurvivor())
+	
+	if (D1Killer->GetCurrentGenerator() && !D1Killer->GetCarriedSurvivor())
 	{
 		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
-		//D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
+		return;
 	}
-	else if (D1Killer->GetVaultTarget() && !D1Killer->GetCarriedSurvivor())
+	
+	if (D1Killer->GetVaultTarget() && !D1Killer->GetCarriedSurvivor())
 	{
 		if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Dracula)
 		{
@@ -434,5 +444,6 @@ void AD1KillerController::HandleInteraction()
 		{
 			D1Killer->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_VaultWindow);
 		}
+		return;
 	}
 }

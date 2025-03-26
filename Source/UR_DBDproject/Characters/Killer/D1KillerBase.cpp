@@ -327,12 +327,9 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 
 	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 	{
-		if (Survivor->GetSurvivorState() == ESurvivorState::Crawl)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
-			DetectedObject = OtherActor;
-			DetectedCrawlSurvivor = Survivor;
-		}
+		UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
+		DetectedObject = OtherActor;
+		DetectedCrawlSurvivor = Survivor;
 	}
 	else if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 	{
