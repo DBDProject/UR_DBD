@@ -42,7 +42,7 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
 	DOREPLIFETIME(AD1GameState, SurvivorStates);
-	DOREPLIFETIME(AD1GameState, ExitReamingTime);
+	DOREPLIFETIME(AD1GameState, ExitRemainingTime);
 }
 
 void AD1GameState::HandleMatchHasStarted()
