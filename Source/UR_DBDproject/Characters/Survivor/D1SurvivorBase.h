@@ -51,7 +51,7 @@ public:
 	UFUNCTION()
 	void OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-	
+
 	void UpdateClosestDetectedObject();
 public: // 발전기 수리
 	UFUNCTION(BlueprintCallable)
@@ -316,10 +316,6 @@ protected:
 
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	ESurvivorState PrevState = ESurvivorState::Healthy;
-
-
-	UPROPERTY(EditAnywhere, BluePrintReadWrite)
-	float EscapeTime = 5.f; // 탈출 진행 될 시간
 
 	float OrbitSpeed = 0.f; // 인트로 및 탈출 카메라 회전 속도 알아서 값에 맞춰 변경됨
 	float ArmLengthSpeed = 0.f; // 인트로 및 탈출 카메라 줌 속도 알아서 값에 맞춰 변경됨.

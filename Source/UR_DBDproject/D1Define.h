@@ -33,7 +33,6 @@ enum class ESurvivorState : uint8
 	Hooked		UMETA(DisplayName = "Hooked"),    // 갈고리 상태 (갈고리에 걸림)
 	Dying		UMETA(DisplayName = "Dying"),     // 사망 상태
 	Escape		UMETA(DisplayName = "Escape"),    // 탈출 상태
-	Logout		UMETA(DisplayName = "Logout"),    // 로그아웃 상태
 };
 
 UENUM(BlueprintType)

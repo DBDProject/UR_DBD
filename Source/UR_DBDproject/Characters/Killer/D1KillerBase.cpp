@@ -650,38 +650,32 @@ void AD1KillerBase::StartBGMUpdateTimer()
 void AD1KillerBase::PlayStartSequence(float INPUT_UNLOCK_TIME)
 {
 	APlayerController* PC = Cast<APlayerController>(GetController());
+
 	if (!IsValid(PC))
 		return;
 
+	// Create playback settings
 	FMovieSceneSequencePlaybackSettings Settings;
 	Settings.bAutoPlay = true;
 
-	// 시퀀스 플레이어 생성
+	// Create sequence player
 	ALevelSequenceActor* StartSequenceActor = nullptr;
 	ULevelSequencePlayer* StartSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
 		GetWorld(), StartLevelSequence, Settings, StartSequenceActor);
 
 	if (StartSequencePlayer)
 	{
-		// 1. 현재 캐릭터 위치에서 스폰
-		FActorSpawnParameters SpawnParams;
-		FVector SpawnLocation = GetActorLocation();
-		FRotator SpawnRotation = GetActorRotation();
-
-		// 2. CineCameraActor 스폰
+		// Spawn camera and dummy actors
 		ACineCameraActor* SpawnedCamera = GetWorld()->SpawnActor<ACineCameraActor>(
-			ACineCameraActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+			ACineCameraActor::StaticClass());
 
-		// 3. 빈 Actor도 스폰
 		AActor* DummyTarget = GetWorld()->SpawnActor<AActor>(
-			AActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+			AActor::StaticClass());
 
-		// 4. 빈 Actor도 스폰
 		AActor* DummyTarget2 = GetWorld()->SpawnActor<AActor>(
-			AActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+			AActor::StaticClass());
 
-		PC->SetViewTarget(SpawnedCamera);
-		// 회전 적용 제대로 되게 루트 컴포넌트 만들어줌
+		// Create and set up root components
 		USceneComponent* RootComp = NewObject<USceneComponent>(DummyTarget);
 		RootComp->RegisterComponent();
 		DummyTarget->SetRootComponent(RootComp);
@@ -690,27 +684,26 @@ void AD1KillerBase::PlayStartSequence(float INPUT_UNLOCK_TIME)
 		RootComp2->RegisterComponent();
 		DummyTarget2->SetRootComponent(RootComp2);
 
-		// 카메라를 빈 액터에 붙임 (부모 자식 관계로)
-		DummyTarget2->AttachToActor(DummyTarget, FAttachmentTransformRules::SnapToTargetIncludingScale);
-		SpawnedCamera->AttachToActor(DummyTarget2, FAttachmentTransformRules::SnapToTargetIncludingScale);
+		// Debug output to verify positions
+		SpawnedCamera->AttachToActor(DummyTarget2, FAttachmentTransformRules::KeepRelativeTransform);
+		DummyTarget2->AttachToActor(DummyTarget, FAttachmentTransformRules::KeepRelativeTransform);
+		DummyTarget->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 
+		// Explicitly set the view target before playing
 
-		// 4. 시퀀스 바인딩 - "CameraTarget"
+		// Set up bindings
 		FMovieSceneObjectBindingID CameraBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("TargetCamera");
 		StartSequenceActor->SetBinding(CameraBindingID, { SpawnedCamera });
 
-		// 5. 시퀀스 바인딩 - "DummyTarget" (있는 경우)
 		FMovieSceneObjectBindingID DummyBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor");
 		StartSequenceActor->SetBinding(DummyBindingID, { DummyTarget });
 
 		FMovieSceneObjectBindingID DummyBindingID2 = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor2");
 		StartSequenceActor->SetBinding(DummyBindingID2, { DummyTarget2 });
 
-		// 6. 시퀀스 재생
 		StartSequencePlayer->Play();
 	}
 }
-
 TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
 {
 	for (TActorIterator<AD1SurvivorBase> It(GetWorld()); It; ++It)

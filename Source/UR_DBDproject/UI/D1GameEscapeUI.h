@@ -16,5 +16,5 @@ class UR_DBDPROJECT_API UD1GameEscapeUI : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
-	void GameEscape(float EscapeTime); // 블루프린트에서 구현할 함수
+	void GameEscape(); // 블루프린트에서 구현할 함수
 };

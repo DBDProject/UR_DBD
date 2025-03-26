@@ -40,6 +40,9 @@ private:
 	// 일정 시간 이후 서버장 나가기
 	void OnTravelTimer();
 
+	// 일정 시간 이후 플레이어 나가기
+	void OnPlayerTravelTimer();
+
 	// UI용 변수 바뀔 시 호출
 	UFUNCTION()
 	void OnRep_RepairedGenerators();
@@ -60,6 +63,7 @@ protected:
 	virtual void HandleMatchHasStarted() override;
 	virtual void HandleMatchHasEnded() override;
 	virtual void HandleMatchIsWaitingToStart() override;
+	virtual void Tick(float DeltaSeconds) override;
 
 public:
 	AD1GameState();
@@ -79,6 +83,7 @@ private:
 	FTimerHandle InputLockTimer;
 	FTimerHandle GameStartTimer;
 	FTimerHandle TravelTimer; // 서버장 내보내려고 만든 타이머
+	FTimerHandle SurvivorTravelTimer; // 플레이어 결과창 보내려는 타이머
 
 	// 현재 수리해야할 발전기 개수
 	UPROPERTY(ReplicatedUsing = OnRep_RepairedGenerators, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
@@ -96,6 +101,9 @@ private:
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TSubclassOf<class UD1GameStartUI> GameStartUIClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
 
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
@@ -128,10 +136,18 @@ protected:
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
 	float EndGameTimer;
 
+	// 입력 잠금 시간
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
-	float INPUT_UNLOCK_TIMER = 4.f;
+	float INPUT_UNLOCK_TIMER = 5.f;
 
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
-	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
+	// 탈출 후 나갈때 까지 대기 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "EscapeExitTime"))
+	float ESCAPE_EXIT_TIME = 5.f;
+
+	// 결과 후 나갈때 까지 대기 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "NormalExitTime"))
+	float NORMAL_EXIT_TIME = 2.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "NormalExitTime"))
+	float KILLER_EXIT_TIME = 5.f;
 };

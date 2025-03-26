@@ -8,6 +8,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "Characters/D1PlayerSpawner.h"
 #include "UI/D1GameStartUI.h"
+#include "UI/D1GameEscapeUI.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Characters/Killer/D1KillerBase.h"
 
@@ -34,6 +35,7 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
 	DOREPLIFETIME(AD1GameState, SurvivorStates);
+	DOREPLIFETIME(AD1GameState, EndGameTimer);
 }
 
 void AD1GameState::HandleMatchHasStarted()
@@ -49,7 +51,7 @@ void AD1GameState::HandleMatchHasStarted()
 			OnRep_RepairedGenerators();
 
 		GetWorld()->GetTimerManager().SetTimer(GameStartTimer, this,
-			&AD1GameState::OnGameStartTimer, 2.0f, false);
+			&AD1GameState::OnGameStartTimer, 4.0f, false);
 	}
 }
 
@@ -76,6 +78,11 @@ void AD1GameState::HandleMatchIsWaitingToStart()
 	}
 }
 
+void AD1GameState::Tick(float DeltaSeconds)
+{
+	Super::Tick(DeltaSeconds);
+}
+
 void AD1GameState::HandleMatchHasEnded()
 {
 	Super::HandleMatchHasEnded();
@@ -84,29 +91,30 @@ void AD1GameState::HandleMatchHasEnded()
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 종료!"));
 
-	if (!HasAuthority())
-	{
-		// 로컬 클라이언트만 처리
-		APlayerController* PC = GetWorld()->GetFirstPlayerController();
-		if (PC && PC->IsLocalController())
-		{
-			UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase2")));
-		}
-	}
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+
+	if (!PC)
+		return;
+
+	if (!PC->IsLocalController())
+		return;
+
+	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(PC->GetPawn());
+
+	if (IsValid(Survivor))
+		ResultSurvivorGame(Survivor->PlayerIndex);
 	else
-	{
-		// 서버장(리슨서버)은 잠깐 기다렸다가 나감
-		GetWorld()->GetTimerManager().SetTimer(TravelTimer, this, &AD1GameState::OnTravelTimer, 2.0f, false);
-	}
+		ResultKillerGame();
 }
 
 void AD1GameState::OnTravelTimer()
 {
-	APlayerController* PC = GetWorld()->GetFirstPlayerController();
-	if (PC && PC->IsLocalController())
-	{
-		UGameplayStatics::OpenLevel(PC, FName(TEXT("L_Showcase3")));
-	}
+	UGameplayStatics::OpenLevel(this, FName(TEXT("L_Showcase3")));
+}
+
+void AD1GameState::OnPlayerTravelTimer()
+{
+	UGameplayStatics::OpenLevel(this, FName(TEXT("L_Showcase2")));
 }
 
 void AD1GameState::FindExitGates()
@@ -185,8 +193,11 @@ void AD1GameState::Multi_GameStart_Implementation()
 {
 	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
 
-	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(Cast<APlayerController>(PC)->GetPawn());
-	AD1KillerBase* Killer = Cast<AD1KillerBase>(Cast<APlayerController>(PC)->GetPawn());
+	if (!PC)
+		return;
+
+	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(PC->GetPawn());
+	AD1KillerBase* Killer = Cast<AD1KillerBase>(PC->GetPawn());
 
 	if (IsValid(Survivor))
 		Survivor->Client_PlayStartSequence(INPUT_UNLOCK_TIMER);
@@ -196,8 +207,7 @@ void AD1GameState::Multi_GameStart_Implementation()
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 시작!"));
 
-	if (IsValid(GameStartUI))
-		GameStartUI->GameStart();
+	GameStartUI->GameStart();
 	OnGameStart.Broadcast();
 }
 
@@ -261,9 +271,10 @@ void AD1GameState::SetSurvivorState(int32 PlayerIndex, ESurvivorState State)
 
 void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
 {
-	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+	if (PlayerIndex < 0 && PlayerIndex >= SurvivorStates.Num())
+		return;
 
-	UE_LOG(LogTemp, Warning, TEXT("생존자 게임 결과! : %d"), PlayerIndex);
+	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
 
 	if (IsValid(GI))
 	{
@@ -271,6 +282,24 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
 		GI->m_resultInfo.playerIndex = PlayerIndex;
 		GI->m_resultInfo.survivorStates = SurvivorStates;
 		GI->m_resultInfo.survivorInfos = GI->m_serverInfo.survivorInfos;
+	}
+
+	GetWorld()->GetGameViewport()->RemoveAllViewportWidgets();
+
+	if (SurvivorStates[PlayerIndex] != ESurvivorState::Escape)
+	{
+
+		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
+			&AD1GameState::OnPlayerTravelTimer, NORMAL_EXIT_TIME, false);
+	}
+	else
+	{
+		UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GameEscapeUIClass);
+		EscapeUI->AddToViewport();
+		EscapeUI->GameEscape();
+
+		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
+			&AD1GameState::OnPlayerTravelTimer, ESCAPE_EXIT_TIME, false);
 	}
 }
 
@@ -285,6 +314,10 @@ void AD1GameState::ResultKillerGame()
 		GI->m_resultInfo.survivorStates = SurvivorStates;
 		GI->m_resultInfo.survivorInfos = GI->m_serverInfo.survivorInfos;
 	}
+
+	// 서버장(리슨서버)은 잠깐 기다렸다가 나감
+	GetWorld()->GetTimerManager().SetTimer(TravelTimer, this,
+		&AD1GameState::OnTravelTimer, KILLER_EXIT_TIME, false);
 }
 
 void AD1GameState::Multi_SetSurvivorState_Implementation(int32 PlayerIndex, ESurvivorState State)
