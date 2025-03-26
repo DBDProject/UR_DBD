@@ -260,7 +260,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 	}
 
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Hooked
-		&& D1Survivor->GetHookHealth() > 50.f)
+		&& D1Survivor->GetHookHealth() > 45.f)
 	{
 		D1Survivor->StartEscapeAttempt();
 		return;
@@ -298,7 +298,7 @@ void AD1SurvivorController::Input_StopInteract_LeftClick()
 	if (!D1Survivor.IsValid()) return;
 
 
-	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl)	// TODO : 마우스를 때기 전 픽업당하면 변수 초기화
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl)
 	{
 		if (!D1Survivor->HasAuthority())
 		{
@@ -393,9 +393,9 @@ void AD1SurvivorController::Input_StartInteract_Space()
 
 			if (IsLocalController())
 			{
-				StartRescue_Local(TargetSurvivor);
+				Rescue_Local(TargetSurvivor);
 			}
-			Server_StartRescue(TargetSurvivor);
+			Server_Rescue(TargetSurvivor);
 
 			return;
 		}
@@ -421,7 +421,10 @@ void AD1SurvivorController::Input_StartInteract_RightClick()
 
 	if (!D1Survivor.IsValid()) return;
 
-	D1Survivor->UseCurrentItem();
+	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
+	{
+		D1Survivor->UseCurrentItem();
+	}
 }
 
 void AD1SurvivorController::Input_StopInteract_RightClick()
@@ -792,7 +795,7 @@ void AD1SurvivorController::VaultPallet()
 
 }
 
-void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
+void AD1SurvivorController::Rescue_Local(AD1SurvivorBase* TargetSurvivor)
 {
 	if (!D1Survivor.IsValid() || !TargetSurvivor) return;
 
@@ -811,27 +814,15 @@ void AD1SurvivorController::StartRescue_Local(AD1SurvivorBase* TargetSurvivor)
 	TargetSurvivor->PlayMontage(D1Survivor->RescueMontage, "BeingRescued");
 }
 
-void AD1SurvivorController::StopRescue_Local(AD1SurvivorBase* TargetSurvivor)
-{
-}
-
-void AD1SurvivorController::Server_StartRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+void AD1SurvivorController::Server_Rescue_Implementation(AD1SurvivorBase* TargetSurvivor)
 {
 	if (HasAuthority())
-		Multicast_StartRescue(TargetSurvivor);
+		Multicast_Rescue(TargetSurvivor);
 }
 
-void AD1SurvivorController::Server_StopRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
+void AD1SurvivorController::Multicast_Rescue_Implementation(AD1SurvivorBase* TargetSurvivor)
 {
-}
-
-void AD1SurvivorController::Multicast_StartRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
-{
-	StartRescue_Local(TargetSurvivor);
-}
-
-void AD1SurvivorController::Multicast_StopRescue_Implementation(AD1SurvivorBase* TargetSurvivor)
-{
+	Rescue_Local(TargetSurvivor);
 }
 
 void AD1SurvivorController::EnableVaultAfterDrop()

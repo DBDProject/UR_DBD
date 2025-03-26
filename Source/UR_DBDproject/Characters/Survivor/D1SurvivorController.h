@@ -103,16 +103,11 @@ protected: // Pallet
 	void VaultPallet();
 
 protected: // Rescue
-	void StartRescue_Local(AD1SurvivorBase* TargetSurvivor);
-	void StopRescue_Local(AD1SurvivorBase* TargetSurvivor);
+	void Rescue_Local(AD1SurvivorBase* TargetSurvivor);
 	UFUNCTION(Server, Reliable)
-	void Server_StartRescue(AD1SurvivorBase* TargetSurvivor);
-	UFUNCTION(Server, Reliable)
-	void Server_StopRescue(AD1SurvivorBase* TargetSurvivor);
+	void Server_Rescue(AD1SurvivorBase* TargetSurvivor);
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_StartRescue(AD1SurvivorBase* TargetSurvivor);
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_StopRescue(AD1SurvivorBase* TargetSurvivor);
+	void Multicast_Rescue(AD1SurvivorBase* TargetSurvivor);
 
 public:
 	UFUNCTION()

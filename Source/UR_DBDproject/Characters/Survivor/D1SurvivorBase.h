@@ -437,6 +437,7 @@ public:
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
 	AD1ItemBase* GetEquippedItem() const { return EquippedItem; }
 
+	UFUNCTION(BlueprintCallable)
 	void SetSurvivorState(ESurvivorState state);
 
 	bool GetIsFail() { return bIsFail; }

@@ -55,14 +55,14 @@ void AD1Generator::BeginPlay()
 {
 	Super::BeginPlay();
 
-    if (HasAuthority())
-    {
-        APlayerController* PC = GetWorld()->GetFirstPlayerController();
-        if (PC)
-        {
-            SetOwner(PC);
-        }
-    }
+    //if (HasAuthority())
+    //{
+    //    APlayerController* PC = GetWorld()->GetFirstPlayerController();
+    //    if (PC)
+    //    {
+    //        SetOwner(PC);
+    //    }
+    //}
 }
 
 void AD1Generator::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -86,7 +86,7 @@ void AD1Generator::Tick(float DeltaTime)
 
     if (!HasAuthority()) return; // 서버에서만 실행
 
-    if (bIsCompleteRepair) return;
+    if (bIsCompleteRepair || bIsRepairBlockedAll) return;
 
     // 발전기 수리 진행
     if (bIsRepairing && RepairProgress < 100.f)
@@ -169,14 +169,17 @@ void AD1Generator::StartRepair(AD1SurvivorBase* Player, EGeneratorInteractionPos
         return;
     }
 
-    if (!RepairingPlayers.Contains(Player))
+    // 서버 실행
     {
-        RepairingPlayers.Add(Player);
-        RepairingPositions.Add(Position, Player);
-    }
+        if (!RepairingPlayers.Contains(Player))
+        {
+            RepairingPlayers.Add(Player);
+            RepairingPositions.Add(Position, Player);
+        }
 
-    // 모든 클라이언트에 수리 상태 동기화
-    Multicast_SetRepairState(Player, true, Position);
+        // 모든 클라이언트에 수리 상태 동기화
+        Multicast_SetRepairState(Player, true, Position);
+    }
 }
 
 void AD1Generator::StopRepair(AD1SurvivorBase* Player)
@@ -185,14 +188,18 @@ void AD1Generator::StopRepair(AD1SurvivorBase* Player)
     {
         return;
     }
-    auto Position = Player->GetInteractionPosition();
-    RepairingPositions.Remove(Position);
-    RepairingPlayers.Remove(Player);
 
-    if (RepairingPlayers.Num() == 0)
+    // 서버 실행
     {
-        bIsRepairing = false;
-        UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+        auto Position = Player->GetInteractionPosition();
+        RepairingPositions.Remove(Position);
+        RepairingPlayers.Remove(Player);
+
+        if (RepairingPlayers.Num() == 0)
+        {
+            bIsRepairing = false;
+            UE_LOG(LogTemp, Warning, TEXT("발전기 수리 중단!"));
+        }
     }
 }
 
@@ -275,6 +282,12 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 
     // 서버에서 실행
     {
+        // 이미 누가 실패했거나 수리 완료됐거나 progress가 100이 찼을 때 Return
+        if (GetIsRepairBlocked() ||
+            GetIsCompleteRepair() ||
+            GetRepairProgress() >= 100.f)
+            return;
+
         RepairProgress -= 5.0f;
         if (RepairProgress < 0.0f) RepairProgress = 0.0f;
 
@@ -346,7 +359,6 @@ void AD1Generator::Multicast_StopRepairAll_Implementation()
     }
 
     bIsRepairing = false;
-    SetOwner(nullptr);
 
     UE_LOG(LogTemp, Warning, TEXT("Multicast: 모든 플레이어 수리 중단"));
 }
@@ -363,9 +375,9 @@ void AD1Generator::CompleteRepair()
     if (HasAuthority())
     {
         bIsRepairBlockedAll = true;
+        RepairProgress = 100.0f;
+        bIsCompleteRepair = true;
     }
-    RepairProgress = 100.0f;
-    bIsCompleteRepair = true;
 
     StopRepairAll();
 

@@ -154,6 +154,7 @@ protected:
 
 public:
     bool GetIsRepairBlocked() { return bIsRepairBlockedAll; }
+    bool GetIsCompleteRepair() { return bIsCompleteRepair; }
     float GetRepairProgress() { return RepairProgress; }
 
     EGeneratorState GetCurrentState() { return CurrentState; }

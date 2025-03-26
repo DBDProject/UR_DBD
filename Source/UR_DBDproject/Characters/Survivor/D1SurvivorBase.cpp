@@ -50,7 +50,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 
-	//GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
+	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
 
@@ -441,7 +441,8 @@ void AD1SurvivorBase::StartRepair_Local()
 {
 	if (!GetCurrentGenerator()) return;
 
-	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
+	if (GetCurrentGenerator()->GetIsRepairBlocked()  ||
+		GetCurrentGenerator()->GetIsCompleteRepair() ||
 		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
 		return;
 
@@ -457,10 +458,10 @@ void AD1SurvivorBase::StartRepair_Local()
 
 void AD1SurvivorBase::StopRepair_Local()
 {
-	if (!GetCurrentGenerator()) return;
-
 	SetIsRepairing(false);
 	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+	if (!GetCurrentGenerator()) return;
 
 	GetCurrentGenerator()->StopRepair(this);
 	if (GetController())
@@ -477,6 +478,10 @@ void AD1SurvivorBase::StopRepair_Local()
 
 void AD1SurvivorBase::Server_StartRepair_Implementation()
 {
+	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
+		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
+		return;
+
 	Multi_StartRepair();
 }
 
@@ -829,13 +834,18 @@ void AD1SurvivorBase::OnEscapeSuccess()
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		bIsHookSkillCheckEnable = false;
-		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
 
+		EscapeGauge = 0.0f;
+		GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
+
 		CurrentHook->SetIsHooked(false);
 		CurrentHook->SetInteractingPlayer(nullptr);
-		CurrentHook = nullptr;
+		CurrentHook = nullptr;;
+
+		SetSurvivorState(ESurvivorState::Injured);
+		GetCharacterMovement()->MaxWalkSpeed = GetSurvivoreSet()->GetInjRunSpeed();
 	}
 }
 
@@ -845,13 +855,18 @@ void AD1SurvivorBase::OnRescued()
 	{
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		bIsHookSkillCheckEnable = false;
-		SetSurvivorState(ESurvivorState::Injured);
 
 		Multicast_StopEntityEvent();
+
+		EscapeGauge = 0.0f;
+		GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
 
 		CurrentHook->SetIsHooked(false);
 		CurrentHook->SetInteractingPlayer(nullptr);
 		CurrentHook = nullptr;
+
+		SetSurvivorState(ESurvivorState::Injured);
+		GetCharacterMovement()->MaxWalkSpeed = GetSurvivoreSet()->GetInjRunSpeed();
 	}
 }
 
@@ -1193,16 +1208,21 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 	{
 	case ESurvivorState::Healthy:
 	{
-
 		PlayMontage(HitMontage, "Hit_BK");
 		SetSurvivorState(ESurvivorState::Injured);
 		UE_LOG(LogTemp, Warning, TEXT("생존자가 부상 상태가 되었습니다!"));
 		break;
 	}
 
-
 	case ESurvivorState::Injured:
 	{
+		// Crawl됐을 때 nullptr 해야할 변수들
+		bIsRepairing = false;
+		bPrevRepairing = false;
+		bIsFail = false;
+		bIsHealing = false;
+		bIsUsingMedkit = false;
+
 		PlayMontage(HitMontage, "BK");
 		SetSurvivorState(ESurvivorState::Crawl);
 		if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
@@ -1215,6 +1235,7 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 
 	case ESurvivorState::Crawl:
 	{
+		SetSurvivorState(ESurvivorState::Crawl);
 		UE_LOG(LogTemp, Warning, TEXT("생존자는 이미 기절 상태입니다!"));
 		break;
 	}
@@ -1239,7 +1260,6 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
 {
 	if (!Killer) return;
-
 	// 충돌 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 물리 시뮬레이션 중지
@@ -1252,6 +1272,12 @@ void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
 
 void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
 {
+	// PickUp됐을 때 nullptr 해야할 변수들
+	HealingSource = nullptr;
+	bIsBeingHealed = false;
+	bCanBeHealed = false;
+	bIsCrawlSelfRecovering = false;
+
 	TakePickUpFromKiller_Multicast(Killer);
 }
 
