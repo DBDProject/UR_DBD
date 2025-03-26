@@ -9,6 +9,7 @@
 #include "Characters/D1PlayerSpawner.h"
 #include "UI/D1GameStartUI.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "Characters/Killer/D1KillerBase.h"
 
 AD1GameState::AD1GameState()
 {
@@ -185,9 +186,12 @@ void AD1GameState::Multi_GameStart_Implementation()
 	APlayerController* PC = Cast<APlayerController>(GetWorld()->GetFirstPlayerController());
 
 	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(Cast<APlayerController>(PC)->GetPawn());
+	AD1KillerBase* Killer = Cast<AD1KillerBase>(Cast<APlayerController>(PC)->GetPawn());
 
 	if (IsValid(Survivor))
 		Survivor->Client_PlayStartSequence(INPUT_UNLOCK_TIMER);
+	else if (IsValid(Killer))
+		Killer->PlayStartSequence(INPUT_UNLOCK_TIMER);
 
 
 	UE_LOG(LogTemp, Warning, TEXT("게임 시작!"));

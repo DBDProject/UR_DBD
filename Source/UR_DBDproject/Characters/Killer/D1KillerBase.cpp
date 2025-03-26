@@ -18,12 +18,12 @@
 #include "Interactables/D1VaultObject.h"
 #include "Interactables/D1Pallet.h"
 #include "Interactables/D1Hook.h"
-#include "MovieSceneSequencePlayer.h"
-#include "CineCameraComponent.h"
-#include "CineCameraActor.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
+#include "CineCameraActor.h"
+#include "CineCameraComponent.h"
+#include "MovieSceneSequencePlayer.h"
 #include "AbilitySystemBlueprintLibrary.h"
 #include "SkeletalMeshRestoreState.h"
 #include "Sound/SoundAttenuation.h"
@@ -118,6 +118,7 @@ AD1KillerBase::AD1KillerBase()
 	FirstPersonCameraComponent->SetupAttachment(SpringArm);
 	FirstPersonCameraComponent->SetRelativeLocation(FVector(0.0f, 0.f, 10.0f)); // Position the camera
 	FirstPersonCameraComponent->bUsePawnControlRotation = true;
+	FirstPersonCameraComponent->Activate();
 
 	WolfCameraComponent = CreateDefaultSubobject<UCameraComponent>(TEXT("WolfCamera"));
 	WolfCameraComponent->SetupAttachment(GetMesh());
@@ -135,6 +136,7 @@ AD1KillerBase::AD1KillerBase()
 	Camera->SetupAttachment(SpringArm);
 	Camera->bUsePawnControlRotation = false; // 카메라 독립적으로 회전 가능
 	Camera->SetRelativeLocationAndRotation(FVector(0.f, 0.f, 90.f), FRotator(-30.0f, 0.0f, 0.0f)); // Position the camera
+	Camera->Deactivate();
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
@@ -190,8 +192,8 @@ void AD1KillerBase::BeginPlay()
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
 	//if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
-	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Deactivate();
-	if (Camera) Camera->Activate();
+	if (FirstPersonCameraComponent) FirstPersonCameraComponent->Activate();
+	if (Camera) Camera->Deactivate();
 	//if (Camera) Camera->Deactivate();
 
 	GetCharacterMesh()->bPauseAnims = false;
@@ -642,6 +644,70 @@ void AD1KillerBase::StartBGMUpdateTimer()
 			0.5f,     // 주기
 			true      // 루프
 		);
+	}
+}
+
+void AD1KillerBase::PlayStartSequence(float INPUT_UNLOCK_TIME)
+{
+	APlayerController* PC = Cast<APlayerController>(GetController());
+	if (!IsValid(PC))
+		return;
+
+	FMovieSceneSequencePlaybackSettings Settings;
+	Settings.bAutoPlay = true;
+
+	// 시퀀스 플레이어 생성
+	ALevelSequenceActor* StartSequenceActor = nullptr;
+	ULevelSequencePlayer* StartSequencePlayer = ULevelSequencePlayer::CreateLevelSequencePlayer(
+		GetWorld(), StartLevelSequence, Settings, StartSequenceActor);
+
+	if (StartSequencePlayer)
+	{
+		// 1. 현재 캐릭터 위치에서 스폰
+		FActorSpawnParameters SpawnParams;
+		FVector SpawnLocation = GetActorLocation();
+		FRotator SpawnRotation = GetActorRotation();
+
+		// 2. CineCameraActor 스폰
+		ACineCameraActor* SpawnedCamera = GetWorld()->SpawnActor<ACineCameraActor>(
+			ACineCameraActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+		// 3. 빈 Actor도 스폰
+		AActor* DummyTarget = GetWorld()->SpawnActor<AActor>(
+			AActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+		// 4. 빈 Actor도 스폰
+		AActor* DummyTarget2 = GetWorld()->SpawnActor<AActor>(
+			AActor::StaticClass(), SpawnLocation, SpawnRotation, SpawnParams);
+
+		PC->SetViewTarget(SpawnedCamera);
+		// 회전 적용 제대로 되게 루트 컴포넌트 만들어줌
+		USceneComponent* RootComp = NewObject<USceneComponent>(DummyTarget);
+		RootComp->RegisterComponent();
+		DummyTarget->SetRootComponent(RootComp);
+
+		USceneComponent* RootComp2 = NewObject<USceneComponent>(DummyTarget2);
+		RootComp2->RegisterComponent();
+		DummyTarget2->SetRootComponent(RootComp2);
+
+		// 카메라를 빈 액터에 붙임 (부모 자식 관계로)
+		DummyTarget2->AttachToActor(DummyTarget, FAttachmentTransformRules::SnapToTargetIncludingScale);
+		SpawnedCamera->AttachToActor(DummyTarget2, FAttachmentTransformRules::SnapToTargetIncludingScale);
+
+
+		// 4. 시퀀스 바인딩 - "CameraTarget"
+		FMovieSceneObjectBindingID CameraBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("TargetCamera");
+		StartSequenceActor->SetBinding(CameraBindingID, { SpawnedCamera });
+
+		// 5. 시퀀스 바인딩 - "DummyTarget" (있는 경우)
+		FMovieSceneObjectBindingID DummyBindingID = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor");
+		StartSequenceActor->SetBinding(DummyBindingID, { DummyTarget });
+
+		FMovieSceneObjectBindingID DummyBindingID2 = StartSequenceActor->GetSequence()->FindBindingByTag("EmptyActor2");
+		StartSequenceActor->SetBinding(DummyBindingID2, { DummyTarget2 });
+
+		// 6. 시퀀스 재생
+		StartSequencePlayer->Play();
 	}
 }
 
