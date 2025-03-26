@@ -1458,7 +1458,6 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 
 		FRotator TargetRot = ExitArea->GetActorRotation();
 		SetSurvivorState(ESurvivorState::Escape);
-		GetController()->DisableInput(Cast<APlayerController>(GetController()));
 
 		ExitAreaFowardVector = ExitArea->GetActorForwardVector();
 		CurrentAngle = 0.f;

@@ -291,6 +291,11 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state)
 
 	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
 
+	APlayerController* Player = GetWorld()->GetFirstPlayerController();
+
+	if (IsValid(Player))
+		Player->DisableInput(Player);
+
 	SurvivorStates[PlayerIndex] = state;
 
 	if (IsValid(GI))
@@ -332,6 +337,11 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state)
 void AD1GameState::ResultKillerGame()
 {
 	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+	APlayerController* Player = GetWorld()->GetFirstPlayerController();
+
+	if (IsValid(Player))
+		Player->DisableInput(Player);
 
 	if (GameExitUIClass)
 	{
