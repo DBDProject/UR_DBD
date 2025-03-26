@@ -1030,48 +1030,100 @@ void AD1SurvivorBase::OnOverlapEnd(UPrimitiveComponent* OverlappedComponent, AAc
 
 void AD1SurvivorBase::UpdateClosestDetectedObject()
 {
-	if (OverlappedActors.Num() == 0) return;
+	if (OverlappedActors.Num() == 0)
+		return;
 
-	float ClosestDistSq = TNumericLimits<float>::Max();
-	AActor* ClosestActor = nullptr;
+	// 후보 변수 선언
+	AActor* NewDetected = nullptr;
+	AD1Generator* NewGenerator = nullptr;
+	AD1Pallet* NewPallet = nullptr;
+	AD1VaultObject* NewVault = nullptr;
+
+	AActor* ClosestGenerator = nullptr;
+	AActor* ClosestPallet = nullptr;
+	AActor* ClosestVault = nullptr;
+	AActor* ClosestOther = nullptr;
+
+	float DistSq_Generator = TNumericLimits<float>::Max();
+	float DistSq_Pallet = TNumericLimits<float>::Max();
+	float DistSq_Vault = TNumericLimits<float>::Max();
+	float DistSq_Other = TNumericLimits<float>::Max();
 
 	for (AActor* Actor : OverlappedActors)
 	{
 		if (!IsValid(Actor)) continue;
 
 		float DistSq = FVector::DistSquared(Actor->GetActorLocation(), GetActorLocation());
-		if (DistSq < ClosestDistSq)
+
+		if (AD1Generator* Gen = Cast<AD1Generator>(Actor))
 		{
-			ClosestDistSq = DistSq;
-			ClosestActor = Actor;
+			if (DistSq < DistSq_Generator)
+			{
+				DistSq_Generator = DistSq;
+				ClosestGenerator = Gen;
+			}
+		}
+		else if (AD1Pallet* Pallet = Cast<AD1Pallet>(Actor))
+		{
+			if (DistSq < DistSq_Pallet)
+			{
+				DistSq_Pallet = DistSq;
+				ClosestPallet = Pallet;
+			}
+		}
+		else if (Actor->ActorHasTag("Vaultable"))
+		{
+			if (DistSq < DistSq_Vault)
+			{
+				DistSq_Vault = DistSq;
+				ClosestVault = Actor;
+			}
+		}
+		else
+		{
+			if (DistSq < DistSq_Other)
+			{
+				DistSq_Other = DistSq;
+				ClosestOther = Actor;
+			}
 		}
 	}
 
-	DetectedObject = ClosestActor;
+	// 우선순위 적용
+	if (ClosestGenerator)
+	{
+		NewDetected = ClosestGenerator;
+		NewGenerator = Cast<AD1Generator>(ClosestGenerator);
+	}
+	else if (ClosestPallet)
+	{
+		NewDetected = ClosestPallet;
+		NewPallet = Cast<AD1Pallet>(ClosestPallet);
+	}
+	else if (ClosestVault)
+	{
+		NewDetected = ClosestVault;
+		NewVault = Cast<AD1VaultObject>(ClosestVault);
+	}
+	else if (ClosestOther)
+	{
+		NewDetected = ClosestOther;
+	}
 
-	// 타입별로 캐싱
-	CurrentGenerator = nullptr;
-	CurrentPallet = nullptr;
-	VaultTarget = nullptr;
+	// 실제 변경이 있는 경우에만 갱신
+	if (NewDetected != DetectedObject)
+	{
+		DetectedObject = NewDetected;
+		CurrentGenerator = NewGenerator;
+		CurrentPallet = NewPallet;
+		VaultTarget = NewVault;
 
-	if (AD1Generator* Generator = Cast<AD1Generator>(DetectedObject))
-	{
-		CurrentGenerator = Generator;
-	}
-	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(DetectedObject))
-	{
-		CurrentPallet = Pallet;
-	}
-	else if (DetectedObject.IsValid() && DetectedObject->ActorHasTag("Vaultable"))
-	{
-		VaultTarget = Cast<AD1VaultObject>(DetectedObject);
-	}
-	
-	else if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(DetectedObject))
-	{
-		if (ExitArea->IsActivated())
+		if (AD1ExitArea* ExitArea = Cast<AD1ExitArea>(DetectedObject))
 		{
-			PlayEscapeSequence(ExitArea);
+			if (ExitArea->IsActivated())
+			{
+				PlayEscapeSequence(ExitArea);
+			}
 		}
 	}
 }

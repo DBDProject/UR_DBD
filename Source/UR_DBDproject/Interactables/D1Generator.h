@@ -127,7 +127,7 @@ protected:
 
     // 수리 진행도
     UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Generator")
-    float RepairProgress = 99.f;
+    float RepairProgress = 0.f;
 
     // 수리 하고 있는 플레이어
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Generator")
