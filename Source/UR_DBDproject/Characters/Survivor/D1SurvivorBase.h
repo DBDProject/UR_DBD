@@ -146,15 +146,16 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void FinishHealing();
 
-	// 아이템 장착 함수
+	// [[[[[ 아이템 함수 ]]]]]
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void EquipItem(TSubclassOf<AD1ItemBase> ItemClass);
 
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(Server, Reliable)
 	void UseCurrentItem();
+	UFUNCTION(Server, Reliable)
+	void NotUseCurrentItem();
 
 	void ResetHealingCooldown();
-
 	void MovePlayerToPalletPoint();
 
 	// 레플리케이션
@@ -356,6 +357,10 @@ protected: // 치료 기능
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
 	bool bCanBeHealed = true;
 
+protected: // 구급상자 사용
+	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor", meta = (AllowPrivateAccess = "true"))
+	bool bIsUsingMedkit = false;
+
 protected: // 빈사 상태
 	UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category = "Survivor")
 	float CrawlHealth = 100.0f; // 빈사 상태 HP
@@ -413,14 +418,14 @@ protected: // 탈출구
 
 	// 현재 장착 아이템
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
-	TWeakObjectPtr<class AD1ItemBase> EquippedItem;
+	TObjectPtr<class AD1ItemBase> EquippedItem;
 
 	// Temp (나중에 로비에서 선택하도록 바꿔야됨)
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TSubclassOf<class AD1ItemBase> BP_MedkitClass;
+	TSubclassOf<class AD1Medkit> BP_MedkitClass;
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
-	TSubclassOf<class AD1ItemBase> BP_ToolboxClass;
+	TSubclassOf<class AD1Toolbox> BP_ToolboxClass;
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
@@ -430,6 +435,7 @@ public:
 	AD1Hook* GetCurrentHook() const { return CurrentHook.IsValid() ? CurrentHook.Get() : nullptr; }
 	UD1SurvivorSet* GetSurvivoreSet() const { return SurvivorSet; }
 	ESurvivorState GetSurvivorState() const { return CurrentState; }
+	AD1ItemBase* GetEquippedItem() const { return EquippedItem; }
 
 	void SetSurvivorState(ESurvivorState state);
 
@@ -441,6 +447,7 @@ public:
 
 	bool GetIsSelfRecovering() { return bIsCrawlSelfRecovering; }
 	void SetIsSelfRecovering(bool State) { bIsCrawlSelfRecovering = State; }
+	void SetIsUsingMedkit(bool State) { bIsUsingMedkit = State; }
 	void SetIsRepairing(bool state) { bIsRepairing = state; }
 	void SetPrevRepairing(bool state) { bPrevRepairing = state; }
 	float GetHookHealth() { return HookHealth; }

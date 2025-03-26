@@ -4,23 +4,46 @@
 #include "Items/D1Medkit.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Items/D1ItemBase.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 AD1Medkit::AD1Medkit()
 {
-    ItemName = "구급상자";
-    MaxUsage = 100.f;
+    ItemName = "Medkit";
+    MaxUsage = 50.f;
     CurrentUsage = MaxUsage;
 }
 
-void AD1Medkit::UseItem(AD1SurvivorBase* Survivor)
+void AD1Medkit::UseItem_Implementation(AD1SurvivorBase* Survivor)
 {
-    if (!bCanUseItem || !Survivor)
+    if (!bCanUseItem || CurrentUsage <= 0.f)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("아이템을 사용할 수 없습니다."));
         return;
+    }
 
-    UE_LOG(LogTemp, Warning, TEXT("구급상자를 사용하여 치료 속도 증가!"));
+    if (!Survivor)  return;
 
-    // 치료 속도 증가
-    //Survivor->ModifyHealingSpeed(2.0f);  // 기존 속도의 2배
+    if (Survivor->GetSurvivorState() == ESurvivorState::Injured)
+    {
+        Survivor->GetCharacterMovement()->DisableMovement();
+        Survivor->SetIsUsingMedkit(true);
 
-    DecreaseUsage(3.f);
+        if (HasAuthority())
+        {
+            StartAutoDecreaseUsage(1.0f);
+        }
+    }
+}
+
+void AD1Medkit::NotUseItem_Implementation(AD1SurvivorBase* Survivor)
+{
+    if (!Survivor)  return;
+
+    Survivor->SetIsUsingMedkit(false);
+    Survivor->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+
+    if (HasAuthority())
+    {
+        StopAutoDecreaseUsage();
+    }
 }

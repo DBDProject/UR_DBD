@@ -17,6 +17,9 @@ class UR_DBDPROJECT_API AD1Medkit : public AD1ItemBase
 public:
 	AD1Medkit();
 
-	virtual void UseItem(AD1SurvivorBase* Survivor) override;
+	UFUNCTION(NetMulticast, Reliable)
+	void UseItem(class AD1SurvivorBase* Survivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void NotUseItem(class AD1SurvivorBase* Survivor);
 
 };

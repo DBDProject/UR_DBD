@@ -30,29 +30,34 @@ void AD1ItemBase::Tick(float DeltaTime)
     Super::Tick(DeltaTime);
 }
 
-// 아이템 사용
-void AD1ItemBase::UseItem(AD1SurvivorBase* Survivor)
-{
-    if (!bCanUseItem || CurrentUsage <= 0.f)
-    {
-        UE_LOG(LogTemp, Warning, TEXT("아이템을 사용할 수 없습니다."));
-        return;
-    }
-
-    DecreaseUsage(10.f);
-}
-
 // 아이템 사용 후 내구도 감소
 void AD1ItemBase::DecreaseUsage(float Amount)
 {
+    if (ItemName == "Medkit")
+    {
+        if (!(ItemOwner->GetSurvivorState() == ESurvivorState::Injured))
+        {
+            UE_LOG(LogTemp, Warning, TEXT("아이템 사용 중지!"));
+            StopAutoDecreaseUsage();
+            ItemOwner->NotUseCurrentItem();
+            return;
+        }
+    }
+    else if (ItemName == "Toolbox")
+    {
+        // TODO
+    }
+
     if (CurrentUsage > 0.f)
     {
         CurrentUsage -= Amount;
+        UE_LOG(LogTemp, Warning, TEXT("[아이템 내구도] 내구도: %.2f%%"), CurrentUsage);
         if (CurrentUsage <= 0.f)
         {
             bCanUseItem = false;
             CurrentUsage = 0.f;
             UE_LOG(LogTemp, Warning, TEXT("아이템 내구도 소진됨!"));
+            ItemOwner->NotUseCurrentItem();
         }
     }
 }
@@ -61,4 +66,39 @@ void AD1ItemBase::DecreaseUsage(float Amount)
 float AD1ItemBase::GetDurabilityPercentage() const
 {
     return (CurrentUsage / MaxUsage) * 100.0f;
+}
+
+void AD1ItemBase::ActivateEntity()
+{
+    if (ItemMesh)
+    {
+        ItemMesh->SetVisibility(true);
+    }
+}
+
+void AD1ItemBase::DeactivateEntity()
+{
+    if (ItemMesh)
+    {
+        ItemMesh->SetVisibility(false);
+    }
+}
+
+void AD1ItemBase::StartAutoDecreaseUsage(float Amount)
+{
+    // 타이머 중복 실행 방지
+    if (!GetWorldTimerManager().IsTimerActive(UsageDecreaseTimerHandle))
+    {
+        GetWorldTimerManager().SetTimer(
+            UsageDecreaseTimerHandle,
+            FTimerDelegate::CreateUObject(this, &AD1ItemBase::DecreaseUsage, Amount),
+            1.0f,
+            true
+        );
+    }
+}
+
+void AD1ItemBase::StopAutoDecreaseUsage()
+{
+    GetWorldTimerManager().ClearTimer(UsageDecreaseTimerHandle);
 }

@@ -132,6 +132,7 @@ void AD1SurvivorBase::BeginPlay()
 
 	// Temp
 	//EquipItem(BP_ToolboxClass);
+	EquipItem(BP_MedkitClass);
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
@@ -188,6 +189,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, bIsHookSkillCheckFail);
 	DOREPLIFETIME(AD1SurvivorBase, EscapeGauge);
 	DOREPLIFETIME(AD1SurvivorBase, PlayerIndex);
+	DOREPLIFETIME(AD1SurvivorBase, bIsUsingMedkit);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -225,7 +227,7 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 
 	if (!HasAuthority()) return; // 서버에서만 실행
 
-	if (bIsBeingHealed || bIsCrawlSelfRecovering)
+	if (bIsBeingHealed || bIsCrawlSelfRecovering || bIsUsingMedkit)
 	{
 		UpdateHealingProgress(DeltaTime);
 	}
@@ -261,7 +263,7 @@ void AD1SurvivorBase::SmoothCameraTransition(float DeltaTime)
 
 void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 {
-	if (!bIsBeingHealed && !bIsCrawlSelfRecovering) return;
+	if (!bIsBeingHealed && !bIsCrawlSelfRecovering && !bIsUsingMedkit) return;
 
 	float CurrentHealingRate = bIsBeingHealed ? HealingRate : SelfRecoveryRate;
 
@@ -1402,7 +1404,7 @@ void AD1SurvivorBase::EquipItem(TSubclassOf<AD1ItemBase> ItemClass)
 	if (!ItemClass) return;
 
 	// 기존 장착 아이템 제거
-	if (EquippedItem.IsValid())
+	if (EquippedItem)
 	{
 		EquippedItem->Destroy();
 		EquippedItem = nullptr;
@@ -1410,20 +1412,41 @@ void AD1SurvivorBase::EquipItem(TSubclassOf<AD1ItemBase> ItemClass)
 
 	// 새 아이템 생성 및 장착
 	EquippedItem = GetWorld()->SpawnActor<AD1ItemBase>(ItemClass);
-	if (EquippedItem.IsValid())
+	if (EquippedItem)
 	{
 		FName AttachSocketName = "RightHandItemSocket";  // 생존자의 오른손 소켓
 		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
 
+		EquippedItem->ItemOwner = this;
 		UE_LOG(LogTemp, Warning, TEXT("%s을(를) 장착했습니다."), *EquippedItem->GetName());
 	}
 }
 
-void AD1SurvivorBase::UseCurrentItem()
+void AD1SurvivorBase::UseCurrentItem_Implementation()
 {
-	if (EquippedItem.IsValid())
+	if (!EquippedItem) return;
+
+	if (AD1Medkit* Medkit = Cast<AD1Medkit>(EquippedItem))
 	{
-		EquippedItem.Get()->UseItem(this);
+		Medkit->UseItem(this);
+	}
+	else if (AD1Toolbox* Toolbox = Cast<AD1Toolbox>(EquippedItem))
+	{
+		Toolbox->UseItem(this);
+	}
+}
+
+void AD1SurvivorBase::NotUseCurrentItem_Implementation()
+{
+	if (!EquippedItem) return;
+
+	if (AD1Medkit* Medkit = Cast<AD1Medkit>(EquippedItem))
+	{
+		Medkit->NotUseItem(this);
+	}
+	else if (AD1Toolbox* Toolbox = Cast<AD1Toolbox>(EquippedItem))
+	{
+		Toolbox->NotUseItem(this);
 	}
 }
 

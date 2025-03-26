@@ -47,6 +47,8 @@ private:
 	void Input_StopInteract_LeftClick();
 	void Input_StartInteract_Space();
 	void Input_StopInteract_Space();
+	void Input_StartInteract_RightClick();
+	void Input_StopInteract_RightClick();
 	void Input_PointTo();
 	void Input_ComeHere();
 

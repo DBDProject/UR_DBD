@@ -16,6 +16,9 @@ class UR_DBDPROJECT_API AD1Toolbox : public AD1ItemBase
 
 public:
 	AD1Toolbox();
+	UFUNCTION(NetMulticast, Reliable)
+	void UseItem(class AD1SurvivorBase* Survivor);
+	UFUNCTION(NetMulticast, Reliable)
+	void NotUseItem(class AD1SurvivorBase* Survivor);
 
-	virtual void UseItem(AD1SurvivorBase* Survivor) override;
 };

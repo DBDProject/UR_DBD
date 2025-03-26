@@ -21,6 +21,8 @@
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1Hook.h"
 #include "D1SurvivorSoundManager.h"
+#include "Items/D1Medkit.h"
+#include "Items/D1Toolbox.h"
 
 AD1SurvivorController::AD1SurvivorController(const FObjectInitializer& ObjectInitializer)
 	: Super(ObjectInitializer)
@@ -107,6 +109,11 @@ void AD1SurvivorController::SetupInputComponent()
 		auto InteractAction2 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_Parkour);
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_Space);
 		EnhancedInputComponent->BindAction(InteractAction2, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_Space);
+
+		// 우클릭
+		auto InteractAction3 = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_ItemUsage);
+		EnhancedInputComponent->BindAction(InteractAction3, ETriggerEvent::Started, this, &ThisClass::Input_StartInteract_RightClick);
+		EnhancedInputComponent->BindAction(InteractAction3, ETriggerEvent::Completed, this, &ThisClass::Input_StopInteract_RightClick);
 
 		// (1번)
 		auto PointToAction = InputData->FindInputActionByTag(D1GameplayTags::Input_Action_PointTo);
@@ -406,6 +413,24 @@ void AD1SurvivorController::Input_StopInteract_Space()
 
 		return;
 	}
+}
+
+void AD1SurvivorController::Input_StartInteract_RightClick()
+{
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
+	if (!D1Survivor.IsValid()) return;
+
+	D1Survivor->UseCurrentItem();
+}
+
+void AD1SurvivorController::Input_StopInteract_RightClick()
+{
+	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
+
+	if (!D1Survivor.IsValid()) return;
+
+	D1Survivor->NotUseCurrentItem();
 }
 
 void AD1SurvivorController::Input_PointTo()

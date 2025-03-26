@@ -27,13 +27,18 @@ public:
 	virtual void Tick(float DeltaTime) override;
 
 public:
-    // 아이템 사용 함수 (각 아이템마다 다르게 구현됨)
-    UFUNCTION(BlueprintCallable, Category = "Item")
-    virtual void UseItem(class AD1SurvivorBase* Survivor);
-
     // UI에서 내구도를 퍼센트(%)로 표시하기 위한 함수
     UFUNCTION(BlueprintPure, Category = "Item")
     float GetDurabilityPercentage() const;
+
+    void ActivateEntity();
+    void DeactivateEntity();
+
+    void StartAutoDecreaseUsage(float Amount);
+    void StopAutoDecreaseUsage();
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadWrite, Category = "Item")
+    TWeakObjectPtr<class AD1SurvivorBase> ItemOwner;
 
 protected:
     // 루트컴포넌트
@@ -48,11 +53,11 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     FString ItemName;
 
-    // 최대 사용 가능 횟수 (ex: 공구상자는 32번 사용 가능)
+    // 최대 사용 가능 게이지
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     float MaxUsage;
 
-    // 현재 남은 사용 횟수
+    // 현재 남은 사용 게이지
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
     float CurrentUsage;
 
@@ -60,4 +65,5 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
     bool bCanUseItem;
 
+    FTimerHandle UsageDecreaseTimerHandle;
 };

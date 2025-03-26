@@ -7,15 +7,20 @@
 
 AD1Toolbox::AD1Toolbox()
 {
-    ItemName = "공구상자";
+    ItemName = "Toolbox";
     MaxUsage = 150.f;
     CurrentUsage = MaxUsage;
 }
 
-void AD1Toolbox::UseItem(AD1SurvivorBase* Survivor)
+void AD1Toolbox::UseItem_Implementation(AD1SurvivorBase* Survivor)
 {
-    if (!bCanUseItem || !Survivor)
+    if (!bCanUseItem || CurrentUsage <= 0.f)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("아이템을 사용할 수 없습니다."));
         return;
+    }
+
+    if (!Survivor)  return;
 
     UE_LOG(LogTemp, Warning, TEXT("공구상자를 사용하여 발전기 수리 속도 증가!"));
 
@@ -24,3 +29,8 @@ void AD1Toolbox::UseItem(AD1SurvivorBase* Survivor)
 
     DecreaseUsage(3.f);
 }
+
+void AD1Toolbox::NotUseItem_Implementation(AD1SurvivorBase* Survivor)
+{
+}
+
