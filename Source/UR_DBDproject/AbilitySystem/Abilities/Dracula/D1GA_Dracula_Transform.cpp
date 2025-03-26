@@ -538,8 +538,8 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 	}
 	else
 	{
-		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
-		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Overlap);
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
+		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 		Killer->GetEyeSpotLight()->SetVisibility(true);
 		if (KillerController)
 		{
