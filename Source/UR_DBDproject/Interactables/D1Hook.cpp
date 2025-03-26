@@ -9,6 +9,7 @@
 #include "MovieSceneSequencePlayer.h"
 #include "CineCameraComponent.h"
 #include "CineCameraActor.h"
+#include "MovieSceneSequence.h"
 #include "LevelSequence.h"
 #include "LevelSequenceActor.h"
 #include "LevelSequencePlayer.h"
