@@ -1,0 +1,20 @@
+// Fill out your copyright notice in the Description page of Project Settings.
+
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "D1GameExitUI.generated.h"
+
+/**
+ *
+ */
+UCLASS()
+class UR_DBDPROJECT_API UD1GameExitUI : public UUserWidget
+{
+	GENERATED_BODY()
+
+public:
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void GameExit(); // 블루프린트에서 구현할 함수
+};

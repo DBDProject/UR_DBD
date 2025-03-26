@@ -937,7 +937,7 @@ void AD1SurvivorBase::RemoveFromGame()
 		if (PC->IsLocalPlayerController())
 		{
 			GetController()->GetPawn()->SetActorHiddenInGame(true);
-			GS->ResultSurvivorGame(PlayerIndex);
+			GS->ResultSurvivorGame(PlayerIndex, ESurvivorState::Dying);
 		}
 	}
 }
@@ -1471,7 +1471,7 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 		SpringArm->bDoCollisionTest = false;
 
 		bPlayingEscape = true;
-		GS->ResultSurvivorGame(PlayerIndex);
+		GS->ResultSurvivorGame(PlayerIndex, ESurvivorState::Escape);
 	}
 }
 void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)

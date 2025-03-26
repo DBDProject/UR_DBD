@@ -9,6 +9,7 @@
 #include "Characters/D1PlayerSpawner.h"
 #include "UI/D1GameStartUI.h"
 #include "UI/D1GameEscapeUI.h"
+#include "UI/D1GameExitUI.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Characters/Killer/D1KillerBase.h"
 
@@ -17,10 +18,16 @@ AD1GameState::AD1GameState()
 	bReplicates = true;
 	bAlwaysRelevant = true;
 
+	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickInterval = 0.5f;
 }
 void AD1GameState::BeginPlay()
 {
 	Super::BeginPlay();
+
+	bAllGeneratorsRepaired = false;
+	IsGateOpened = false;
+	ExitRemainingTime = GATE_EXIT_TIME;
 
 	UD1GameInstance* GI = Cast<UD1GameInstance>(GetGameInstance());
 
@@ -35,14 +42,13 @@ void AD1GameState::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLife
 	DOREPLIFETIME(AD1GameState, RepairedGenerators);
 	DOREPLIFETIME(AD1GameState, bAllGeneratorsRepaired);
 	DOREPLIFETIME(AD1GameState, SurvivorStates);
-	DOREPLIFETIME(AD1GameState, EndGameTimer);
+	DOREPLIFETIME(AD1GameState, ExitReamingTime);
 }
 
 void AD1GameState::HandleMatchHasStarted()
 {
 	Super::HandleMatchHasStarted();
 
-	// 게임 시작 시 발전기 수리해야할 개수 초기화
 	if (HasAuthority())
 	{
 		RepairedGenerators = PlayerArray.Num();
@@ -51,7 +57,7 @@ void AD1GameState::HandleMatchHasStarted()
 			OnRep_RepairedGenerators();
 
 		GetWorld()->GetTimerManager().SetTimer(GameStartTimer, this,
-			&AD1GameState::OnGameStartTimer, 4.0f, false);
+			&AD1GameState::OnGameStartTimer, GAME_START_TIME, false);
 	}
 }
 
@@ -73,14 +79,23 @@ void AD1GameState::HandleMatchIsWaitingToStart()
 	if (IsValid(GameStartUIClass))
 	{
 		GameStartUI = CreateWidget<UD1GameStartUI>(GetWorld(), GameStartUIClass);
-		if (GameStartUI)
-			GameStartUI->AddToViewport();
+		GameStartUI->AddToViewport();
 	}
 }
 
 void AD1GameState::Tick(float DeltaSeconds)
 {
 	Super::Tick(DeltaSeconds);
+
+	if (IsGateOpened)
+	{
+		ExitRemainingTime -= DeltaSeconds;
+
+		if (ExitRemainingTime <= 0.f)
+		{
+			OnGateEnded.Broadcast();
+		}
+	}
 }
 
 void AD1GameState::HandleMatchHasEnded()
@@ -102,7 +117,7 @@ void AD1GameState::HandleMatchHasEnded()
 	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(PC->GetPawn());
 
 	if (IsValid(Survivor))
-		ResultSurvivorGame(Survivor->PlayerIndex);
+		ResultSurvivorGame(Survivor->PlayerIndex, ESurvivorState::Dying);
 	else
 		ResultKillerGame();
 }
@@ -269,12 +284,14 @@ void AD1GameState::SetSurvivorState(int32 PlayerIndex, ESurvivorState State)
 	Multi_SetSurvivorState(PlayerIndex, State);
 }
 
-void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
+void AD1GameState::ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state)
 {
 	if (PlayerIndex < 0 && PlayerIndex >= SurvivorStates.Num())
 		return;
 
 	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+	SurvivorStates[PlayerIndex] = state;
 
 	if (IsValid(GI))
 	{
@@ -286,17 +303,26 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
 
 	GetWorld()->GetGameViewport()->RemoveAllViewportWidgets();
 
-	if (SurvivorStates[PlayerIndex] != ESurvivorState::Escape)
+	if (state != ESurvivorState::Escape)
 	{
+		if (GameExitUIClass)
+		{
+			UD1GameExitUI* ExitUI = CreateWidget<UD1GameExitUI>(GetWorld(), GameExitUIClass);
+			ExitUI->AddToViewport();
+			ExitUI->GameExit();
+		}
 
 		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
 			&AD1GameState::OnPlayerTravelTimer, NORMAL_EXIT_TIME, false);
 	}
 	else
 	{
-		UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GameEscapeUIClass);
-		EscapeUI->AddToViewport();
-		EscapeUI->GameEscape();
+		if (GameEscapeUIClass)
+		{
+			UD1GameEscapeUI* EscapeUI = CreateWidget<UD1GameEscapeUI>(GetWorld(), GameEscapeUIClass);
+			EscapeUI->AddToViewport();
+			EscapeUI->GameEscape();
+		}
 
 		GetWorld()->GetTimerManager().SetTimer(SurvivorTravelTimer, this,
 			&AD1GameState::OnPlayerTravelTimer, ESCAPE_EXIT_TIME, false);
@@ -306,6 +332,13 @@ void AD1GameState::ResultSurvivorGame(int32 PlayerIndex)
 void AD1GameState::ResultKillerGame()
 {
 	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
+
+	if (GameExitUIClass)
+	{
+		UD1GameExitUI* ExitUI = CreateWidget<UD1GameExitUI>(GetWorld(), GameExitUIClass);
+		ExitUI->AddToViewport();
+		ExitUI->GameExit();
+	}
 
 	if (IsValid(GI))
 	{

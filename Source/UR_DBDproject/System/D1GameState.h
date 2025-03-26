@@ -16,6 +16,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGeneratorCompleted);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInputUnlock);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameStart);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGameEnd);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGateOpend);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnGateEnded);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnGeneratorRepaired, uint8, GenerateCount);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnSurvivorStateChanged,
 	int32, SurvivorIndex, ESurvivorState, SurvivorState);
@@ -76,7 +78,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_SetSurvivorState(int32 PlayerIndex, ESurvivorState State);
 
-	void ResultSurvivorGame(int32 PlayerIndex);
+	void ResultSurvivorGame(int32 PlayerIndex, ESurvivorState state);
 	void ResultKillerGame();
 
 private:
@@ -93,10 +95,12 @@ private:
 	UPROPERTY(ReplicatedUsing = OnRep_GeneratorCompleted)
 	bool bAllGeneratorsRepaired = false;
 
-	class UD1GameStartUI* GameStartUI;
-
 	UPROPERTY(Replicated)
 	TArray<ESurvivorState> SurvivorStates;
+
+	bool IsGateOpened = false;
+
+	class UD1GameStartUI* GameStartUI;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
@@ -104,6 +108,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TSubclassOf<class UD1GameEscapeUI> GameEscapeUIClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	TSubclassOf<class UD1GameExitUI> GameExitUIClass;
 
 	// 발전기 수리 완료 시 UI에 연결할 델리게이트
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
@@ -122,6 +129,12 @@ protected:
 	FOnGameEnd OnGameEnd;
 
 	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGateOpend OnGateOpend;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
+	FOnGateOpend OnGateEnded;
+
+	UPROPERTY(BlueprintAssignable, Category = "DBDListen")
 	FOnSurvivorStateChanged OnSurvivorStateChanged;
 
 	// 맵에 있는 탈출구들
@@ -134,7 +147,14 @@ protected:
 
 	// TODO : 출구 열린 후 타이머
 	UPROPERTY(Replicated, BlueprintReadWrite, Category = "DBDListen")
-	float EndGameTimer;
+	float ExitRemainingTime = 0.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
+	float GATE_EXIT_TIME = 30.f;
+
+	// 입력 잠금 시간
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "GameStartTime"))
+	float GAME_START_TIME = 4.f;
 
 	// 입력 잠금 시간
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "InputUnlockTime"))
