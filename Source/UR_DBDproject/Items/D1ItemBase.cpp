@@ -68,19 +68,21 @@ float AD1ItemBase::GetDurabilityPercentage() const
     return (CurrentUsage / MaxUsage) * 100.0f;
 }
 
-void AD1ItemBase::ActivateEntity()
+void AD1ItemBase::ActivateItem()
 {
     if (ItemMesh)
     {
         ItemMesh->SetVisibility(true);
+        IsVisible = true;
     }
 }
 
-void AD1ItemBase::DeactivateEntity()
+void AD1ItemBase::DeactivateItem()
 {
     if (ItemMesh)
     {
         ItemMesh->SetVisibility(false);
+        IsVisible = false;
     }
 }
 

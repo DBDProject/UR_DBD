@@ -23,7 +23,7 @@ public:
 	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	TObjectPtr<class AD1SurvivorBase> D1Survivor;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)

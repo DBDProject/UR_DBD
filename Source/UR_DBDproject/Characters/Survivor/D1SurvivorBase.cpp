@@ -195,6 +195,31 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	if (EquippedItem)
+	{
+		if (HasAuthority()) // 박쥐 폼일 때 초기화 못하게
+		{
+			if (GetKiller() &&
+				CachedKiller->GetCurrentTransformState() == EDraculaTransformationState::Bat)
+			{
+				return;
+			}
+		}
+
+		const bool bShouldShow = ShouldShowItemMesh();
+		if (EquippedItem->GetIsVisible() != bShouldShow)
+		{
+			if (EquippedItem->GetIsVisible() == true)
+			{
+				EquippedItem->DeactivateItem();
+			}
+			else if (EquippedItem->GetIsVisible() == false)
+			{
+				EquippedItem->ActivateItem();
+			}
+		}
+	}
+
 	if (bPlayingIntro)
 	{
 		if (GetController()->IsLocalPlayerController())
@@ -701,12 +726,12 @@ void AD1SurvivorBase::OnHooked()
 
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
-		// 2번째 갈고리
-		if (HookedCount == 2)
-		{
-			if (HookHealth > 50.f)
-				HookHealth = 50.0f;
-		}
+	// 2번째 갈고리
+	if (HookedCount == 2)
+	{
+		if (HookHealth > 50.f)
+			HookHealth = 50.0f;
+	}
 }
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
@@ -1174,9 +1199,11 @@ void AD1SurvivorBase::TakeDamageFromKiller()
 		bIsFail = false;
 		bIsHealing = false;
 		bIsUsingMedkit = false;
+		bIsBeingHealed = false;
 
 		PlayMontage(HitMontage, "BK");
 		SetSurvivorState(ESurvivorState::Crawl);
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 		if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 		{
 			PC->PlaySurvivorBGMByLevel(EBGMLevel::Crawl);
@@ -1428,6 +1455,29 @@ void AD1SurvivorBase::NotUseCurrentItem_Implementation()
 	}
 }
 
+bool AD1SurvivorBase::ShouldShowItemMesh() const
+{
+	if (!(CurrentState == ESurvivorState::Healthy) &&
+		!(CurrentState == ESurvivorState::Injured))
+		return false;
+	else if (CreatureState == ECreatureState::Parkour) // 파쿠르 할 때
+		return false;
+	else if (CreatureState == ECreatureState::DropPallet) // 판자 넘어뜨리기 할 때
+		return false;
+	else if (bIsRepairing) // 발전기 수리 중일 때
+		return false;
+	else if (bIsFail)	// 발전기 실패 모션 일 때
+		return false;
+	else if (bIsHealing) // 치료 중 일 때
+		return false;
+	else if (bIsBeingHealed) // 치료 받는 중 일 때
+		return false;
+	else if (bIsUsingMedkit) // 구급상자 사용 중 일 때
+		return false;
+
+	return true;
+}
+
 void AD1SurvivorBase::ResetHealingCooldown()
 {
 	bCanBeHealed = true;
@@ -1549,4 +1599,18 @@ void AD1SurvivorBase::Server_SetSurvivorState_Implementation(int32 _PlayerIndex,
 
 	if (IsValid(GS))
 		GS->SetSurvivorState(_PlayerIndex, State);
+}
+
+AD1KillerBase* AD1SurvivorBase::GetKiller()
+{
+	if (!CachedKiller.IsValid())
+	{
+		for (TActorIterator<AD1KillerBase> It(GetWorld()); It; ++It)
+		{
+			CachedKiller = *It;
+			break;
+		}
+	}
+
+	return CachedKiller.Get();
 }

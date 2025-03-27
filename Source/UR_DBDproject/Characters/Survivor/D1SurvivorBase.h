@@ -155,6 +155,8 @@ public:
 	UFUNCTION(Server, Reliable)
 	void NotUseCurrentItem();
 
+	bool ShouldShowItemMesh() const;
+
 	void ResetHealingCooldown();
 	void MovePlayerToPalletPoint();
 
@@ -412,6 +414,7 @@ protected: // 탈출구
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadWrite)
 	bool bIsExitGateOpening = false;
 
+public:
 	// 현재 장착 아이템
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
 	TObjectPtr<class AD1ItemBase> EquippedItem;
@@ -422,6 +425,9 @@ protected: // 탈출구
 
 	UPROPERTY(EditDefaultsOnly, Category = "Item")
 	TSubclassOf<class AD1Toolbox> BP_ToolboxClass;
+
+public:
+	TWeakObjectPtr<class AD1KillerBase> CachedKiller;
 
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
@@ -435,6 +441,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetSurvivorState(ESurvivorState state);
+
+	UFUNCTION(BlueprintCallable)
+	AD1KillerBase* GetKiller();
 
 	bool GetIsFail() { return bIsFail; }
 	void SetIsFail(bool state) { bIsFail = state; }

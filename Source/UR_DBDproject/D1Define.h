@@ -20,6 +20,7 @@ enum class ECreatureState : uint8
 	Interactable,
 	Dead,
 	Parkour,
+	DropPallet
 };
 
 UENUM(BlueprintType)

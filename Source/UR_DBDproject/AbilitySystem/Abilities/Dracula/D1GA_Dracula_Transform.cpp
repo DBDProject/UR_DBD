@@ -9,6 +9,7 @@
 #include "Characters/Killer/D1KillerController.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Items/D1ItemBase.h"
 
 
 UD1GA_Dracula_Transform::UD1GA_Dracula_Transform(const FObjectInitializer& ObjectInitializer)
@@ -532,6 +533,7 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 				if (Survivor)
 				{
 					Survivor->GetMesh()->SetVisibility(false);  // 메쉬만 숨기기
+					Survivor->EquippedItem->DeactivateItem();
 				}
 			}
 		}
@@ -548,6 +550,7 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 				if (Survivor)
 				{
 					Survivor->GetMesh()->SetVisibility(true);  // 메쉬만 숨기기
+					Survivor->EquippedItem->ActivateItem();
 				}
 			}
 		}

@@ -244,6 +244,7 @@ void AD1SurvivorController::Input_StartInteract_LeftClick()
 	D1Survivor = Cast<AD1SurvivorBase>(GetCharacter());
 
 	if (!D1Survivor.IsValid()) return;
+
 	if (GetCreatureState() == ECreatureState::Parkour) return;
 
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Crawl)
@@ -751,6 +752,8 @@ void AD1SurvivorController::DropPallet()
 
 		//SectionName = (PalletLocation == EPalletLocation::LT) ? "WalkPullDownLT" : "WalkPullDownRT";
 	}
+	D1Survivor->CreatureState = ECreatureState::DropPallet;
+
 	D1Survivor->PlayMontage(D1Survivor->PalletMontage, SectionName);
 	Pallet->StartDropping(D1Survivor.Get());
 

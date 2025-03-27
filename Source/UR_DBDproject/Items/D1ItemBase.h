@@ -31,8 +31,8 @@ public:
     UFUNCTION(BlueprintPure, Category = "Item")
     float GetDurabilityPercentage() const;
 
-    void ActivateEntity();
-    void DeactivateEntity();
+    void ActivateItem();
+    void DeactivateItem();
 
     void StartAutoDecreaseUsage(float Amount);
     void StopAutoDecreaseUsage();
@@ -65,5 +65,10 @@ protected:
     UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
     bool bCanUseItem;
 
+    bool IsVisible = true;
+
     FTimerHandle UsageDecreaseTimerHandle;
+
+public:
+    bool GetIsVisible() { return IsVisible; }
 };

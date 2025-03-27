@@ -34,7 +34,7 @@ public:
 	virtual void HandleGameplayEvent(FGameplayTag EventTag);
 
 public:
-	UPROPERTY(BlueprintReadWrite)
+	UPROPERTY(EditAnyWhere, BlueprintReadWrite)
 	ECreatureState CreatureState = ECreatureState::None;
 
 protected:

@@ -21,8 +21,15 @@ void UD1SurvivorBaseAnim::NativeUpdateAnimation(float DeltaSeconds)
 {
 	Super::NativeUpdateAnimation(DeltaSeconds);
 
-	if (D1Survivor == nullptr)
-		return;
+	if (!D1Survivor)
+	{
+		APawn* OwnerPawn = TryGetPawnOwner();
+		if (OwnerPawn)
+		{
+			D1Survivor = Cast<AD1SurvivorBase>(OwnerPawn);
+		}
+	}
+	if (!D1Survivor) return;
 
 	if (MovementComponent == nullptr)
 		return;
