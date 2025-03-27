@@ -90,7 +90,7 @@ public: // 게임스테이트와 연동
 	void Client_PlayStartSequence(float UNLOCK_INPUT_TIMER);
 
 	UFUNCTION(Server, Reliable)
-	void Server_PlayEscapeSequence(AD1SurvivorBase* Survivor, class AD1ExitArea* ExitArea);
+	void Server_PlayEscapeSequence(class AD1ExitArea* ExitArea);
 
 
 public:	// 판자

@@ -178,10 +178,8 @@ void AD1SurvivorController::Input_StartRun()
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
 		StartRun_Local();
+		Server_StartRun();
 	}
-
-	Server_StartRun();
-
 }
 
 void AD1SurvivorController::Input_StopRun()
@@ -193,10 +191,8 @@ void AD1SurvivorController::Input_StopRun()
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
 		StopRun_Local();
+		Server_StopRun();
 	}
-
-	Server_StopRun();
-
 }
 
 void AD1SurvivorController::Input_StartCrouch()
@@ -483,7 +479,6 @@ void AD1SurvivorController::RepairDelegate_End()
 
 void AD1SurvivorController::StartRun_Local()
 {
-
 	if (!D1Survivor.IsValid()) return;
 
 	if (D1Survivor.Get()->GetSurvivorState() == ESurvivorState::Healthy)
@@ -515,31 +510,13 @@ void AD1SurvivorController::StopRun_Local()
 void AD1SurvivorController::Server_StartRun_Implementation()
 {
 	if (HasAuthority())
-	{
-		Multi_StartRun();
-	}
+		StartRun_Local();
 }
 
 void AD1SurvivorController::Server_StopRun_Implementation()
 {
 	if (HasAuthority())
-	{
-		Multi_StopRun();
-	}
-}
-
-void AD1SurvivorController::Multi_StartRun_Implementation()
-{
-	if (IsLocalController()) return;
-
-	StartRun_Local();
-}
-
-void AD1SurvivorController::Multi_StopRun_Implementation()
-{
-	if (IsLocalController()) return;
-
-	StopRun_Local();
+		StopRun_Local();
 }
 
 void AD1SurvivorController::StartHeal_Local(AD1SurvivorBase* TargetSurvivor)
