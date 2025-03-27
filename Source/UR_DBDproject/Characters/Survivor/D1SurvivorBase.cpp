@@ -408,10 +408,9 @@ void AD1SurvivorBase::StartRepair()
 		if (GetController()->IsLocalController())
 		{
 			StartRepair_Local();
+			Server_StartRepair();
 		}
 	}
-	Server_StartRepair();
-
 }
 
 void AD1SurvivorBase::StopRepair()
@@ -465,7 +464,7 @@ void AD1SurvivorBase::StartRepair_Local()
 {
 	if (!GetCurrentGenerator()) return;
 
-	if (GetCurrentGenerator()->GetIsRepairBlocked()  ||
+	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
 		GetCurrentGenerator()->GetIsCompleteRepair() ||
 		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
 		return;
@@ -475,8 +474,8 @@ void AD1SurvivorBase::StartRepair_Local()
 
 	// 이동
 	MoveToGeneratorPosition(Position);
-
 	SetInteractionPosition(Position);
+
 	GetCurrentGenerator()->StartRepair(this, Position);
 }
 
@@ -502,17 +501,26 @@ void AD1SurvivorBase::StopRepair_Local()
 
 void AD1SurvivorBase::Server_StartRepair_Implementation()
 {
-	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
-		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
-		return;
+	//if (GetCurrentGenerator()->GetIsRepairBlocked() ||
+	//	GetCurrentGenerator()->GetRepairProgress() >= 100.f)
+	//	return;
 
-	Multi_StartRepair();
+	//EGeneratorInteractionPosition Position = GetCurrentGenerator()->FindInteractionPosition(this);
+
+	//MoveToGeneratorPosition(Position);
+	//SetInteractionPosition(Position);
+
+	//GetCurrentGenerator()->StartRepair(this, Position);
+	StartRepair_Local();
+
+	//Multi_StartRepair();
 }
 
 void AD1SurvivorBase::Server_StopRepair_Implementation()
 {
 	Multi_StopRepair();
 }
+
 void AD1SurvivorBase::Multi_StartRepair_Implementation()
 {
 	StartRepair_Local();
@@ -1557,7 +1565,7 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 		UE_LOG(LogTemp, Warning, TEXT("플레이어 탈출 시퀀스 시작"));
 
 		// 콜리젼 없애기
-		Server_PlayEscapeSequence(this, ExitArea);
+		Server_PlayEscapeSequence(ExitArea);
 		GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
 
 		FRotator TargetRot = ExitArea->GetActorRotation();
@@ -1577,9 +1585,9 @@ void AD1SurvivorBase::PlayEscapeSequence(AD1ExitArea* ExitArea)
 		GS->ResultSurvivorGame(PlayerIndex, ESurvivorState::Escape);
 	}
 }
-void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1SurvivorBase* Survivor, AD1ExitArea* ExitArea)
+void AD1SurvivorBase::Server_PlayEscapeSequence_Implementation(AD1ExitArea* ExitArea)
 {
-	Survivor->GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
+	GetCapsuleComponent()->MoveIgnoreActors.Add(ExitArea);
 }
 void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
 {
