@@ -19,6 +19,7 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Attack1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Skill1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_RightClick);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_KeyboardF);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SpaceBar);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Drop);
 

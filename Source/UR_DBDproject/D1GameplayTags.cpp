@@ -19,6 +19,7 @@ namespace D1GameplayTags
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_Begin, "Event.Transform.Begin");
 	UE_DEFINE_GAMEPLAY_TAG(Event_Transform_End, "Event.Transform.End");
 	UE_DEFINE_GAMEPLAY_TAG(Input_Action_Drop, "Input.Action.Drop");
+	UE_DEFINE_GAMEPLAY_TAG(Input_Action_KeyboardF, "Input.Action.KeyboardF");
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Attack_DetactStart, "Killer.Attack.DetactStart");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_PowerAttack_DetactStart, "Killer.PowerAttack.DetactStart");

@@ -14,7 +14,7 @@ struct FInputActionValue;
 class UInputMappingContext;
 class UInputAction;
 /**
- * 
+ *
  */
 UCLASS()
 class UR_DBDPROJECT_API AD1KillerController : public APlayerController
@@ -46,12 +46,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
 	UInputAction* RightClickAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Input")
+	UInputAction* WolfPounce_InputAction;
+
 private:
 	void Input_Move(const FInputActionValue& InputValue);
 	void Input_Look(const FInputActionValue& InputValue);
 	void Input_LeftClick(const FInputActionValue& InputValue);
 	void Input_RightClick(const FInputActionValue& InputValue);
 	void Input_RightClickRelease(const FInputActionValue& InputValue);
+	void Input_KeyboardF(const FInputActionValue& InputValue);
+	void Input_FRelease(const FInputActionValue& InputValue);
 	void Input_Skill1(const FInputActionValue& InputValue);
 	void Input_OnCtrlReleased(const FInputActionValue& InputValue);
 	void Input_Drop(const FInputActionValue& InputValue);
@@ -67,6 +72,12 @@ private:
 	bool bIgnoreInputLook = false;
 
 	bool bTransform = false;
+
+	void ResetCombo();
+	FTimerHandle ComboDashTimer;
+	bool bComboAttackable = true;
+	int32 comboIndex = 0;
+
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
@@ -74,5 +85,8 @@ public:
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
 
 	void SetbTransform(bool state) { bTransform = state; }
+	bool GetbCombo() { return bComboAttackable; }
+	void SetbCombo(bool bValue) { bComboAttackable = bValue; }
+	int32 GetComboIndex() { return comboIndex; }
 
 };
