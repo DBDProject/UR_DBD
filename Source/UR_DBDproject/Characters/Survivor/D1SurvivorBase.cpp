@@ -51,7 +51,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 
 	GetMesh()->SetRelativeLocationAndRotation(FVector(0.f, 0.f, -88.f), FRotator(0.f, -90.f, 0.f));
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
-	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
+	GetCharacterMovement()->SetWalkableFloorAngle(50.f); // 기본 44 -> 60으로 증가
 
 	// 상호작용 감지용 박스 컴포넌트 (상호작용 범위를 넓게 설정)
 	InteractionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("InteractionCollider"));
