@@ -22,6 +22,7 @@ class UR_DBDPROJECT_API AD1InGameMode : public AGameMode
 
 private:
 	uint8 nReadyPlayerCount = 0;
+	int32 nLocalCount = 0;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen", Meta = (Displayername = "CharacterDataTable"))
