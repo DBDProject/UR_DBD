@@ -58,14 +58,11 @@ public: // Repair
 protected: // Run
 	void StartRun_Local();
 	void StopRun_Local();
+
 	UFUNCTION(Server, Reliable)
 	void Server_StartRun();
 	UFUNCTION(Server, Reliable)
 	void Server_StopRun();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_StartRun();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_StopRun();
 
 public: // Heal
 	void StartHeal_Local(AD1SurvivorBase* TargetSurvivor);
@@ -160,8 +157,8 @@ private:
 public:
 	ECreatureState GetCreatureState();
 	void SetCreatureState(ECreatureState InState);
-	
-// 사운드
+
+	// 사운드
 	UFUNCTION(Client, Reliable)
 	void Client_UpdateBGMLevel(EBGMLevel NewLevel);
 
