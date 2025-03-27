@@ -298,14 +298,25 @@ void AD1InGameMode::PostLogin(APlayerController* NewPlayer)
 {
 	Super::PostLogin(NewPlayer);
 
-	UD1GameInstance* gameInstance = GetGameInstance<UD1GameInstance>();
+	UD1GameInstance* GI = GetGameInstance<UD1GameInstance>();
 
-	if (IsValid(gameInstance))
+	if (!IsValid(GI))
+		return;
+
+	if (GI->m_serverInfo.killerInfo.userIP == TEXT("127.0.0.1"))
+	{
+		AD1SurvivorBase* survivor = Cast<AD1SurvivorBase>(NewPlayer->GetPawn());
+
+		if (IsValid(survivor))
+			survivor->PlayerIndex = nLocalCount++;
+
+	}
+	else
 	{
 		// 아이피로 매칭해서 플레이어 인덱스를 게임 인스터스에 있는 서바이버 데이터와 동기화
-		for (int32 i = 0; i < gameInstance->m_serverInfo.survivorInfos.Num(); i++)
+		for (int32 i = 0; i < GI->m_serverInfo.survivorInfos.Num(); i++)
 		{
-			if (gameInstance->m_serverInfo.survivorInfos[i].userIP ==
+			if (GI->m_serverInfo.survivorInfos[i].userIP ==
 				NewPlayer->GetPlayerNetworkAddress())
 			{
 				AD1SurvivorBase* survivor = Cast<AD1SurvivorBase>(NewPlayer->GetPawn());
