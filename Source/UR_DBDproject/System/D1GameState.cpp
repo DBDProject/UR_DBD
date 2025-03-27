@@ -114,6 +114,13 @@ void AD1GameState::HandleMatchHasEnded()
 	if (!PC->IsLocalController())
 		return;
 
+	// Check if world is tearing down before creating widgets
+	if (GetWorld()->bIsTearingDown)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("World is tearing down, skipping result UI creation"));
+		return;
+	}
+
 	AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(PC->GetPawn());
 
 	if (IsValid(Survivor))
