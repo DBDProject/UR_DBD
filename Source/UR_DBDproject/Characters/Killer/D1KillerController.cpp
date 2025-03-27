@@ -18,6 +18,7 @@
 #include "Camera/CameraActor.h"
 #include "Components/BoxComponent.h"
 #include "Components/CapsuleComponent.h"
+#include "Interactables/D1Generator.h"
 #include "AbilitySystem/D1AbilitySystemComponent.h"
 
 AD1KillerController::AD1KillerController(const FObjectInitializer& ObjectInitializer)
@@ -430,8 +431,13 @@ void AD1KillerController::HandleInteraction()
 	
 	if (D1Killer->GetCurrentGenerator() && !D1Killer->GetCarriedSurvivor())
 	{
-		EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
-		return;
+		AD1Generator* generator = D1Killer->GetCurrentGenerator();
+		if (generator->GetRepairProgress() >= 100.0f)
+		{
+			EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
+			return;
+
+		}
 	}
 	
 	if (D1Killer->GetVaultTarget() && !D1Killer->GetCarriedSurvivor())
