@@ -188,6 +188,8 @@ void AD1KillerBase::BeginPlay()
 {
 	Super::BeginPlay();
 
+	GetCharacterMovement()->GravityScale = 1.0f; // 떠다니지 않게
+
 	// 카메라 활성화
 	if (WolfCameraComponent) WolfCameraComponent->Deactivate();
 	if (BatCameraComponent) BatCameraComponent->Deactivate();
@@ -229,6 +231,8 @@ void AD1KillerBase::BeginPlay()
 		if (GetController()->IsLocalController())
 		{
 			AudioComponent->SetVolumeMultiplier(0.0f);
+			EyeSpotLight->SetVisibility(false);
+			EyeSpotLight->SetHiddenInGame(true);
 		}
 	}
 

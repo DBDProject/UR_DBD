@@ -7,6 +7,7 @@
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Killer/D1KillerController.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Items/D1ItemBase.h"
@@ -526,6 +527,8 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 판자 무시
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Ignore);  // 창틀 무시
 		Killer->GetEyeSpotLight()->SetVisibility(false);
+		Killer->GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+
 		if (KillerController)
 		{
 			for (AD1SurvivorBase* Survivor : FoundSurvivor)
@@ -543,6 +546,8 @@ void UD1GA_Dracula_Transform::EndAbility(const FGameplayAbilitySpecHandle Handle
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 		Killer->GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_GameTraceChannel2, ECR_Block);
 		Killer->GetEyeSpotLight()->SetVisibility(true);
+		Killer->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+
 		if (KillerController)
 		{
 			for (AD1SurvivorBase* Survivor : FoundSurvivor)
