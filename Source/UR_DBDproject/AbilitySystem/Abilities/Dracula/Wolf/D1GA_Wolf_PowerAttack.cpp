@@ -96,13 +96,16 @@ void UD1GA_Wolf_PowerAttack::InputReleased(const FGameplayAbilitySpecHandle Hand
 		TargetLocation = StartLocation + Forward * 500.0f;
 
 		GetWorld()->GetTimerManager().SetTimer(DashTimer, this, &UD1GA_Wolf_PowerAttack::DashToTarget, 0.01f, true);
-
-		KillerController->comboIndex = 1;
 	}
 	else
 	{
+		WolfAnimInstance->Montage_Stop(0.0f,Wolf_PowerAttack.Get());
+		if (HasAuthority(&ActivationInfo))
+		{
+			Multicast_WolfAnimStop(Killer, FName("Swing"));
+		}
 		KillerController->SetCanSecondPounce(false);
-		FinalMontageEnded(Wolf_PowerAttack.Get(), false);
+		EndAbility(Handle, ActorInfo, ActivationInfo, true, false);
 	}
 }
 
@@ -202,11 +205,13 @@ void UD1GA_Wolf_PowerAttack::PerformWolfAttackTrace()
 				}
 				else if (AD1Pallet* pallet = Cast<AD1Pallet>(HitActor))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("팔레트 파괴"));
+					if (pallet->GetCurrentState() == EPalletState::Down)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("팔레트 파괴"));
 
-					pallet->OnDestroy();
-					bSurvivorHit = true;
-
+						pallet->OnDestroy();
+						bSurvivorHit = true;
+					}
 					break;
 				}
 			}
@@ -220,6 +225,13 @@ void UD1GA_Wolf_PowerAttack::Multicast_WolfAnim_Implementation(AD1KillerBase* Pl
 
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
 	WolfAnimInstance->Montage_JumpToSection(SectionName, Wolf_PowerAttack.Get());
+}
+
+void UD1GA_Wolf_PowerAttack::Multicast_WolfAnimStop_Implementation(AD1KillerBase* Player, FName SectionName)
+{
+	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
+
+	WolfAnimInstance->Montage_Stop(0.0f, Wolf_PowerAttack.Get());
 }
 
 void UD1GA_Wolf_PowerAttack::FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
@@ -238,5 +250,6 @@ void UD1GA_Wolf_PowerAttack::EndAbility(
 
 	bSurvivorHit = false;
 	Killer->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	KillerController->SetEndFirstPounce(true);
 	UE_LOG(LogTemp, Log, TEXT("✅ First Wolf Power Attack GAS END "));
 }
