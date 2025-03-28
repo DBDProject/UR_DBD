@@ -42,6 +42,7 @@ namespace D1GameplayTags
 
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Attack, "Killer.Ability.Wolf.Attack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_PowerAttack, "Killer.Ability.Wolf.PowerAttack");
+	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_SecondPowerAttack, "Killer.Ability.Wolf.SecondPowerAttack");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_VaultWindow, "Killer.Ability.Wolf.VaultWindow");
 	UE_DEFINE_GAMEPLAY_TAG(Killer_Ability_Wolf_Stun, "Killer.Ability.Wolf.Stun");
 

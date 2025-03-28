@@ -4,21 +4,18 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystem/Abilities/D1GameplayAbility.h"
-#include "D1GA_Wolf_PowerAttack.generated.h"
+#include "D1GA_Wolf_SecondPowerAttack.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class UR_DBDPROJECT_API UD1GA_Wolf_PowerAttack : public UD1GameplayAbility
+class UR_DBDPROJECT_API UD1GA_Wolf_SecondPowerAttack : public UD1GameplayAbility
 {
 	GENERATED_BODY()
 
 public:
-	UD1GA_Wolf_PowerAttack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
-
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Cooldown")
-	TSubclassOf<UGameplayEffect> WolfCooldownEffect;
+	UD1GA_Wolf_SecondPowerAttack(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 
 protected:
 	virtual bool CanActivateAbility(
@@ -40,29 +37,24 @@ protected:
 		const FGameplayAbilityActivationInfo ActivationInfo,
 		bool bReplicateEndAbility,
 		bool bWasCancelled) override;
-
-	virtual void InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo) override;
-
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadWrite)
 	TObjectPtr<class UAnimMontage> Wolf_PowerAttack;
-
+	
 private:
 	void FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted);
+	void InMontageEnded(UAnimMontage* Montage, bool bInterrupted);
 
-	void EndDash();
 	void DashToTarget();
+	void PerformWolfAttackTrace();
+	void EndDash();
+
 	FVector TargetLocation;
-
-	float ChargingStartTime = 0.0f;
-	float WolfChargeDuration = 0.85f;
-
 	FTimerHandle DashTimer;
 
-	void PerformWolfAttackTrace();
 	bool bSurvivorHit = false;
-
 public:
 	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_WolfAnim(AD1KillerBase* Player, FName SectionName);
+	void Multicast_SecondWolfAnim(AD1KillerBase* Player, FName SectionName);
 
 };

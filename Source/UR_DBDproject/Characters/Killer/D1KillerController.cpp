@@ -269,24 +269,27 @@ void AD1KillerController::Input_KeyboardF(const FInputActionValue& InputValue)
 	if (!D1Killer)
 		return;
 
-	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
+	if (D1Killer->GetCurrentTransformState() != EDraculaTransformationState::Wolf)
+		return;
+
+	if (comboIndex == 0)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Wolf PowerAttack"));
+		UE_LOG(LogTemp, Warning, TEXT("First Wolf PowerAttack"));
 		if (D1Killer->GetAbilitySystemComponent())
 		{
-			comboIndex++;
 			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(WolfPounce_InputAction);
-			bComboAttackable = false;
 		}
-		return;
 	}
-}
 
-void AD1KillerController::ResetCombo()
-{
-	bComboAttackable = false;
-	comboIndex = 0;
-	GetWorld()->GetTimerManager().ClearTimer(ComboDashTimer);
+	if (comboIndex == 1 && CanSecondPounce)
+	{
+		GetWorld()->GetTimerManager().ClearTimer(ComboDashTimer);
+		UE_LOG(LogTemp, Warning, TEXT("Second Wolf PowerAttack"));
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_SecondPowerAttack);
+		}
+	}
 }
 
 void AD1KillerController::Input_FRelease(const FInputActionValue& InputValue)
@@ -294,15 +297,26 @@ void AD1KillerController::Input_FRelease(const FInputActionValue& InputValue)
 	if (!D1Killer)
 		return;
 
-	if (D1Killer->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
+	if (D1Killer->GetCurrentTransformState() != EDraculaTransformationState::Wolf)
+		return;
+
+	if (comboIndex == 0)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Wolf PowerAttack Release"));
 		if (D1Killer->GetAbilitySystemComponent())
 		{
+			CanSecondPounce = true;
 			D1Killer->GetAbilitySystemComponent()->OnAbilityInputReleased(WolfPounce_InputAction);
+			GetWorld()->GetTimerManager().SetTimer(ComboDashTimer, this, &AD1KillerController::PounceTimer, 1.0f, true);
 		}
-		return;
 	}
+}
+
+void AD1KillerController::PounceTimer()
+{
+	GetWorld()->GetTimerManager().ClearTimer(ComboDashTimer);
+	CanSecondPounce = false;
+	comboIndex = 0;
 }
 
 void AD1KillerController::Input_Skill1(const FInputActionValue& InputValue)

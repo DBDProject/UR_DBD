@@ -73,10 +73,9 @@ private:
 
 	bool bTransform = false;
 
-	void ResetCombo();
 	FTimerHandle ComboDashTimer;
-	bool bComboAttackable = true;
-	int32 comboIndex = 0;
+	void PounceTimer();
+	bool CanSecondPounce = false;
 
 public:
 	ECreatureState GetCreatureState();
@@ -85,8 +84,8 @@ public:
 	void SetIgnoreInputLook(bool bEnable) { bIgnoreInputLook = bEnable; }
 
 	void SetbTransform(bool state) { bTransform = state; }
-	bool GetbCombo() { return bComboAttackable; }
-	void SetbCombo(bool bValue) { bComboAttackable = bValue; }
-	int32 GetComboIndex() { return comboIndex; }
+
+	void SetCanSecondPounce(bool bValue) { CanSecondPounce = bValue; }
+	int32 comboIndex = 0;
 
 };
