@@ -8,6 +8,8 @@
 #include "Characters/Killer/D1KillerController.h"
 #include "Characters/Killer/D1KillerBase.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
+#include "NiagaraFunctionLibrary.h"
+#include "NiagaraSystem.h"
 #include "Net/UnrealNetwork.h"
 
 // Sets default values
@@ -167,6 +169,34 @@ void AD1Pallet::PlayPalletMontage()
 
 void AD1Pallet::OnDestroy()
 {
+	FVector TargetLocation = GetActorRightVector();
+	TargetLocation *= 150.0f;
+
+	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+		GetWorld(),
+		DestroyEffect,                // 이펙트 에셋
+		GetActorLocation()+ TargetLocation,				  // 위치
+		GetActorRotation(),           // 회전
+		FVector(2.f),                 // 스케일
+		true,                         // 자동 파괴 여부
+		true,                         // 로컬 시뮬레이션
+		ENCPoolMethod::AutoRelease,   // 풀링 설정
+		true                          // 예측 가능 여부
+	);
+	if (HasAuthority())
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
+			GetWorld(),
+			DestroyEffect,                // 이펙트 에셋
+			GetActorLocation() + TargetLocation,				  // 위치
+			GetActorRotation(),           // 회전
+			FVector(2.f),                 // 스케일
+			true,                         // 자동 파괴 여부
+			true,                         // 로컬 시뮬레이션
+			ENCPoolMethod::AutoRelease,   // 풀링 설정
+			true                          // 예측 가능 여부
+		);
+	}
 	Destroy();
 
 	UE_LOG(LogTemp, Warning, TEXT("Pallet Destroyed"));
