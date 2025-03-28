@@ -45,6 +45,8 @@ public:
 	EPalletLocation FindClosestInteractionPoint(class AD1CharacterBase* Player);
 	EPalletLocation MovePlayerToInteractionPoint(class AD1CharacterBase* Player, ECharacterType type);
 
+	void PlayPalletMontage();
+
 	UFUNCTION(BlueprintCallable)
 	void OnDestroy();
 
@@ -60,6 +62,9 @@ public:
 	// 중간 지점
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	TObjectPtr<USceneComponent> InteractionPoint_Center;
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly)
+	TObjectPtr<class UAnimMontage> PalletMontage;
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))

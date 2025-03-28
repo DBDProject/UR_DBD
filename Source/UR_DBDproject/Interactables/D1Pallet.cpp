@@ -47,6 +47,12 @@ AD1Pallet::AD1Pallet()
 	InteractionPoint_Center = CreateDefaultSubobject<USceneComponent>(TEXT("InteractionPoint_Center"));
 	InteractionPoint_Center->SetupAttachment(RootComponent);
 
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> PalletMontageAsset(TEXT("/Game/Blueprints/Animation/Interactables/AM_Pallet.AM_Pallet"));
+	if (PalletMontageAsset.Succeeded())
+	{
+		PalletMontage = PalletMontageAsset.Object;
+	}
+
 	CurrentState = EPalletState::Up;
 }
 
@@ -151,6 +157,12 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 
 
 	return PalletLocation;
+}
+
+void AD1Pallet::PlayPalletMontage()
+{
+	if (!PalletMesh || !PalletMesh) return;
+	PalletMesh->GetAnimInstance()->Montage_Play(PalletMontage);
 }
 
 void AD1Pallet::OnDestroy()
