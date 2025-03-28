@@ -21,6 +21,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1Hook.h"
 #include "D1SurvivorSoundManager.h"
+#include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
 
@@ -177,8 +178,10 @@ void AD1SurvivorController::Input_StartRun()
 
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
+		if (!HasAuthority())
+			Server_StartRun();
+
 		StartRun_Local();
-		Server_StartRun();
 	}
 }
 
@@ -190,8 +193,10 @@ void AD1SurvivorController::Input_StopRun()
 
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
+		if (!HasAuthority())
+			Server_StopRun();
+
 		StopRun_Local();
-		Server_StopRun();
 	}
 }
 
@@ -419,7 +424,7 @@ void AD1SurvivorController::Input_StartInteract_RightClick()
 	if (!D1Survivor.IsValid()) return;
 
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
-	{
+	{	
 		D1Survivor->UseCurrentItem();
 	}
 }

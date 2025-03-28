@@ -31,6 +31,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	bool bCarryingSurvivor = false; // 들고 있는 중인지
 
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	bool bBuffSpeed = false; // 울프 스피드 버프
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EVaultType VaultType = EVaultType::Medium;
 
@@ -40,5 +43,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool GetIsCarryingSurvivor() { return bCarryingSurvivor; }	
+
+	UFUNCTION(BlueprintCallable)
+	void SetIsBuffSpeed(bool bBuff) { bBuffSpeed = bBuff; }
+
+	UFUNCTION(BlueprintCallable)
+	bool GetIsBuffSpeed() { return bBuffSpeed; }
 
 };

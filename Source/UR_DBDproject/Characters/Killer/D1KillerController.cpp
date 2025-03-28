@@ -272,16 +272,7 @@ void AD1KillerController::Input_KeyboardF(const FInputActionValue& InputValue)
 	if (D1Killer->GetCurrentTransformState() != EDraculaTransformationState::Wolf)
 		return;
 
-	if (comboIndex == 0)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("First Wolf PowerAttack"));
-		if (D1Killer->GetAbilitySystemComponent())
-		{
-			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(WolfPounce_InputAction);
-		}
-	}
-
-	if (comboIndex == 1 && CanSecondPounce)
+	if (CanSecondPounce && EndFirstPounce)
 	{
 		GetWorld()->GetTimerManager().ClearTimer(ComboDashTimer);
 		UE_LOG(LogTemp, Warning, TEXT("Second Wolf PowerAttack"));
@@ -290,6 +281,16 @@ void AD1KillerController::Input_KeyboardF(const FInputActionValue& InputValue)
 			D1Killer->GetAbilitySystemComponent()->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_SecondPowerAttack);
 		}
 	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("First Wolf PowerAttack"));
+		EndFirstPounce = false;
+		if (D1Killer->GetAbilitySystemComponent())
+		{
+			D1Killer->GetAbilitySystemComponent()->OnAbilityInputPressed(WolfPounce_InputAction);
+		}
+	}
+
 }
 
 void AD1KillerController::Input_FRelease(const FInputActionValue& InputValue)
@@ -300,23 +301,19 @@ void AD1KillerController::Input_FRelease(const FInputActionValue& InputValue)
 	if (D1Killer->GetCurrentTransformState() != EDraculaTransformationState::Wolf)
 		return;
 
-	if (comboIndex == 0)
+	UE_LOG(LogTemp, Warning, TEXT("Wolf PowerAttack Release"));
+	if (D1Killer->GetAbilitySystemComponent())
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Wolf PowerAttack Release"));
-		if (D1Killer->GetAbilitySystemComponent())
-		{
-			CanSecondPounce = true;
-			D1Killer->GetAbilitySystemComponent()->OnAbilityInputReleased(WolfPounce_InputAction);
-			GetWorld()->GetTimerManager().SetTimer(ComboDashTimer, this, &AD1KillerController::PounceTimer, 1.0f, true);
-		}
+		D1Killer->GetAbilitySystemComponent()->OnAbilityInputReleased(WolfPounce_InputAction);
 	}
+
+	CanSecondPounce = true;
+	GetWorld()->GetTimerManager().SetTimer(ComboDashTimer, this, &AD1KillerController::PounceTimer, 1.0f, true);
 }
 
 void AD1KillerController::PounceTimer()
 {
-	GetWorld()->GetTimerManager().ClearTimer(ComboDashTimer);
 	CanSecondPounce = false;
-	comboIndex = 0;
 }
 
 void AD1KillerController::Input_Skill1(const FInputActionValue& InputValue)

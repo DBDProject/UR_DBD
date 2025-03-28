@@ -18,6 +18,7 @@ AD1ItemBase::AD1ItemBase()
 
     ItemMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ItemMesh"));
     ItemMesh->SetupAttachment(RootScene);
+    bReplicates = true;
 }
 
 void AD1ItemBase::BeginPlay()

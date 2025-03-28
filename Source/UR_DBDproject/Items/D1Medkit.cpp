@@ -13,8 +13,11 @@ AD1Medkit::AD1Medkit()
     CurrentUsage = MaxUsage;
 }
 
+// 멀티케스트 RPC
 void AD1Medkit::UseItem_Implementation(AD1SurvivorBase* Survivor)
 {
+    if (!Survivor) return;
+
     if (!bCanUseItem || CurrentUsage <= 0.f)
     {
         UE_LOG(LogTemp, Warning, TEXT("아이템을 사용할 수 없습니다."));
@@ -27,7 +30,6 @@ void AD1Medkit::UseItem_Implementation(AD1SurvivorBase* Survivor)
     {
         Survivor->GetCharacterMovement()->DisableMovement();
         Survivor->SetIsUsingMedkit(true);
-
         if (HasAuthority())
         {
             StartAutoDecreaseUsage(1.0f);

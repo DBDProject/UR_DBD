@@ -271,7 +271,7 @@ void AD1GameState::UpdateGeneratorState()
 		{
 			if (ExitGate)
 			{
-				ExitGate->Multicast_ActivateExitGate();
+				ExitGate->ActivateExitGate();
 			}
 		}
 
