@@ -118,6 +118,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
 	class UAudioComponent* AudioComponent;
 
+	UFUNCTION()
+	void ResetDetectedObjects();
+
 private:
 	UFUNCTION()
 	void OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,

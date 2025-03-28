@@ -171,6 +171,7 @@ AD1KillerBase::AD1KillerBase()
 	// 오디오 컴포넌트 생성
 	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComp"));
 	AudioComponent->SetupAttachment(RootComponent);
+	AudioComponent->Play();
 
 	// 안광
 	{
@@ -242,6 +243,16 @@ void AD1KillerBase::BeginPlay()
 void AD1KillerBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (DetectedObject.IsValid())
+	{
+		float Distance = FVector::Dist(GetActorLocation(), DetectedObject->GetActorLocation());
+		if (Distance > 1000.0f) // 적당한 거리 기준
+		{
+			UE_LOG(LogTemp, Warning, TEXT("💨 오버랩 벗어남으로 수동 초기화"));
+			ResetDetectedObjects();
+		}
+	}
 }
 
 void AD1KillerBase::PossessedBy(AController* NewController)
@@ -396,6 +407,16 @@ void AD1KillerBase::OnOverlapObjectEnd(UPrimitiveComponent* OverlappedComponent,
 		VaultTarget = nullptr;
 	}
 
+	DetectedObject = nullptr;
+}
+
+void AD1KillerBase::ResetDetectedObjects()
+{
+	CurrentGenerator = nullptr;
+	CurrentPallet = nullptr;
+	CurrentHook = nullptr;
+	DetectedCrawlSurvivor = nullptr;
+	VaultTarget = nullptr;
 	DetectedObject = nullptr;
 }
 

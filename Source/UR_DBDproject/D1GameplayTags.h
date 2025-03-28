@@ -19,6 +19,7 @@ namespace D1GameplayTags
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Attack1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Skill1);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_RightClick);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_KeyboardF);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_SpaceBar);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Input_Action_Drop);
 
@@ -43,6 +44,7 @@ namespace D1GameplayTags
 
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Attack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_PowerAttack);
+	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_SecondPowerAttack);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_VaultWindow);
 	UE_DECLARE_GAMEPLAY_TAG_EXTERN(Killer_Ability_Wolf_Stun);
 
