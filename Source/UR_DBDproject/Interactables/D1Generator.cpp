@@ -292,8 +292,16 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 		RepairProgress -= 5.0f;
 		if (RepairProgress < 0.0f) RepairProgress = 0.0f;
 
-		// 스킬 체크 실패한 플레이어 상태 변환
-		Multi_OnSkillCheckFail(Player);
+		TArray<AD1SurvivorBase*> FailPlayers;
+
+		for (auto repairPlayer : RepairingPlayers)
+		{
+			if (repairPlayer)
+			{
+				FailPlayers.Add(repairPlayer);
+			}
+		}
+		Multi_OnSkillCheckFail(FailPlayers);
 
 		// 실패한 플레이어 배열 지우기
 		RepairingPlayers.Remove(Player);
@@ -309,25 +317,49 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 	}
 }
 
-void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player)
+//void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player)
+//{
+//	if (!Player) return;
+//
+//	// 애니메이션 실행
+//	GeneratorMesh->GetAnimInstance()->Montage_Play(G_GeneratorMontage);
+//	Player->PlayAnimMontage(Player->S_GeneratorMontage, 1.0f);
+//
+//	// 실패한 플레이어 상태 변환
+//	Player->SetIsFail(true);
+//	Player->SetIsRepairing(false);
+//	Player->SetPrevRepairing(false);
+//
+//	// 실패한 플레이어 스킬체크 UI 제거
+//	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+//	{
+//		if (!PC->IsLocalPlayerController()) return;
+//
+//		PC->RepairDelegate_End();
+//	}
+//}
+
+void AD1Generator::Multi_OnSkillCheckFail_Implementation(const TArray<AD1SurvivorBase*>& Players)
 {
-	if (!Player) return;
+	if (Players.Num() == 0) return;
 
 	// 애니메이션 실행
 	GeneratorMesh->GetAnimInstance()->Montage_Play(G_GeneratorMontage);
-	Player->PlayAnimMontage(Player->S_GeneratorMontage, 1.0f);
 
-	// 실패한 플레이어 상태 변환
-	Player->SetIsFail(true);
-	Player->SetIsRepairing(false);
-	Player->SetPrevRepairing(false);
-
-	// 실패한 플레이어 스킬체크 UI 제거
-	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+	for (auto Player : Players)
 	{
-		if (!PC->IsLocalPlayerController()) return;
-
-		PC->RepairDelegate_End();
+		if (!Player) continue;
+		Player->PlayAnimMontage(Player->S_GeneratorMontage, 1.0f);
+		// 실패한 플레이어 상태 변환
+		Player->SetIsFail(true);
+		Player->SetIsRepairing(false);
+		Player->SetPrevRepairing(false);
+		// 실패한 플레이어 스킬체크 UI 제거
+		if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(Player->GetController()))
+		{
+			if (!PC->IsLocalPlayerController()) return;
+			PC->RepairDelegate_End();
+		}
 	}
 }
 
