@@ -18,6 +18,7 @@
 #include "Characters/Killer/D1KillerBase.h"
 #include "Interactables/D1Hook.h"
 #include "Interactables/D1ExitGate.h"
+#include "Interactables/D1ScentSphere.h"
 #include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
@@ -267,6 +268,22 @@ void AD1SurvivorBase::Tick(float DeltaTime)
 	if (CurrentState == ESurvivorState::Hooked)
 	{
 		UpdateHookBleedOut(DeltaTime);
+	}
+
+	if (WolfCheck)
+	{
+		if (GetKiller() &&
+			CachedKiller->GetCurrentTransformState() == EDraculaTransformationState::Wolf)
+		{
+			GetWorldTimerManager().SetTimer(
+				WolfCheckTimerHandle,
+				this,
+				&AD1SurvivorBase::TrySpawnScentSphere,
+				5.0f,
+				true
+			);
+			WolfCheck = false;
+		}
 	}
 
 }
@@ -1587,4 +1604,19 @@ AD1KillerBase* AD1SurvivorBase::GetKiller()
 	}
 
 	return CachedKiller.Get();
+}
+
+void AD1SurvivorBase::TrySpawnScentSphere()
+{
+	if (GetVelocity().SizeSquared() < 10.0f) // 거의 안 움직이면 무시
+		return;
+
+	GetWorld()->SpawnActor<class AD1ScentSphere>(
+		AD1ScentSphere::StaticClass(),
+		GetActorLocation(),
+		FRotator::ZeroRotator
+	);
+
+	WolfCheck = true;
+	UE_LOG(LogTemp, Log, TEXT("🐾 향기 구체 생성됨: %s"), *GetName());
 }

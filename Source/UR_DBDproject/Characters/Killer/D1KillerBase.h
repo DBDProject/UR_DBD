@@ -118,6 +118,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Sound")
 	class UAudioComponent* AudioComponent;
 
+	UFUNCTION()
+	void ResetDetectedObjects();
+
 private:
 	UFUNCTION()
 	void OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
@@ -137,24 +140,12 @@ private:
 	void OnPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
-	UFUNCTION()
-	void OnWolfPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
-		bool bFromSweep, const FHitResult& SweepResult);
-
-	UFUNCTION()
-	void OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
-		UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
-
 public:
 	UFUNCTION(BlueprintCallable, Category = KDH_Camera)
 	void SwitchCamera(EDraculaTransformationState NewState);
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack")
 	UBoxComponent* PowerAttackCollision;
-
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Attack")
-	UBoxComponent* WolfPowerAttackCollision;
 
 	TObjectPtr<USkeletalMeshComponent> GetCharacterMesh() const { return CharacterMesh; }
 	TObjectPtr<USkeletalMeshComponent> GetFPVMesh() const { return FPVMesh; }
@@ -197,6 +188,12 @@ public:
 	void StartBGMUpdateTimer();         // 타이머 시작
 
 	void PlayStartSequence(float INPUT_UNLOCK_TIME);			// 시작 시퀀스 재생
+
+	// Scent Sphere Buff
+	void ApplySmellBuff();
+	FTimerHandle SpeedBuffHandle;
+	void DestroyBuff();
+
 protected:
 	UPROPERTY(EditDefaultsOnly)
 	TSubclassOf<class AD1KillerSoundManager> SoundManagerClass;
