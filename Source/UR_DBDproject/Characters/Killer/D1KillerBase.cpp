@@ -724,7 +724,7 @@ void AD1KillerBase::ApplySmellBuff()
 		UE_LOG(LogTemp, Warning, TEXT("Speed Buff Active"));
 		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
 		GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
-		GetWorld()->GetTimerManager().SetTimer(SpeedBuffHandle, this, &AD1KillerBase::DestroyBuff, 10.f, false);
+		GetWorld()->GetTimerManager().SetTimer(SpeedBuffHandle, this, &AD1KillerBase::DestroyBuff, 5.0f, false);
 	}
 }
 

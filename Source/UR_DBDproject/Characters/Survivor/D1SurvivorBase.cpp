@@ -1645,9 +1645,12 @@ void AD1SurvivorBase::TrySpawnScentSphere()
 	if (GetVelocity().SizeSquared() < 10.0f) // 거의 안 움직이면 무시
 		return;
 
+	FVector TargetLocation = GetActorLocation();
+	TargetLocation.Z -= 30.0f;
+
 	GetWorld()->SpawnActor<class AD1ScentSphere>(
 		AD1ScentSphere::StaticClass(),
-		GetActorLocation(),
+		TargetLocation,
 		FRotator::ZeroRotator
 	);
 
