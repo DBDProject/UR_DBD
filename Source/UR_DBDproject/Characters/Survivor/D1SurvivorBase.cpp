@@ -714,7 +714,8 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 		FAttachmentTransformRules::SnapToTargetNotIncludingScale,
 		HookSocket);
 
-	CurrentHook = Hook;
+	if (Hook)
+		CurrentHook = Hook;
 	CurrentHook->SetIsHooked(true);
 	CurrentHook->SetInteractingPlayer(this);
 	// 충돌 활성화
@@ -845,12 +846,12 @@ void AD1SurvivorBase::AttemptEscape()
 
 	// 4% 확률로 탈출 성공
 	float EscapeChance = FMath::RandRange(0.f, 100.f);
-	//if (EscapeChance <= 99.f)
-	if (EscapeChance <= 4.f)
+	if (EscapeChance <= 99.f)
+		//if (EscapeChance <= 4.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Escape Success!"));
 		PlayMontage(EscapeMontage, "Free");
-		OnEscapeSuccess();
+		OnRescued();
 		return;
 	}
 
@@ -866,32 +867,11 @@ void AD1SurvivorBase::Server_AttemptEscape_Implementation()
 	AttemptEscape();
 }
 
-void AD1SurvivorBase::OnEscapeSuccess()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Survivor Escaped from Hook!"));
-	if (CurrentState == ESurvivorState::Hooked)
-	{
-		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-		Multicast_SkillCheckEnable(false);
-
-		Multicast_StopEntityEvent();
-
-		EscapeGauge = 0.0f;
-		GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
-
-		CurrentHook->SetIsHooked(false);
-		CurrentHook->SetInteractingPlayer(nullptr);
-		CurrentHook = nullptr;;
-
-		SetSurvivorState(ESurvivorState::Injured);
-		GetCharacterMovement()->MaxWalkSpeed = GetSurvivoreSet()->GetInjRunSpeed();
-	}
-}
-
 void AD1SurvivorBase::OnRescued()
 {
 	if (CurrentState == ESurvivorState::Hooked)
 	{
+		bIsCarryHook = false;
 		DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 		Multicast_SkillCheckEnable(false);
 

@@ -61,10 +61,10 @@ void UD1GA_Dracula_PickUpSurvivor::ActivateAbility(
 
 	if (HasAuthority(&ActivationInfo))
 	{
-		Survivor->TakePickUpFromKiller(Killer);
 		Multicast_PickUpSurvivor(Killer);
 	}
 
+	Survivor->TakePickUpFromKiller(Killer);
 	//Survivor->TakePickUpFromKiller(Killer);
 	Killer->SetCarriedSurvivor(Survivor);
 	TPVAnimInstance->SetIsCarryingSurvivor(true);

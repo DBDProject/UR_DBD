@@ -209,8 +209,6 @@ protected:
 	void AttemptEscape();
 	UFUNCTION(Server, Reliable)
 	void Server_AttemptEscape();
-	UFUNCTION(BlueprintCallable, Category = "Survivor")
-	void OnEscapeSuccess();
 
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void OnRescued();
@@ -417,7 +415,7 @@ public:
 public:
 	TWeakObjectPtr<class AD1KillerBase> CachedKiller;
 
-//향기 구체
+	//향기 구체
 protected:
 	bool WolfCheck = true;
 	FTimerHandle WolfCheckTimerHandle;
