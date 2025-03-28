@@ -1,17 +1,17 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "AbilitySystem/Abilities/Dracula/Wolf/D1GA_Wolf_PowerAttack.h"
+#include "AbilitySystem/Abilities/Dracula/Wolf/D1GA_Wolf_SecondPowerAttack.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Characters/Survivor/D1SurvivorBase.h"
 #include "Interactables/D1Pallet.h"
 
-UD1GA_Wolf_PowerAttack::UD1GA_Wolf_PowerAttack(const FObjectInitializer& ObjectInitializer)
+UD1GA_Wolf_SecondPowerAttack::UD1GA_Wolf_SecondPowerAttack(const FObjectInitializer& ObjectInitializer)
 	:Super(ObjectInitializer)
 {
 }
 
-bool UD1GA_Wolf_PowerAttack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
+bool UD1GA_Wolf_SecondPowerAttack::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
@@ -21,20 +21,13 @@ bool UD1GA_Wolf_PowerAttack::CanActivateAbility(const FGameplayAbilitySpecHandle
 	return true;
 }
 
-void UD1GA_Wolf_PowerAttack::ActivateAbility(
+void UD1GA_Wolf_SecondPowerAttack::ActivateAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
 	const FGameplayEventData* TriggerEventData)
 {
 	Super::ActivateAbility(Handle, ActorInfo, ActivationInfo, TriggerEventData);
-
-	if (WolfCooldownEffect)
-	{
-		FGameplayEffectSpecHandle CooldownSpecHandle = MakeOutgoingGameplayEffectSpec(WolfCooldownEffect, GetAbilityLevel());
-		ApplyGameplayEffectSpecToOwner(Handle, ActorInfo, ActivationInfo, CooldownSpecHandle);
-		UE_LOG(LogTemp, Log, TEXT("✅ Cooldown Effect Applied!"));
-	}
 
 	Killer = Cast<AD1KillerBase>(ActorInfo->AvatarActor.Get());
 	KillerController = Cast<AD1KillerController>(Killer->GetController());
@@ -66,47 +59,34 @@ void UD1GA_Wolf_PowerAttack::ActivateAbility(
 	WolfAnimInstance->Montage_JumpToSection(FName("In"), Wolf_PowerAttack.Get());
 	if (HasAuthority(&ActivationInfo))
 	{
-		Multicast_WolfAnim(Killer, FName("In"));
+		Multicast_SecondWolfAnim(Killer, FName("In"));
 	}
 
-	ChargingStartTime = GetWorld()->GetTimeSeconds();
+	FOnMontageEnded EndDelegate;
+	EndDelegate.BindUObject(this, &UD1GA_Wolf_SecondPowerAttack::InMontageEnded);
+	WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_PowerAttack.Get());
 
-	CommitAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo);
 }
 
-void UD1GA_Wolf_PowerAttack::InputReleased(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo)
+void UD1GA_Wolf_SecondPowerAttack::InMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
-	float ChargingDuration = GetWorld()->GetTimeSeconds() - ChargingStartTime;
-
 	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
-
 	WolfAnimInstance->Montage_Play(Wolf_PowerAttack.Get(), 1.0f);
-
-	if (ChargingDuration >= WolfChargeDuration)
+	WolfAnimInstance->Montage_JumpToSection(FName("Swing"), Wolf_PowerAttack.Get());
+	if (HasAuthority(&CurrentActivationInfo))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("🚨 차징 성공"));
-		WolfAnimInstance->Montage_JumpToSection(FName("Swing"), Wolf_PowerAttack.Get());
-		if (HasAuthority(&ActivationInfo))
-		{
-			Multicast_WolfAnim(Killer, FName("Swing"));
-		}
-
-		FVector StartLocation = Killer->GetActorLocation();
-		FVector Forward = Killer->GetActorForwardVector();
-		TargetLocation = StartLocation + Forward * 500.0f;
-
-		GetWorld()->GetTimerManager().SetTimer(DashTimer, this, &UD1GA_Wolf_PowerAttack::DashToTarget, 0.01f, true);
-
-		KillerController->comboIndex = 1;
+		Multicast_SecondWolfAnim(Killer, FName("Swing"));
 	}
-	else
-	{
-		KillerController->SetCanSecondPounce(false);
-		FinalMontageEnded(Wolf_PowerAttack.Get(), false);
-	}
+
+	FVector StartLocation = Killer->GetActorLocation();
+	FVector Forward = Killer->GetActorForwardVector();
+	TargetLocation = StartLocation + Forward * 500.0f;
+
+	GetWorld()->GetTimerManager().SetTimer(DashTimer, this, &UD1GA_Wolf_SecondPowerAttack::DashToTarget, 0.01f, true);
+
 }
 
-void UD1GA_Wolf_PowerAttack::DashToTarget()
+void UD1GA_Wolf_SecondPowerAttack::DashToTarget()
 {
 	UE_LOG(LogTemp, Warning, TEXT("🚨 대쉬중"));
 	FVector CurrentLocation = Killer->GetActorLocation();
@@ -128,7 +108,7 @@ void UD1GA_Wolf_PowerAttack::DashToTarget()
 	}
 }
 
-void UD1GA_Wolf_PowerAttack::EndDash()
+void UD1GA_Wolf_SecondPowerAttack::EndDash()
 {
 	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 	if (bSurvivorHit)
@@ -137,15 +117,12 @@ void UD1GA_Wolf_PowerAttack::EndDash()
 		WolfAnimInstance->Montage_JumpToSection(FName("Hit"), Wolf_PowerAttack.Get());
 		if (HasAuthority(&CurrentActivationInfo))
 		{
-			Multicast_WolfAnim(Killer, FName("Hit"));
+			Multicast_SecondWolfAnim(Killer, FName("Hit"));
 		}
 
-		KillerController->SetCanSecondPounce(false);
-
 		FOnMontageEnded EndDelegate;
-		EndDelegate.BindUObject(this, &UD1GA_Wolf_PowerAttack::FinalMontageEnded);
+		EndDelegate.BindUObject(this, &UD1GA_Wolf_SecondPowerAttack::FinalMontageEnded);
 		WolfAnimInstance->Montage_SetEndDelegate(EndDelegate, Wolf_PowerAttack.Get());
-		return;
 	}
 	else
 	{
@@ -153,7 +130,7 @@ void UD1GA_Wolf_PowerAttack::EndDash()
 	}
 }
 
-void UD1GA_Wolf_PowerAttack::PerformWolfAttackTrace()
+void UD1GA_Wolf_SecondPowerAttack::PerformWolfAttackTrace()
 {
 	FVector TraceStart = Killer->GetMesh()->GetSocketLocation("nose");
 	FVector TraceEnd = TraceStart + (Killer->GetActorForwardVector() * 100.f);
@@ -214,7 +191,7 @@ void UD1GA_Wolf_PowerAttack::PerformWolfAttackTrace()
 	}
 }
 
-void UD1GA_Wolf_PowerAttack::Multicast_WolfAnim_Implementation(AD1KillerBase* Player, FName SectionName)
+void UD1GA_Wolf_SecondPowerAttack::Multicast_SecondWolfAnim_Implementation(AD1KillerBase* Player, FName SectionName)
 {
 	UAnimInstance* WolfAnimInstance = Player->GetMesh()->GetAnimInstance();
 
@@ -222,12 +199,12 @@ void UD1GA_Wolf_PowerAttack::Multicast_WolfAnim_Implementation(AD1KillerBase* Pl
 	WolfAnimInstance->Montage_JumpToSection(SectionName, Wolf_PowerAttack.Get());
 }
 
-void UD1GA_Wolf_PowerAttack::FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
+void UD1GA_Wolf_SecondPowerAttack::FinalMontageEnded(UAnimMontage* Montage, bool bInterrupted)
 {
 	EndAbility(CurrentSpecHandle, CurrentActorInfo, CurrentActivationInfo, true, false);
 }
 
-void UD1GA_Wolf_PowerAttack::EndAbility(
+void UD1GA_Wolf_SecondPowerAttack::EndAbility(
 	const FGameplayAbilitySpecHandle Handle,
 	const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo,
@@ -238,5 +215,5 @@ void UD1GA_Wolf_PowerAttack::EndAbility(
 
 	bSurvivorHit = false;
 	Killer->GetCharacterMovement()->MaxWalkSpeed = 600.0f;
-	UE_LOG(LogTemp, Log, TEXT("✅ First Wolf Power Attack GAS END "));
+	UE_LOG(LogTemp, Log, TEXT("✅ Second Wolf Power Attack GAS END "));
 }
