@@ -165,7 +165,7 @@ void AD1Pallet::OnDestroy()
 		DestroyEffect,                // 이펙트 에셋
 		GetActorLocation()+ TargetLocation,				  // 위치
 		GetActorRotation(),           // 회전
-		FVector(1.f),                 // 스케일
+		FVector(2.f),                 // 스케일
 		true,                         // 자동 파괴 여부
 		true,                         // 로컬 시뮬레이션
 		ENCPoolMethod::AutoRelease,   // 풀링 설정
@@ -178,7 +178,7 @@ void AD1Pallet::OnDestroy()
 			DestroyEffect,                // 이펙트 에셋
 			GetActorLocation() + TargetLocation,				  // 위치
 			GetActorRotation(),           // 회전
-			FVector(1.f),                 // 스케일
+			FVector(2.f),                 // 스케일
 			true,                         // 자동 파괴 여부
 			true,                         // 로컬 시뮬레이션
 			ENCPoolMethod::AutoRelease,   // 풀링 설정
