@@ -16,7 +16,7 @@ AD1ScentSphere::AD1ScentSphere()
 	RootComponent = Collision;
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
-	Mesh->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Script/Engine.StaticMesh'/Game/Art/Map/Interactable/Scent_Sphere.Scent_Sphere'")));
+	Mesh->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Script/Engine.StaticMesh'/Game/Art/Map/Interactable/ScentSphere/Scent_Sphere.Scent_Sphere'")));
 	Mesh->SetWorldScale3D(FVector(0.5f));
 	Mesh->SetVisibility(true);
 	Mesh->SetHiddenInGame(false);
