@@ -206,7 +206,7 @@ bool UDBDNetManager::ConnectLocalServer(const int port, int timeoutMs)
 	const float WAIT_TIME_SEC = (float)timeoutMs / 1000.f;  // 각 스레드가 대기할 시간
 
 	// 전체 검색 시간 제한 (기본값: 타임아웃의 5배, 최소 3초)
-	const double TOTAL_TIMEOUT_SEC = FMath::Max(timeoutMs / 1000.0 * 5.0, 3.0);
+	const double TOTAL_TIMEOUT_SEC = FMath::Max((timeoutMs / 1000.0) * 5.0, 3.0);
 	double startTime = FPlatformTime::Seconds();
 
 	struct FScanResult
