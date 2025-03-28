@@ -51,12 +51,12 @@ private:
 
 	void EndDash();
 	void DashToTarget();
-	FVector TargetLocation;
 
 	float ChargingStartTime = 0.0f;
 	float WolfChargeDuration = 0.85f;
 
 	FTimerHandle DashTimer;
+	FTimerHandle DashEndTimer;
 
 	void PerformWolfAttackTrace();
 	bool bSurvivorHit = false;
