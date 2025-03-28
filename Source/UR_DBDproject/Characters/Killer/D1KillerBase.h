@@ -105,7 +105,7 @@ protected:
 
 	UPROPERTY()
 	EDraculaTransformationState PrevTransformState;
-	UPROPERTY()
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	EDraculaTransformationState CurrentTransformState;
 
 	bool bSurvivorHit = false;
