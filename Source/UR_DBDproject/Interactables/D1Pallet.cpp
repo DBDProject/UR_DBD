@@ -157,10 +157,13 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 
 void AD1Pallet::OnDestroy()
 {
+	FVector TargetLocation = GetActorRightVector();
+	TargetLocation *= 150.0f;
+
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 		GetWorld(),
 		DestroyEffect,                // 이펙트 에셋
-		GetActorLocation(),           // 위치
+		GetActorLocation()+ TargetLocation,				  // 위치
 		GetActorRotation(),           // 회전
 		FVector(1.f),                 // 스케일
 		true,                         // 자동 파괴 여부
@@ -168,12 +171,12 @@ void AD1Pallet::OnDestroy()
 		ENCPoolMethod::AutoRelease,   // 풀링 설정
 		true                          // 예측 가능 여부
 	);
-	if (!HasAuthority())
+	if (HasAuthority())
 	{
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(
 			GetWorld(),
 			DestroyEffect,                // 이펙트 에셋
-			GetActorLocation(),           // 위치
+			GetActorLocation() + TargetLocation,				  // 위치
 			GetActorRotation(),           // 회전
 			FVector(1.f),                 // 스케일
 			true,                         // 자동 파괴 여부
