@@ -428,6 +428,12 @@ public:
 public:
 	TWeakObjectPtr<class AD1KillerBase> CachedKiller;
 
+//향기 구체
+protected:
+	bool WolfCheck = true;
+	FTimerHandle WolfCheckTimerHandle;
+	void TrySpawnScentSphere();
+
 public:
 	AActor* GetDetectedObject() const { return DetectedObject.IsValid() ? DetectedObject.Get() : nullptr; }
 	AD1Generator* GetCurrentGenerator() const { return CurrentGenerator.IsValid() ? CurrentGenerator.Get() : nullptr; }

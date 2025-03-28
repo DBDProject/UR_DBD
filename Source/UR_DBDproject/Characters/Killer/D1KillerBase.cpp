@@ -152,13 +152,6 @@ AD1KillerBase::AD1KillerBase()
 	PowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
 	PowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
 
-	WolfPowerAttackCollision = CreateDefaultSubobject<UBoxComponent>(TEXT("WolfPowerAttackCollision"));
-	WolfPowerAttackCollision->SetupAttachment(GetMesh()); // 메쉬에 부착
-	WolfPowerAttackCollision->SetBoxExtent(FVector(0.3f, 0.3f, 0.3f));
-	WolfPowerAttackCollision->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
-	WolfPowerAttackCollision->SetCollisionResponseToAllChannels(ECR_Ignore);
-	WolfPowerAttackCollision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
-
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 	GetCharacterMovement()->SetWalkableFloorAngle(60.f); // 기본 44 -> 60으로 증가
@@ -219,12 +212,6 @@ void AD1KillerBase::BeginPlay()
 	{
 		PowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
 		PowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
-	}
-
-	if (WolfPowerAttackCollision)
-	{
-		WolfPowerAttackCollision->OnComponentBeginOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerBegin);
-		WolfPowerAttackCollision->OnComponentEndOverlap.AddDynamic(this, &AD1KillerBase::OnPowerAttackOverlapPlayerEnd);
 	}
 
 	if (GetController())
@@ -441,30 +428,6 @@ void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Overlap
 }
 
 void AD1KillerBase::OnPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-}
-
-void AD1KillerBase::OnWolfPowerAttackOverlapPlayerBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	if (!WolfPowerAttackCollision->IsActive())
-		return;
-
-	if (bAttackSuccess)
-		return;
-
-	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
-	{
-		UE_LOG(LogTemp, Log, TEXT("Wolf Power Attack 적중: %s"), *OtherActor->GetName());
-		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Wolf Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
-			Survivor->TakeDamageFromKiller();
-			bAttackSuccess = true;
-		}
-	}
-}
-
-void AD1KillerBase::OnWolfPowerAttackOverlapPlayerEnd(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 }
 
@@ -734,6 +697,7 @@ void AD1KillerBase::PlayStartSequence(float INPUT_UNLOCK_TIME)
 		StartSequencePlayer->Play();
 	}
 }
+
 TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
 {
 	for (TActorIterator<AD1SurvivorBase> It(GetWorld()); It; ++It)
@@ -746,4 +710,40 @@ TArray<TObjectPtr<AD1SurvivorBase>> AD1KillerBase::GetFoundSurvivor()
 	}
 
 	return FoundSurvivors;
+}
+
+void AD1KillerBase::ApplySmellBuff()
+{
+	if (CurrentTransformState == EDraculaTransformationState::Wolf)
+	{
+		UD1KillerBaseAnim* WolfAnimInstance = Cast<UD1KillerBaseAnim>(GetMesh()->GetAnimInstance());
+		if (WolfAnimInstance)
+		{
+			WolfAnimInstance->SetIsBuffSpeed(true);
+		}
+		UE_LOG(LogTemp, Warning, TEXT("Speed Buff Active"));
+		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
+		GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
+		GetWorld()->GetTimerManager().SetTimer(SpeedBuffHandle, this, &AD1KillerBase::DestroyBuff, 10.f, false);
+	}
+}
+
+void AD1KillerBase::DestroyBuff()
+{
+	if (CurrentTransformState == EDraculaTransformationState::Bat)
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 1000.0f;
+	}
+	else
+	{
+		GetCharacterMovement()->MaxWalkSpeed = 600.0f;
+	}
+
+	UD1KillerBaseAnim* WolfAnimInstance = Cast<UD1KillerBaseAnim>(GetMesh()->GetAnimInstance());
+	if (WolfAnimInstance)
+	{
+		WolfAnimInstance->SetIsBuffSpeed(false);
+	}
+	UE_LOG(LogTemp, Warning, TEXT("Speed Buff Finish"));
+	GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
 }

@@ -76,6 +76,7 @@ private:
 	FTimerHandle ComboDashTimer;
 	void PounceTimer();
 	bool CanSecondPounce = false;
+	bool EndFirstPounce = false;
 
 public:
 	ECreatureState GetCreatureState();
@@ -86,6 +87,6 @@ public:
 	void SetbTransform(bool state) { bTransform = state; }
 
 	void SetCanSecondPounce(bool bValue) { CanSecondPounce = bValue; }
-	int32 comboIndex = 0;
+	void SetEndFirstPounce(bool bValue) { EndFirstPounce = bValue; }
 
 };
