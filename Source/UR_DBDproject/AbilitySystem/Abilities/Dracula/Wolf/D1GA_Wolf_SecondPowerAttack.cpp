@@ -78,38 +78,42 @@ void UD1GA_Wolf_SecondPowerAttack::InMontageEnded(UAnimMontage* Montage, bool bI
 		Multicast_SecondWolfAnim(Killer, FName("Swing"));
 	}
 
-	FVector StartLocation = Killer->GetActorLocation();
-	FVector Forward = Killer->GetActorForwardVector();
-	TargetLocation = StartLocation + Forward * 500.0f;
-
 	GetWorld()->GetTimerManager().SetTimer(DashTimer, this, &UD1GA_Wolf_SecondPowerAttack::DashToTarget, 0.01f, true);
+	GetWorld()->GetTimerManager().SetTimer(DashEndTimer, this, &UD1GA_Wolf_SecondPowerAttack::EndDash, 0.38f, true);
 
 }
 
 void UD1GA_Wolf_SecondPowerAttack::DashToTarget()
 {
-	UE_LOG(LogTemp, Warning, TEXT("🚨 대쉬중"));
+	UE_LOG(LogTemp, Warning, TEXT("🚨 Second 대쉬중"));
 	FVector CurrentLocation = Killer->GetActorLocation();
-	FVector Direction = (TargetLocation - CurrentLocation).GetSafeNormal();
+	FVector TargetForward = Killer->GetActorForwardVector();
 	float MoveSpeed = 500.0f / 0.38f; // 거리 / 시간
 
-	FVector MoveAmount = Direction * MoveSpeed * 0.01f;
-	Killer->SetActorLocation(CurrentLocation + MoveAmount);
+	FVector MoveAmount = TargetForward * MoveSpeed * 0.01f;
+
+	FHitResult Hit;
+	FVector Start = CurrentLocation + FVector(0, 0, 50);
+	FVector End = Start - FVector(0, 0, 1000);
+
+	if (GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility))
+	{
+		FVector GroundNormal = Hit.ImpactNormal;
+		FVector GroundDirection = FVector::VectorPlaneProject(TargetForward, GroundNormal).GetSafeNormal();
+
+		MoveAmount = GroundDirection * MoveSpeed * 0.01f;
+	}
+
+	Killer->SetActorLocation(CurrentLocation + MoveAmount, true);
 
 	PerformWolfAttackTrace();
-
-	if ((Killer->GetActorLocation() - TargetLocation).Size() < 1.0f)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("🚨 대쉬끝"));
-		GetWorld()->GetTimerManager().ClearTimer(DashTimer);
-		Killer->SetActorLocation(TargetLocation);
-
-		EndDash();
-	}
 }
 
 void UD1GA_Wolf_SecondPowerAttack::EndDash()
 {
+	UE_LOG(LogTemp, Warning, TEXT("🚨 Second 대쉬끝"));
+	GetWorld()->GetTimerManager().ClearTimer(DashTimer);
+	GetWorld()->GetTimerManager().ClearTimer(DashEndTimer);
 	UAnimInstance* WolfAnimInstance = Killer->GetMesh()->GetAnimInstance();
 	if (bSurvivorHit)
 	{

@@ -49,8 +49,8 @@ private:
 	void PerformWolfAttackTrace();
 	void EndDash();
 
-	FVector TargetLocation;
 	FTimerHandle DashTimer;
+	FTimerHandle DashEndTimer;
 
 	bool bSurvivorHit = false;
 public:
