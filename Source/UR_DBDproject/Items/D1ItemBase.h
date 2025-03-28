@@ -63,6 +63,7 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
     float MaxUsage;
 
+public:
     // 현재 남은 사용 게이지
     UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item")
     float CurrentUsage;

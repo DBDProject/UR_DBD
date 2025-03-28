@@ -21,6 +21,7 @@
 #include "Net/UnrealNetwork.h"
 #include "Interactables/D1Hook.h"
 #include "D1SurvivorSoundManager.h"
+#include "Items/D1ItemBase.h"
 #include "Items/D1Medkit.h"
 #include "Items/D1Toolbox.h"
 
@@ -419,7 +420,7 @@ void AD1SurvivorController::Input_StartInteract_RightClick()
 	if (!D1Survivor.IsValid()) return;
 
 	if (D1Survivor->GetSurvivorState() == ESurvivorState::Injured)
-	{
+	{	
 		D1Survivor->UseCurrentItem();
 	}
 }

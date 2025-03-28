@@ -132,7 +132,6 @@ void AD1SurvivorBase::BeginPlay()
 
 	// Temp
 	//EquipItem(BP_ToolboxClass);
-	EquipItem(BP_MedkitClass);
 }
 
 void AD1SurvivorBase::InitAbilitySystem()
@@ -163,6 +162,10 @@ void AD1SurvivorBase::PossessedBy(AController* NewController)
 
 	InitAbilitySystem();
 
+	if (HasAuthority())
+	{
+		EquipItem(BP_MedkitClass);
+	}
 }
 
 void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -170,6 +173,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(AD1SurvivorBase, SurvivorSet);
+	DOREPLIFETIME(AD1SurvivorBase, EquippedItem);
 	DOREPLIFETIME(AD1SurvivorBase, bIsRepairing);
 	DOREPLIFETIME(AD1SurvivorBase, InteractionPosition);
 	DOREPLIFETIME(AD1SurvivorBase, bIsFail);
@@ -1559,6 +1563,11 @@ void AD1SurvivorBase::OnRep_SurvivorSet()
 		GetCharacterMovement()->MaxWalkSpeed = SurvivorSet->GetWalkSpeed();
 		GetCharacterMovement()->MaxWalkSpeedCrouched = SurvivorSet->GetCrouchSpeed();
 	}
+}
+
+void AD1SurvivorBase::OnRep_EquippedItem()
+{
+	UE_LOG(LogTemp, Warning, TEXT("[클라이언트] EquippedItem이 복제되어 도착함: %s"), *GetNameSafe(EquippedItem));
 }
 
 void AD1SurvivorBase::Multicast_SkillCheckEnable_Implementation(bool State)

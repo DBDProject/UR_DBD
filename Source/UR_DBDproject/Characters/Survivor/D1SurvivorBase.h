@@ -162,6 +162,8 @@ public:
 	// 레플리케이션
 	UFUNCTION()
 	void OnRep_SurvivorSet();
+	UFUNCTION()
+	void OnRep_EquippedItem();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "State")
 	void BP_GetHook();
@@ -415,7 +417,7 @@ protected: // 탈출구
 
 public:
 	// 현재 장착 아이템
-	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+	UPROPERTY(ReplicatedUsing = OnRep_EquippedItem, VisibleAnywhere, BlueprintReadOnly)
 	TObjectPtr<class AD1ItemBase> EquippedItem;
 
 	// Temp (나중에 로비에서 선택하도록 바꿔야됨)
