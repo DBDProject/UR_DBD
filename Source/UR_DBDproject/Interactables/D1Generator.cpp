@@ -292,7 +292,16 @@ void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
 		RepairProgress -= 5.0f;
 		if (RepairProgress < 0.0f) RepairProgress = 0.0f;
 
-		// 스킬 체크 실패한 플레이어 상태 변환
+		//TArray<AD1SurvivorBase*> FailPlayers;
+
+		//for (auto repairPlayer : RepairingPlayers)
+		//{
+		//	if (repairPlayer)
+		//	{
+		//		FailPlayers.Add(repairPlayer);
+		//	}
+		//}
+		//Multi_OnSkillCheckFail(FailPlayers);
 		Multi_OnSkillCheckFail(Player);
 
 		// 실패한 플레이어 배열 지우기
@@ -330,6 +339,7 @@ void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player
 		PC->RepairDelegate_End();
 	}
 }
+
 
 void AD1Generator::StopRepairAll()
 {

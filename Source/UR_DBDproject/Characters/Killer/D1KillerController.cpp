@@ -465,7 +465,7 @@ void AD1KillerController::HandleInteraction()
 	if (D1Killer->GetCurrentGenerator() && !D1Killer->GetCarriedSurvivor())
 	{
 		AD1Generator* generator = D1Killer->GetCurrentGenerator();
-		if (generator->GetRepairProgress() >= 100.0f)
+		if (generator->GetRepairProgress() < 100.0f)
 		{
 			EnsureDraculaFormAndActivate(D1GameplayTags::Killer_Ability_Dracula_DamageGenerator);
 			return;

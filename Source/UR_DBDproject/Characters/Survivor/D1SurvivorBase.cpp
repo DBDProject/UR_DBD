@@ -32,7 +32,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.2f;
 	bAlwaysRelevant = true;
 	bReplicates = true;
 
@@ -769,7 +768,6 @@ void AD1SurvivorBase::Multicast_OnHookSkillCheckFail_Implementation()
 {
 	bIsHookSkillCheckFail = true;
 	CurrentHook->SetIsSkillCheckFail(true);
-
 	UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패!"));
 }
 
@@ -846,8 +844,8 @@ void AD1SurvivorBase::AttemptEscape()
 
 	// 4% 확률로 탈출 성공
 	float EscapeChance = FMath::RandRange(0.f, 100.f);
-	if (EscapeChance <= 99.f)
-		//if (EscapeChance <= 4.f)
+	//if (EscapeChance <= 99.f)
+	if (EscapeChance <= 4.f)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Escape Success!"));
 		PlayMontage(EscapeMontage, "Free");

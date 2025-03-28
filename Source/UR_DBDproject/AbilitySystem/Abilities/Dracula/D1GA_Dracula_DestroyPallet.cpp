@@ -80,7 +80,6 @@ void UD1GA_Dracula_DestroyPallet::ActivateAbility(
 	// ✅ Montage 시작
 	TPVAnimInstance->Montage_Play(TPV_DestroyPallet.Get());
 	FPVAnimInstance->Montage_Play(FPV_DestroyPallet.Get());
-
 	// ✅ Montage 끝나면 `OnEndMontage()` 실행
 	FOnMontageEnded EndDelegate;
 	EndDelegate.BindUObject(this, &UD1GA_Dracula_DestroyPallet::OnEndMontage);
@@ -119,6 +118,7 @@ void UD1GA_Dracula_DestroyPallet::Multicast_PlayDestroyPallet_Implementation(AD1
 	UAnimInstance* TPVAnimInstance = Player->GetCharacterMesh()->GetAnimInstance();
 	UAnimInstance* FPVAnimInstance = Player->GetFPVMesh()->GetAnimInstance();
 
+	Pallet->PlayPalletMontage();
 	TPVAnimInstance->Montage_Play(TPV_DestroyPallet.Get());
 	FPVAnimInstance->Montage_Play(FPV_DestroyPallet.Get());
 
