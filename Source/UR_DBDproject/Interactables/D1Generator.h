@@ -68,10 +68,8 @@ public: // 스킬 체크
 	UFUNCTION(BlueprintCallable)
 	void OnSkillCheckFail(class AD1SurvivorBase* Player);
 protected:
-	//UFUNCTION(NetMulticast, Reliable)
-	//void Multi_OnSkillCheckFail(AD1SurvivorBase* Player);
 	UFUNCTION(NetMulticast, Reliable)
-	void Multi_OnSkillCheckFail(const TArray<AD1SurvivorBase*>& Players);
+	void Multi_OnSkillCheckFail(AD1SurvivorBase* Player);
 
 
 	// 모든 플레이어의 수리를 중단
