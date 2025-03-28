@@ -202,11 +202,13 @@ void UD1GA_Wolf_PowerAttack::PerformWolfAttackTrace()
 				}
 				else if (AD1Pallet* pallet = Cast<AD1Pallet>(HitActor))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("팔레트 파괴"));
+					if (pallet->GetCurrentState() == EPalletState::Down)
+					{
+						UE_LOG(LogTemp, Warning, TEXT("팔레트 파괴"));
 
-					pallet->OnDestroy();
-					bSurvivorHit = true;
-
+						pallet->OnDestroy();
+						bSurvivorHit = true;
+					}
 					break;
 				}
 			}
