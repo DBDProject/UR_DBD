@@ -19,8 +19,8 @@ UCLASS()
 class UR_DBDPROJECT_API AD1ExitGate : public AActor
 {
 	GENERATED_BODY()
-	
-public:	
+
+public:
 	// Sets default values for this actor's properties
 	AD1ExitGate();
 
@@ -40,8 +40,6 @@ public:
 	void StartOpening_Local(AD1SurvivorBase* Player);
 	void StopOpening_Local();
 
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_ActivateExitGate();
 protected:
 	UFUNCTION(Server, Reliable)
 	void Server_StartExitOpening(AD1SurvivorBase* Player);
@@ -63,7 +61,7 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
-public:	
+public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 

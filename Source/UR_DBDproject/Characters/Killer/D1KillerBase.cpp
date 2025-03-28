@@ -339,25 +339,29 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 		DetectedObject = OtherActor;
 		DetectedCrawlSurvivor = Survivor;
 	}
-	else if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
+
+	if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("범위 내 훅 감지"));
 		DetectedObject = OtherActor;
 		CurrentHook = Hook;
 	}
-	else if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
+
+	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
 		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
 	}
-	else if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
+
+	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
 		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
-	else if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
+
+	if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
 		DetectedObject = OtherActor;
@@ -571,7 +575,7 @@ void AD1KillerBase::UpdateSurvivorBGMStates()
 		AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(SurvivorPC->GetPawn());
 		if (!Survivor) continue;
 
-		if (!(Survivor->GetSurvivorState() == ESurvivorState::Healthy) && 
+		if (!(Survivor->GetSurvivorState() == ESurvivorState::Healthy) &&
 			!(Survivor->GetSurvivorState() == ESurvivorState::Injured))
 			continue;
 
