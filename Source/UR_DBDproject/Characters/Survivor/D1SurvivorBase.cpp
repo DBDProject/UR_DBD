@@ -32,7 +32,6 @@ AD1SurvivorBase::AD1SurvivorBase()
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
-	PrimaryActorTick.TickInterval = 0.2f;
 	bAlwaysRelevant = true;
 	bReplicates = true;
 
