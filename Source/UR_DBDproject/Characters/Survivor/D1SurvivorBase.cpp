@@ -1431,10 +1431,12 @@ void AD1SurvivorBase::EquipItem(TSubclassOf<AD1ItemBase> ItemClass)
 		EquippedItem->AttachToComponent(GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
 
 		EquippedItem->ItemOwner = this;
+		EquippedItem->SetOwner(this);
 		UE_LOG(LogTemp, Warning, TEXT("%s을(를) 장착했습니다."), *EquippedItem->GetName());
 	}
 }
 
+// Server RPC
 void AD1SurvivorBase::UseCurrentItem_Implementation()
 {
 	if (!EquippedItem) return;
@@ -1449,6 +1451,7 @@ void AD1SurvivorBase::UseCurrentItem_Implementation()
 	}
 }
 
+// Server
 void AD1SurvivorBase::NotUseCurrentItem_Implementation()
 {
 	if (!EquippedItem) return;
