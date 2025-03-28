@@ -19,12 +19,18 @@ protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
 
+public:
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+    virtual void Tick(float DeltaTime) override;
+
     // 아이템 사용 후 내구도 감소
     UFUNCTION(BlueprintCallable, Category = "Item")
     void DecreaseUsage(float Amount);
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
+
+    UFUNCTION(NetMulticast, Reliable)
+    void UpdateCurrentUsage(float Usage);
+    // Called every frame
 
 public:
     // UI에서 내구도를 퍼센트(%)로 표시하기 위한 함수
@@ -58,7 +64,7 @@ protected:
     float MaxUsage;
 
     // 현재 남은 사용 게이지
-    UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Item")
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadWrite, Category = "Item")
     float CurrentUsage;
 
     // 아이템 사용 가능 여부

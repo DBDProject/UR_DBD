@@ -92,7 +92,6 @@ public: // 게임스테이트와 연동
 	UFUNCTION(Server, Reliable)
 	void Server_PlayEscapeSequence(class AD1ExitArea* ExitArea);
 
-
 public:	// 판자
 	UFUNCTION(Server, Reliable)
 	void Server_StartDropping_Request(class AD1Pallet* Pallet);
