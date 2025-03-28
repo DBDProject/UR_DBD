@@ -721,6 +721,7 @@ void AD1KillerBase::ApplySmellBuff()
 		{
 			WolfAnimInstance->SetIsBuffSpeed(true);
 		}
+		UE_LOG(LogTemp, Warning, TEXT("Speed Buff Active"));
 		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
 		GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
 		GetWorld()->GetTimerManager().SetTimer(SpeedBuffHandle, this, &AD1KillerBase::DestroyBuff, 10.f, false);
@@ -743,5 +744,6 @@ void AD1KillerBase::DestroyBuff()
 	{
 		WolfAnimInstance->SetIsBuffSpeed(false);
 	}
+	UE_LOG(LogTemp, Warning, TEXT("Speed Buff Finish"));
 	GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
 }

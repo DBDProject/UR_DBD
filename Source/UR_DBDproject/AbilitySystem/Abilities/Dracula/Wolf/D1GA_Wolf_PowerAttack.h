@@ -65,4 +65,7 @@ public:
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_WolfAnim(AD1KillerBase* Player, FName SectionName);
 
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_WolfAnimStop(AD1KillerBase* Player, FName SectionName);
+
 };
