@@ -189,6 +189,7 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 	DOREPLIFETIME(AD1SurvivorBase, EscapeGauge);
 	DOREPLIFETIME(AD1SurvivorBase, PlayerIndex);
 	DOREPLIFETIME(AD1SurvivorBase, bIsUsingMedkit);
+	DOREPLIFETIME(AD1SurvivorBase, bIsBlockRescue);
 }
 
 void AD1SurvivorBase::Tick(float DeltaTime)
@@ -682,6 +683,7 @@ void AD1SurvivorBase::Multicast_StartEntityReaction_Implementation()
 {
 	if (CurrentHook.IsValid())
 	{
+		bIsBlockRescue = true; // 리액션일 때 구출 막음 (몽타주 끝날 때 false)
 		PlayAnimMontage(SpiderMontage, 1.0f, "Reaction");
 		CurrentHook->PlayEntityMontage("Reaction");
 	}
@@ -715,6 +717,8 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
+	PlayAnimMontage(EscapeMontage, 1.0f, "CarryHook");
+
 	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 	{
 		PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
@@ -730,7 +734,6 @@ void AD1SurvivorBase::OnHooked()
 {
 	HookedCount++;
 	//HookedCount = 2;
-	bIsCarryHook = true;
 
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
