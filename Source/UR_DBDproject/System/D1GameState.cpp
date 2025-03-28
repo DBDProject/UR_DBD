@@ -51,11 +51,6 @@ void AD1GameState::HandleMatchHasStarted()
 
 	if (HasAuthority())
 	{
-		RepairedGenerators = PlayerArray.Num();
-
-		if (GetNetMode() == NM_ListenServer)
-			OnRep_RepairedGenerators();
-
 		GetWorld()->GetTimerManager().SetTimer(GameStartTimer, this,
 			&AD1GameState::OnGameStartTimer, GAME_START_TIME, false);
 	}
