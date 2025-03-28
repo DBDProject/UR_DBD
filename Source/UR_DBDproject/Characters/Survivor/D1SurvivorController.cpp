@@ -177,8 +177,10 @@ void AD1SurvivorController::Input_StartRun()
 
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
+		if (!HasAuthority())
+			Server_StartRun();
+
 		StartRun_Local();
-		Server_StartRun();
 	}
 }
 
@@ -190,8 +192,10 @@ void AD1SurvivorController::Input_StopRun()
 
 	if (IsLocalController()) // 로컬에서 즉시 실행
 	{
+		if (!HasAuthority())
+			Server_StopRun();
+
 		StopRun_Local();
-		Server_StopRun();
 	}
 }
 

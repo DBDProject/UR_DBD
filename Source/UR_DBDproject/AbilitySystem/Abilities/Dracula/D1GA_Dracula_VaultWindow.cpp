@@ -67,7 +67,18 @@ void UD1GA_Dracula_VaultWindow::ActivateAbility(
 	TPVAnimInstance->Montage_Play(TPV_VaultWindow.Get());
 	FPVAnimInstance->Montage_Play(FPV_VaultWindow.Get());
 
-	FRotator LookAtRotation = (VaultObj->GetActorLocation() - Killer->GetActorLocation()).Rotation();
+	FVector VaultFowardVec = VaultObj->GetActorForwardVector();
+	FVector VaultCenter = VaultObj->GetActorLocation();
+	FVector KillerCenter = Killer->GetActorLocation();
+
+	// 플레이어가 장애물 기준 앞쪽인지 뒤쪽인지 판단
+	FVector ToObstacle = (VaultCenter - KillerCenter).GetSafeNormal();
+	float Dot = FVector::DotProduct(ToObstacle, VaultFowardVec);
+
+	if (Dot < 0)
+		VaultFowardVec *= -1; // 방향 반전
+
+	FRotator LookAtRotation = VaultFowardVec.Rotation();
 	LookAtRotation.Pitch = 0.0f;
 	KillerController->SetControlRotation(LookAtRotation);
 
@@ -83,7 +94,6 @@ void UD1GA_Dracula_VaultWindow::OnEndMontage(UAnimMontage* Montage, bool bInterr
 		return;
 	if (!Killer || !VaultObj) return;
 
-	FVector StartLocation = VaultObj->GetStartPos();
 	FVector TargetLocation = VaultObj->GetTargetPos();
 
 	Killer->SetActorLocation(TargetLocation);

@@ -11,7 +11,7 @@ UD1GA_Wolf_VaultWindow::UD1GA_Wolf_VaultWindow(const FObjectInitializer& ObjectI
 
 bool UD1GA_Wolf_VaultWindow::CanActivateAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo, const FGameplayTagContainer* SourceTags, const FGameplayTagContainer* TargetTags, FGameplayTagContainer* OptionalRelevantTags) const
 {
- 	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
+	if (Super::CanActivateAbility(Handle, ActorInfo, SourceTags, TargetTags, OptionalRelevantTags) == false)
 	{
 		return false;
 	}
@@ -41,6 +41,21 @@ void UD1GA_Wolf_VaultWindow::ActivateAbility(const FGameplayAbilitySpecHandle Ha
 	if (!VaultObj)
 		return;
 	VaultObj->MoveToVaultInteractionLocation(Killer);
+
+	FVector VaultFowardVec = VaultObj->GetActorForwardVector();
+	FVector VaultCenter = VaultObj->GetActorLocation();
+	FVector KillerCenter = Killer->GetActorLocation();
+
+	// 플레이어가 장애물 기준 앞쪽인지 뒤쪽인지 판단
+	FVector ToObstacle = (VaultCenter - KillerCenter).GetSafeNormal();
+	float Dot = FVector::DotProduct(ToObstacle, VaultFowardVec);
+
+	if (Dot < 0)
+		VaultFowardVec *= -1; // 방향 반전
+
+	FRotator LookAtRotation = VaultFowardVec.Rotation();
+	LookAtRotation.Pitch = 0.0f;
+	KillerController->SetControlRotation(LookAtRotation);
 
 	if (!Wolf_VaultWindow)
 	{

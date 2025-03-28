@@ -31,6 +31,7 @@ AD1SurvivorBase::AD1SurvivorBase()
 {
 	PrimaryActorTick.bStartWithTickEnabled = true;
 	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.TickInterval = 0.2f;
 	bAlwaysRelevant = true;
 	bReplicates = true;
 
@@ -170,6 +171,8 @@ void AD1SurvivorBase::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutL
 
 	DOREPLIFETIME(AD1SurvivorBase, SurvivorSet);
 	DOREPLIFETIME(AD1SurvivorBase, bIsRepairing);
+	DOREPLIFETIME(AD1SurvivorBase, bPrevRepairing);
+	DOREPLIFETIME(AD1SurvivorBase, PrevState);
 	DOREPLIFETIME(AD1SurvivorBase, InteractionPosition);
 	DOREPLIFETIME(AD1SurvivorBase, bIsFail);
 	DOREPLIFETIME(AD1SurvivorBase, bIsHealing);
@@ -295,7 +298,6 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	HealingProgress += CurrentHealingRate * DeltaTime;
 	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, bIsCrawlSelfRecovering ? 95.0f : 100.0f);
 
-	Multicast_UpdateHealingProgress(HealingProgress);
 	UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
 
 	// 치료가 완료되었는지 확인
@@ -312,7 +314,6 @@ void AD1SurvivorBase::UpdateCrawlBleedOut(float DeltaTime)
 	CrawlHealth -= BleedOutRate * DeltaTime;
 	CrawlHealth = FMath::Clamp(CrawlHealth, 0.0f, 100.0f);
 
-	Multicast_UpdateCrawlBleedOut(CrawlHealth);
 	UE_LOG(LogTemp, Warning, TEXT("[출혈] HP: %.2f%%"), CrawlHealth);
 
 	if (CrawlHealth <= 0.f)
@@ -329,7 +330,6 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	HookHealth -= HookBleedOutRate * DeltaTime;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
-	Multicast_UpdateHookBleedOut(HookHealth);
 	UE_LOG(LogTemp, Warning, TEXT("[갈고리][출혈] HP: %.2f%%"), HookHealth);
 
 	if (HookHealth <= 50.f && CurrentHook.IsValid())
@@ -398,19 +398,41 @@ void AD1SurvivorBase::MoveToGeneratorPosition(EGeneratorInteractionPosition Posi
 	FRotator LookAtRotation = (GeneratorLocation - TargetLocation).Rotation();
 	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
 	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
+
+	bUseControllerRotationYaw = true;
 	SetActorRotation(LookAtRotation);
+	bUseControllerRotationYaw = false;
 }
 
 void AD1SurvivorBase::StartRepair()
 {
-	if (GetController())
+	AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController());
+	if (PC)
 	{
-		if (GetController()->IsLocalController())
+		if (PC->IsLocalController())
 		{
-			StartRepair_Local();
-			Server_StartRepair();
+			if (!GetCurrentGenerator()) return;
+
+			if (GetCurrentGenerator()->GetIsRepairBlocked() ||
+				GetCurrentGenerator()->GetIsCompleteRepair() ||
+				GetCurrentGenerator()->GetRepairProgress() >= 100.f)
+				return;
+
+			EGeneratorInteractionPosition Position = GetCurrentGenerator()->FindInteractionPosition(this);
+
+			MoveToGeneratorPosition(Position);
+			SetInteractionPosition(Position);
+
+			Server_StartRepair(Position);
 		}
 	}
+}
+
+void AD1SurvivorBase::Server_StartRepair_Implementation(EGeneratorInteractionPosition Position)
+{
+	MoveToGeneratorPosition(Position);
+	SetInteractionPosition(Position);
+	GetCurrentGenerator()->StartRepair(this, Position);
 }
 
 void AD1SurvivorBase::StopRepair()
@@ -441,8 +463,6 @@ void AD1SurvivorBase::Server_RequestSkillCheckFail_Implementation(AD1Generator* 
 	}
 }
 
-
-
 void AD1SurvivorBase::Multicast_StartEntityGeneratorEvent_Implementation()
 {
 	if (AD1Generator* Generator = GetCurrentGenerator())
@@ -457,26 +477,6 @@ void AD1SurvivorBase::Multicast_StopEntityGeneratorEvent_Implementation()
 
 		Generator->StartDissolveDisappearEffect();
 	}
-}
-
-
-void AD1SurvivorBase::StartRepair_Local()
-{
-	if (!GetCurrentGenerator()) return;
-
-	if (GetCurrentGenerator()->GetIsRepairBlocked() ||
-		GetCurrentGenerator()->GetIsCompleteRepair() ||
-		GetCurrentGenerator()->GetRepairProgress() >= 100.f)
-		return;
-
-	// 발전기 위치 판별
-	EGeneratorInteractionPosition Position = GetCurrentGenerator()->FindInteractionPosition(this);
-
-	// 이동
-	MoveToGeneratorPosition(Position);
-	SetInteractionPosition(Position);
-
-	GetCurrentGenerator()->StartRepair(this, Position);
 }
 
 void AD1SurvivorBase::StopRepair_Local()
@@ -499,31 +499,9 @@ void AD1SurvivorBase::StopRepair_Local()
 	}
 }
 
-void AD1SurvivorBase::Server_StartRepair_Implementation()
-{
-	//if (GetCurrentGenerator()->GetIsRepairBlocked() ||
-	//	GetCurrentGenerator()->GetRepairProgress() >= 100.f)
-	//	return;
-
-	//EGeneratorInteractionPosition Position = GetCurrentGenerator()->FindInteractionPosition(this);
-
-	//MoveToGeneratorPosition(Position);
-	//SetInteractionPosition(Position);
-
-	//GetCurrentGenerator()->StartRepair(this, Position);
-	StartRepair_Local();
-
-	//Multi_StartRepair();
-}
-
 void AD1SurvivorBase::Server_StopRepair_Implementation()
 {
 	Multi_StopRepair();
-}
-
-void AD1SurvivorBase::Multi_StartRepair_Implementation()
-{
-	StartRepair_Local();
 }
 
 void AD1SurvivorBase::Multi_StopRepair_Implementation()
@@ -558,7 +536,11 @@ void AD1SurvivorBase::MoveToVaultStartPosition()
 	// 장애물 방향으로 회전
 	FRotator LookAtRotation = ObstacleNormal.Rotation();
 	LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
+
+	bUseControllerRotationYaw = true;
 	SetActorRotation(LookAtRotation);
+	bUseControllerRotationYaw = false;
+
 }
 
 void AD1SurvivorBase::PlayMontage(UAnimMontage* Montage, FName SectionName = "Default")
@@ -693,6 +675,8 @@ void AD1SurvivorBase::StartOnHooked(AD1Hook* Hook)
 	if (!Hook) return;
 	if (CurrentState == ESurvivorState::Hooked) return;
 
+	SetSurvivorState(ESurvivorState::Hooked);
+
 	if (HasAuthority())
 	{
 		Multicast_AttachToHook(Hook);
@@ -715,7 +699,7 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
+	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetWorld()->GetFirstPlayerController()))
 	{
 		PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
 	}
@@ -734,12 +718,12 @@ void AD1SurvivorBase::OnHooked()
 
 	UE_LOG(LogTemp, Warning, TEXT("HookedCount : %d"), HookedCount)
 
-	// 2번째 갈고리
-	if (HookedCount == 2)
-	{
-		if (HookHealth > 50.f)
-			HookHealth = 50.0f;
-	}
+		// 2번째 갈고리
+		if (HookedCount == 2)
+		{
+			if (HookHealth > 50.f)
+				HookHealth = 50.0f;
+		}
 }
 
 void AD1SurvivorBase::OnHookSkillCheckFail()
@@ -895,9 +879,12 @@ void AD1SurvivorBase::OnRescued()
 		EscapeGauge = 0.0f;
 		GetWorld()->GetTimerManager().ClearTimer(EscapeGaugeTimer);
 
-		CurrentHook->SetIsHooked(false);
-		CurrentHook->SetInteractingPlayer(nullptr);
-		CurrentHook = nullptr;
+		if (CurrentHook.IsValid())
+		{
+			CurrentHook->SetIsHooked(false);
+			CurrentHook->SetInteractingPlayer(nullptr);
+			CurrentHook = nullptr;
+		}
 
 		SetSurvivorState(ESurvivorState::Injured);
 		GetCharacterMovement()->MaxWalkSpeed = GetSurvivoreSet()->GetInjRunSpeed();
@@ -1024,7 +1011,9 @@ void AD1SurvivorBase::MoveToPalletStartPosition()
 	// 장애물 방향으로 회전
 	FRotator LookAtRotation = PalletNormal.Rotation();
 	//LookAtRotation.Yaw += 180.f; // 장애물 좌표값 보정
+	bUseControllerRotationYaw = true;
 	SetActorRotation(LookAtRotation);
+	bUseControllerRotationYaw = false;
 }
 
 void AD1SurvivorBase::MoveToExitGateStartPosition(AD1ExitGate* Gate)
@@ -1038,7 +1027,9 @@ void AD1SurvivorBase::MoveToExitGateStartPosition(AD1ExitGate* Gate)
 	LookAtRotation.Pitch = 0.0f;  // 상하 회전을 고정하여 땅을 보지 않도록 설정
 	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 
+	bUseControllerRotationYaw = true;
 	SetActorRotation(LookAtRotation);
+	bUseControllerRotationYaw = false;
 }
 
 
@@ -1234,19 +1225,24 @@ void AD1SurvivorBase::TakePickUpFromKiller(AD1KillerBase* Killer)
 {
 	if (!Killer) return;
 
-	if (!HasAuthority())
+	SetSurvivorState(ESurvivorState::PickedUp);
+
+	if (HasAuthority())
 	{
-		TakePickUpFromKiller_Server(Killer);
-	}
-	else
-	{
-		TakePickUpFromKiller_Local(Killer);
+		TakePickUpFromKiller_Multi(Killer);
 	}
 }
 
-void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
+void AD1SurvivorBase::TakePickUpFromKiller_Multi_Implementation(AD1KillerBase* Killer)
 {
 	if (!Killer) return;
+
+	// PickUp됐을 때 nullptr 해야할 변수들
+	HealingSource = nullptr;
+	bIsBeingHealed = false;
+	bCanBeHealed = false;
+	bIsCrawlSelfRecovering = false;
+
 	// 충돌 비활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	// 물리 시뮬레이션 중지
@@ -1254,23 +1250,7 @@ void AD1SurvivorBase::TakePickUpFromKiller_Local(AD1KillerBase* Killer)
 	FName AttachSocketName = "PickUpSurvivor"; // 살인자의 왼손 본
 	// 캐릭터를 본(소켓)에 부착
 	AttachToComponent(Killer->GetCharacterMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, AttachSocketName);
-	SetSurvivorState(ESurvivorState::PickedUp);
-}
 
-void AD1SurvivorBase::TakePickUpFromKiller_Server_Implementation(AD1KillerBase* Killer)
-{
-	// PickUp됐을 때 nullptr 해야할 변수들
-	HealingSource = nullptr;
-	bIsBeingHealed = false;
-	bCanBeHealed = false;
-	bIsCrawlSelfRecovering = false;
-
-	TakePickUpFromKiller_Multicast(Killer);
-}
-
-void AD1SurvivorBase::TakePickUpFromKiller_Multicast_Implementation(AD1KillerBase* Killer)
-{
-	TakePickUpFromKiller_Local(Killer);
 }
 
 void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
@@ -1278,7 +1258,6 @@ void AD1SurvivorBase::TakeDropFromKiller(AD1KillerBase* Killer)
 	if (!Killer) return;
 
 	//TODO
-
 
 	SetSurvivorState(ESurvivorState::Crawl);
 }
@@ -1346,21 +1325,6 @@ void AD1SurvivorBase::Multicast_StopBeingHealing_Implementation()
 	{
 		StopBeingHealing_Local();
 	}
-}
-
-void AD1SurvivorBase::Multicast_UpdateHealingProgress_Implementation(float NewProgress)
-{
-	HealingProgress = NewProgress;
-}
-
-void AD1SurvivorBase::Multicast_UpdateCrawlBleedOut_Implementation(float NewProgress)
-{
-	CrawlHealth = NewProgress;
-}
-
-void AD1SurvivorBase::Multicast_UpdateHookBleedOut_Implementation(float NewProgress)
-{
-	HookHealth = NewProgress;
 }
 
 void AD1SurvivorBase::Server_SetSelfRecovering_Implementation(bool bNewState)
@@ -1523,7 +1487,9 @@ void AD1SurvivorBase::MovePlayerToPalletPoint()
 	LookAtRotation.Roll = 0.0f;   // 불필요한 기울기 방지
 
 	// 플레이어 회전
+	bUseControllerRotationYaw = true;
 	SetActorRotation(LookAtRotation);
+	bUseControllerRotationYaw = false;
 }
 
 void AD1SurvivorBase::Server_UpdatePalletLocation_Implementation(AD1Pallet* Pallet, EPalletLocation PalletLocation)
@@ -1594,9 +1560,6 @@ void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
 	PrevState = CurrentState;
 	CurrentState = state;
 
-	if (PlayerIndex < 0)
-		return;
-
 	Server_SetSurvivorState(PlayerIndex, CurrentState);
 }
 
@@ -1605,7 +1568,10 @@ void AD1SurvivorBase::Server_SetSurvivorState_Implementation(int32 _PlayerIndex,
 {
 	AD1GameState* GS = GetWorld()->GetGameState<AD1GameState>();
 
-	if (IsValid(GS))
+	PrevState = CurrentState;
+	CurrentState = State;
+
+	if (IsValid(GS) && _PlayerIndex >= 0)
 		GS->SetSurvivorState(_PlayerIndex, State);
 }
 

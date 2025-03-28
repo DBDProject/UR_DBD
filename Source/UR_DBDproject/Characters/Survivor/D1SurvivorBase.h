@@ -68,14 +68,11 @@ public: // 발전기 수리
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopEntityGeneratorEvent();
 protected:
-	void StartRepair_Local();
 	void StopRepair_Local();
 	UFUNCTION(Server, Reliable)
-	void Server_StartRepair();
+	void Server_StartRepair(EGeneratorInteractionPosition Position);
 	UFUNCTION(Server, Reliable)
 	void Server_StopRepair();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multi_StartRepair();
 	UFUNCTION(NetMulticast, Reliable)
 	void Multi_StopRepair();
 
@@ -105,12 +102,8 @@ public:
 	// 생존자 픽업 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
 	void TakePickUpFromKiller(class AD1KillerBase* Killer);
-	UFUNCTION()
-	void TakePickUpFromKiller_Local(class AD1KillerBase* Killer);
-	UFUNCTION(Server, Reliable)
-	void TakePickUpFromKiller_Server(class AD1KillerBase* Killer);
 	UFUNCTION(NetMulticast, Reliable)
-	void TakePickUpFromKiller_Multicast(class AD1KillerBase* Killer);
+	void TakePickUpFromKiller_Multi(class AD1KillerBase* Killer);
 
 	// 생존자 드랍 처리 함수
 	UFUNCTION(BlueprintCallable, Category = "Survivor")
@@ -133,12 +126,6 @@ public:
 	void Multicast_BeingHealing(AD1SurvivorBase* Healer);
 	UFUNCTION(NetMulticast, Reliable)
 	void Multicast_StopBeingHealing();
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateHealingProgress(float NewProgress);
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateCrawlBleedOut(float NewProgress);
-	UFUNCTION(NetMulticast, Reliable)
-	void Multicast_UpdateHookBleedOut(float NewProgress);
 	UFUNCTION(Server, Reliable)
 	void Server_SetSelfRecovering(bool bNewState);
 
