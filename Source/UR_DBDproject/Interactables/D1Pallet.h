@@ -83,6 +83,10 @@ protected:
 	UPROPERTY(Replicated, EditAnywhere, BlueprintReadOnly, Category = "Pallet")
 	EPalletLocation CurrentLocation;
 
+	// 이펙트
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, meta = (AllowPrivateAccess = "true"))
+	TObjectPtr<class UNiagaraSystem> DestroyEffect;
+
 	// 킬러감지
 	UPROPERTY()
 	TWeakObjectPtr<class AD1KillerBase> DeteactedKiller;
