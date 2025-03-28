@@ -273,49 +273,50 @@ void AD1Generator::OnSkillCheckSuccess(AD1SurvivorBase* Player)
 	RepairProgress += 1.0f;
 }
 
-//void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
-//{
-//	if (!HasAuthority())
-//	{
-//		Player->Server_RequestSkillCheckFail(this);
-//		return;
-//	}
-//
-//	// 서버에서 실행
-//	{
-//		// 이미 누가 실패했거나 수리 완료됐거나 progress가 100이 찼을 때 Return
-//		if (GetIsRepairBlocked() ||
-//			GetIsCompleteRepair() ||
-//			GetRepairProgress() >= 100.f)
-//			return;
-//
-//		RepairProgress -= 5.0f;
-//		if (RepairProgress < 0.0f) RepairProgress = 0.0f;
-//
-//		TArray<AD1SurvivorBase*> FailPlayers;
-//
-//		for (auto repairPlayer : RepairingPlayers)
-//		{
-//			if (repairPlayer)
-//			{
-//				FailPlayers.Add(repairPlayer);
-//			}
-//		}
-//		Multi_OnSkillCheckFail(FailPlayers);
-//
-//		// 실패한 플레이어 배열 지우기
-//		RepairingPlayers.Remove(Player);
-//
-//		// 모든 플레이어 5초간 블락
-//		StartDissolveEffect();  // Generator Entity Active
-//		bIsRepairBlockedAll = true;
-//		GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 5.0f, false);
-//		UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 모든 플레이어 5초간 수리 불가"));
-//
-//		// 모든 플레이어 수리 중지
-//		StopRepairAll();
-//	}
-//}
+void AD1Generator::OnSkillCheckFail(AD1SurvivorBase* Player)
+{
+	if (!HasAuthority())
+	{
+		Player->Server_RequestSkillCheckFail(this);
+		return;
+	}
+
+	// 서버에서 실행
+	{
+		// 이미 누가 실패했거나 수리 완료됐거나 progress가 100이 찼을 때 Return
+		if (GetIsRepairBlocked() ||
+			GetIsCompleteRepair() ||
+			GetRepairProgress() >= 100.f)
+			return;
+
+		RepairProgress -= 5.0f;
+		if (RepairProgress < 0.0f) RepairProgress = 0.0f;
+
+		//TArray<AD1SurvivorBase*> FailPlayers;
+
+		//for (auto repairPlayer : RepairingPlayers)
+		//{
+		//	if (repairPlayer)
+		//	{
+		//		FailPlayers.Add(repairPlayer);
+		//	}
+		//}
+		//Multi_OnSkillCheckFail(FailPlayers);
+		Multi_OnSkillCheckFail(Player);
+
+		// 실패한 플레이어 배열 지우기
+		RepairingPlayers.Remove(Player);
+
+		// 모든 플레이어 5초간 블락
+		StartDissolveEffect();  // Generator Entity Active
+		bIsRepairBlockedAll = true;
+		GetWorldTimerManager().SetTimer(RepairBlockTimer, this, &AD1Generator::EnableRepair, 5.0f, false);
+		UE_LOG(LogTemp, Warning, TEXT("스킬 체크 실패! 모든 플레이어 5초간 수리 불가"));
+
+		// 모든 플레이어 수리 중지
+		StopRepairAll();
+	}
+}
 
 void AD1Generator::Multi_OnSkillCheckFail_Implementation(AD1SurvivorBase* Player)
 {
