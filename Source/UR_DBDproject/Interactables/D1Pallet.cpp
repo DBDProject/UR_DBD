@@ -131,7 +131,7 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 	}
 	else if (type == ECharacterType::DRACULA)
 	{
-		TargetLocation.Z += 30.f;
+		TargetLocation.Z += 60.f;
 
 		Player->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
@@ -178,10 +178,10 @@ void AD1Pallet::StartDropping(AD1SurvivorBase* Player)
 	{
 		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Wolf_Stun);
 	}
-	if (DeteactedKiller->GetCurrentTransformState() == EDraculaTransformationState::Bat)
+	/*if (DeteactedKiller->GetCurrentTransformState() == EDraculaTransformationState::Bat)
 	{
 		DeteactedKiller->ActivateAbility(D1GameplayTags::Killer_Ability_Bat_Stun);
-	}
+	}*/
 }
 
 void AD1Pallet::OnOverlapDropPalletBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
