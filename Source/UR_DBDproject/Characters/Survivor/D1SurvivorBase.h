@@ -155,6 +155,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent, Category = "State")
 	void BP_GetHook();
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "State")
+	void BP_OnHealthChanged();
+
 public:  // 몽타주 실행
 	UFUNCTION()
 	void PlayMontage(UAnimMontage* Montage, FName SectionName);
