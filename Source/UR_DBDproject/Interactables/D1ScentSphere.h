@@ -33,6 +33,8 @@ protected:
 		const FHitResult& SweepResult);
 
 	void DestroySelf();
+
+	TWeakObjectPtr<class AD1KillerBase> CachedKiller;
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
