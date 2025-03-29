@@ -227,10 +227,7 @@ void AD1KillerBase::BeginPlay()
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
 
-	if (AD1GameState* GI = Cast<AD1GameState>(GetWorld()->GetGameState()))
-	{
-		GI->OnInputUnlock.AddDynamic(this, &AD1KillerBase::StartBGMUpdateTimer);
-	}
+	StartBGMUpdateTimer();
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
