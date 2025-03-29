@@ -1566,6 +1566,7 @@ void AD1SurvivorBase::SetSurvivorState(ESurvivorState state)
 {
 	PrevState = CurrentState;
 	CurrentState = state;
+	BP_OnHealthChanged();
 
 	Server_SetSurvivorState(PlayerIndex, CurrentState);
 }
