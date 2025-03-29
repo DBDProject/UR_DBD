@@ -102,7 +102,7 @@ private:
 
 	class UD1GameStartUI* GameStartUI;
 
-protected:
+public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "DBDListen")
 	TSubclassOf<class UD1GameStartUI> GameStartUIClass;
 
