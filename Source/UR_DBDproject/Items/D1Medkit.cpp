@@ -9,7 +9,7 @@
 AD1Medkit::AD1Medkit()
 {
     ItemName = "Medkit";
-    MaxUsage = 50.f;
+    MaxUsage = 100.f;
     CurrentUsage = MaxUsage;
 }
 

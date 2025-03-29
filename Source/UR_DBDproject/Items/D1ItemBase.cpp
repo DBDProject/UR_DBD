@@ -107,7 +107,7 @@ void AD1ItemBase::StartAutoDecreaseUsage(float Amount)
         GetWorldTimerManager().SetTimer(
             UsageDecreaseTimerHandle,
             FTimerDelegate::CreateUObject(this, &AD1ItemBase::DecreaseUsage, Amount),
-            0.1f,
+            0.33f,
             true
         );
     }
