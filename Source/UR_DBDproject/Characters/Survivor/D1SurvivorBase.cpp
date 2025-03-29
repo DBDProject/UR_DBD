@@ -318,7 +318,7 @@ void AD1SurvivorBase::UpdateHealingProgress(float DeltaTime)
 	HealingProgress += CurrentHealingRate * DeltaTime;
 	HealingProgress = FMath::Clamp(HealingProgress, 0.0f, bIsCrawlSelfRecovering ? 95.0f : 100.0f);
 
-	UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
+	//UE_LOG(LogTemp, Warning, TEXT("치료 진행도: %.2f%%"), HealingProgress);
 
 	// 치료가 완료되었는지 확인
 	if (HealingProgress >= 100.0f)
@@ -334,7 +334,7 @@ void AD1SurvivorBase::UpdateCrawlBleedOut(float DeltaTime)
 	CrawlHealth -= BleedOutRate * DeltaTime;
 	CrawlHealth = FMath::Clamp(CrawlHealth, 0.0f, 100.0f);
 
-	UE_LOG(LogTemp, Warning, TEXT("[출혈] HP: %.2f%%"), CrawlHealth);
+	//UE_LOG(LogTemp, Warning, TEXT("[출혈] HP: %.2f%%"), CrawlHealth);
 
 	if (CrawlHealth <= 0.f)
 	{
@@ -350,7 +350,7 @@ void AD1SurvivorBase::UpdateHookBleedOut(float DeltaTime)
 	HookHealth -= HookBleedOutRate * DeltaTime;
 	HookHealth = FMath::Clamp(HookHealth, 0.0f, 100.0f);
 
-	UE_LOG(LogTemp, Warning, TEXT("[갈고리][출혈] HP: %.2f%%"), HookHealth);
+	//UE_LOG(LogTemp, Warning, TEXT("[갈고리][출혈] HP: %.2f%%"), HookHealth);
 
 	if (HookHealth <= 50.f && CurrentHook.IsValid())
 	{
@@ -1611,5 +1611,5 @@ void AD1SurvivorBase::TrySpawnScentSphere()
 	);
 
 	WolfCheck = true;
-	UE_LOG(LogTemp, Log, TEXT("🐾 향기 구체 생성됨: %s"), *GetName());
+	//UE_LOG(LogTemp, Log, TEXT("🐾 향기 구체 생성됨: %s"), *GetName());
 }

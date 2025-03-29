@@ -54,7 +54,7 @@ AD1KillerBase::AD1KillerBase()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load Character Mesh asset!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Failed to load Character Mesh asset!"));
 	}
 
 	FPVMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("FPVMesh"));
@@ -70,7 +70,7 @@ AD1KillerBase::AD1KillerBase()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load FPVMesh asset!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Failed to load FPVMesh asset!"));
 	}
 
 	BatMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BatMesh"));
@@ -87,7 +87,7 @@ AD1KillerBase::AD1KillerBase()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Failed to load BatMesh asset!"));
+		//UE_LOG(LogTemp, Warning, TEXT("Failed to load BatMesh asset!"));
 	}
 
 	{
@@ -242,7 +242,7 @@ void AD1KillerBase::Tick(float DeltaTime)
 		float Distance = FVector::Dist(GetActorLocation(), DetectedObject->GetActorLocation());
 		if (Distance > 1000.0f) // 적당한 거리 기준
 		{
-			UE_LOG(LogTemp, Warning, TEXT("💨 오버랩 벗어남으로 수동 초기화"));
+			//UE_LOG(LogTemp, Warning, TEXT("💨 오버랩 벗어남으로 수동 초기화"));
 			ResetDetectedObjects();
 		}
 	}
@@ -333,35 +333,35 @@ void AD1KillerBase::OnOverlapObjectBegin(UPrimitiveComponent* OverlappedComponen
 
 	if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
+		//UE_LOG(LogTemp, Warning, TEXT("기절 상태의 생존자 감지"));
 		DetectedObject = OtherActor;
 		DetectedCrawlSurvivor = Survivor;
 	}
 
 	if (AD1Hook* Hook = Cast<AD1Hook>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("범위 내 훅 감지"));
+		//UE_LOG(LogTemp, Warning, TEXT("범위 내 훅 감지"));
 		DetectedObject = OtherActor;
 		CurrentHook = Hook;
 	}
 
 	if (AD1Generator* Generator = Cast<AD1Generator>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
+		//UE_LOG(LogTemp, Warning, TEXT("Generator 감지"));
 		DetectedObject = OtherActor;
 		CurrentGenerator = Generator;
 	}
 
 	if (AD1Pallet* Pallet = Cast<AD1Pallet>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
+		//UE_LOG(LogTemp, Warning, TEXT("Pallet 감지"));
 		DetectedObject = OtherActor;
 		CurrentPallet = Pallet;
 	}
 
 	if (AD1VaultObject* VaultObj = Cast<AD1VaultObject>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
+		//UE_LOG(LogTemp, Warning, TEXT("범위 내 VaultObject 감지"));
 		DetectedObject = OtherActor;
 		VaultTarget = VaultObj;
 	}
@@ -419,10 +419,10 @@ void AD1KillerBase::OnPowerAttackOverlapPlayerBegin(UPrimitiveComponent* Overlap
 
 	if (OtherActor && OtherActor != this && DetectedObject != OtherActor)
 	{
-		UE_LOG(LogTemp, Log, TEXT("Power Attack 적중: %s"), *OtherActor->GetName());
+		//UE_LOG(LogTemp, Log, TEXT("Power Attack 적중: %s"), *OtherActor->GetName());
 		if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(OtherActor))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
+			//UE_LOG(LogTemp, Warning, TEXT("Power Attack Survivor 감지됨: %s"), *Survivor->GetName());
 			Survivor->TakeDamageFromKiller();
 			bAttackSuccess = true;
 		}
@@ -484,10 +484,10 @@ void AD1KillerBase::PerformDraculaAttackTrace()
 			AActor* HitActor = Hit.GetActor();
 			if (HitActor && HitActor != this)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
 				if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(HitActor))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
+					//UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
 
 					Survivor->TakeDamageFromKiller();
 					bSurvivorHit = true;
@@ -499,7 +499,7 @@ void AD1KillerBase::PerformDraculaAttackTrace()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
+		//UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
 	}
 }
 
@@ -541,10 +541,10 @@ void AD1KillerBase::PerformWolfAttackTrace()
 			AActor* HitActor = Hit.GetActor();
 			if (HitActor && HitActor != this)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
+				//UE_LOG(LogTemp, Warning, TEXT("공격 적중! : %s"), *HitActor->GetName());
 				if (AD1SurvivorBase* Survivor = Cast<AD1SurvivorBase>(HitActor))
 				{
-					UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
+					//UE_LOG(LogTemp, Warning, TEXT("서바이버에게 피해 적용: %s"), *Survivor->GetName());
 
 					Survivor->TakeDamageFromKiller();
 					bSurvivorHit = true;
@@ -556,7 +556,7 @@ void AD1KillerBase::PerformWolfAttackTrace()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
+		//UE_LOG(LogTemp, Warning, TEXT("공격 미스!"));
 	}
 }
 
@@ -723,7 +723,7 @@ void AD1KillerBase::ApplySmellBuff()
 		{
 			WolfAnimInstance->SetIsBuffSpeed(true);
 		}
-		UE_LOG(LogTemp, Warning, TEXT("Speed Buff Active"));
+		//UE_LOG(LogTemp, Warning, TEXT("Speed Buff Active"));
 		GetCharacterMovement()->MaxWalkSpeed = 900.0f;
 		GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
 		GetWorld()->GetTimerManager().SetTimer(SpeedBuffHandle, this, &AD1KillerBase::DestroyBuff, 5.0f, false);
@@ -746,6 +746,6 @@ void AD1KillerBase::DestroyBuff()
 	{
 		WolfAnimInstance->SetIsBuffSpeed(false);
 	}
-	UE_LOG(LogTemp, Warning, TEXT("Speed Buff Finish"));
+	//UE_LOG(LogTemp, Warning, TEXT("Speed Buff Finish"));
 	GetWorld()->GetTimerManager().ClearTimer(SpeedBuffHandle);
 }
