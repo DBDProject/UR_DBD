@@ -4,12 +4,13 @@
 #include "Interactables/D1ScentSphere.h"
 #include "Components/SphereComponent.h"
 #include "Characters/Killer/D1KillerBase.h"
+#include "EngineUtils.h"
 
 // Sets default values
 AD1ScentSphere::AD1ScentSphere()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	PrimaryActorTick.bCanEverTick = true;
 
 	Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
 	Collision->InitSphereRadius(60.f);
@@ -37,6 +38,12 @@ void AD1ScentSphere::BeginPlay()
 		Mesh->SetHiddenInGame(true);
 	}
 
+	for (TActorIterator<AD1KillerBase> It(GetWorld()); It; ++It)
+	{
+		CachedKiller = *It;
+		break;
+	}
+
 	GetWorld()->GetTimerManager().SetTimer(LifetimeHandle, this, &AD1ScentSphere::DestroySelf, 8.f, false);
 }
 
@@ -44,6 +51,14 @@ void AD1ScentSphere::BeginPlay()
 void AD1ScentSphere::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+
+	if (CachedKiller.IsValid())
+	{
+		if (CachedKiller->GetCurrentTransformState() != EDraculaTransformationState::Wolf)
+		{
+			Destroy();
+		}
+	}
 }
 
 void AD1ScentSphere::OnOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
