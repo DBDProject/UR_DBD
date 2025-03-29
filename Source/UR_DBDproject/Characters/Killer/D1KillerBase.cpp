@@ -32,6 +32,7 @@
 #include "GameFramework/GameStateBase.h"
 #include "Characters/Survivor/D1SurvivorController.h"
 #include "D1KillerSoundManager.h"
+#include "System/D1GameState.h"
 #include "EngineUtils.h"
 
 AD1KillerBase::AD1KillerBase()
@@ -225,6 +226,11 @@ void AD1KillerBase::BeginPlay()
 	}
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
+
+	if (AD1GameState* GI = Cast<AD1GameState>(GetWorld()->GetGameState()))
+	{
+		GI->OnInputUnlock.AddDynamic(this, &AD1KillerBase::StartBGMUpdateTimer);
+	}
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
@@ -263,14 +269,6 @@ void AD1KillerBase::PossessedBy(AController* NewController)
 			SpawnParams
 		);
 	}
-
-	GetWorldTimerManager().SetTimer(
-		BGMStartTimerHandle,
-		this,
-		&AD1KillerBase::StartBGMUpdateTimer,
-		10.0f,
-		false
-	);
 }
 
 void AD1KillerBase::InitAbilitySystem()
