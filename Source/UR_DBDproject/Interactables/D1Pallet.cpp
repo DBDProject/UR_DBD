@@ -144,7 +144,7 @@ EPalletLocation AD1Pallet::MovePlayerToInteractionPoint(AD1CharacterBase* Player
 		Player->SetActorLocation(TargetLocation, false, nullptr, ETeleportType::TeleportPhysics);
 
 		LookAtRotation = (InteractionPoint_Center->GetComponentLocation() - TargetLocation).Rotation();
-		LookAtRotation.Pitch = -15.0f;
+		LookAtRotation.Pitch = -30.0f;
 		if (!HasAuthority())
 		{
 			Server_SetControlRotation(Player, LookAtRotation);

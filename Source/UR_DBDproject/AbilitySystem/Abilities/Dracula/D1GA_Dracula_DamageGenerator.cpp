@@ -76,7 +76,7 @@ void UD1GA_Dracula_DamageGenerator::ActivateAbility(
 
 	// 플레이어 방향을 발전기로 조정 (자동 회전)
 	FRotator LookAtRotation = (Generator->GetActorLocation() - Killer->GetActorLocation()).Rotation();
-	LookAtRotation.Pitch = -15.0f;
+	LookAtRotation.Pitch = -30.0f;
 	KillerController->SetControlRotation(LookAtRotation);
 
 	Generator->SetCurrentState(EGeneratorState::Breaking);
