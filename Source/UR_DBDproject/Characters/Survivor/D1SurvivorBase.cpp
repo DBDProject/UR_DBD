@@ -720,9 +720,12 @@ void AD1SurvivorBase::Multicast_AttachToHook_Implementation(AD1Hook* Hook)
 	// 충돌 활성화
 	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 
-	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetWorld()->GetFirstPlayerController()))
+	if (AD1SurvivorController* PC = Cast<AD1SurvivorController>(GetController()))
 	{
-		PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
+		if (PC->IsLocalPlayerController())
+		{
+			PC->PlaySurvivorBGMByLevel(EBGMLevel::HookPart1);
+		}
 	}
 
 	if (HasAuthority())

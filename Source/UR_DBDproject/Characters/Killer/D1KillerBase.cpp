@@ -227,7 +227,6 @@ void AD1KillerBase::BeginPlay()
 
 	CurrentTransformState = EDraculaTransformationState::Dracula;
 
-	StartBGMUpdateTimer();
 }
 
 void AD1KillerBase::Tick(float DeltaTime)
@@ -266,6 +265,14 @@ void AD1KillerBase::PossessedBy(AController* NewController)
 			SpawnParams
 		);
 	}
+
+	GetWorldTimerManager().SetTimer(
+		BGMStartTimerHandle,
+		this,
+		&AD1KillerBase::StartBGMUpdateTimer,
+		10.0f,
+		false
+	);
 }
 
 void AD1KillerBase::InitAbilitySystem()

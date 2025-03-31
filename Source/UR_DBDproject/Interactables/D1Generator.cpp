@@ -103,10 +103,10 @@ void AD1Generator::Tick(float DeltaTime)
 
 		switch (NumPlayers)
 		{
-		case 1: RepairSpeed = 1.5f; break;
-		case 2: RepairSpeed = 2.2f; break;
-		case 3: RepairSpeed = 2.6f; break;
-		case 4: RepairSpeed = 3.0f; break;
+		case 1: RepairSpeed = 1.0f; break;
+		case 2: RepairSpeed = 1.4f; break;
+		case 3: RepairSpeed = 1.6f; break;
+		case 4: RepairSpeed = 2.0f; break;
 		default:
 			return;
 		}
