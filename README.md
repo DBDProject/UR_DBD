@@ -4,7 +4,7 @@
 
 이 프로젝트는 인기 비대칭 서바이벌 호러 게임 **Dead by Daylight**를 **Unreal Engine 5.5**를 사용하여 재해석하고 구현한 것입니다.
 
-핵심 목표는 원작의 게임플레이 메카닉을 깊이 있게 학습하고, 특히 언리얼 엔진의 **게임플레이 어빌리티 시스템 (Gameplay Ability System, GAS)**을 활용하여 캐릭터의 복잡한 스킬, 아이템, 상태 효과를 체계적으로 구현하는 것입니다.
+핵심 목표는 원작의 게임플레이 메카닉을 깊이 있게 학습하고, 특히 언리얼 엔진의 게임플레이 어빌리티 시스템 (Gameplay Ability System, GAS)을 활용하여 캐릭터의 복잡한 스킬, 아이템, 상태 효과를 체계적으로 구현하는 것입니다.
 
 ---
 
@@ -44,7 +44,7 @@ Source/UR_DBDproject/
 ## 🛠 빌드 (Build)
 
 1) 이 저장소를 로컬 컴퓨터에 클론합니다.
-2) `UR_DBDproject.uproject` 파일을 우클릭한 후 **'Generate Visual Studio project files'**를 선택하여 Visual Studio 솔루션 파일을 생성합니다.
+2) `UR_DBDproject.uproject` 파일을 우클릭한 후 **Generate Visual Studio project files**를 선택하여 Visual Studio 솔루션 파일을 생성합니다.
 3) 생성된 `.sln` 파일을 Visual Studio에서 엽니다.
 4) 솔루션을 빌드합니다.
 5) Unreal Editor에서 `UR_DBDproject.uproject` 파일을 열고 플레이(Play) 버튼을 눌러 게임을 실행합니다.
